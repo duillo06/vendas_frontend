@@ -1,4 +1,4 @@
-import { LayoutDashboard, LogOut, Package, Settings, ShoppingBag } from "lucide-react";
+import { LayoutDashboard, Layers, ListTree, LogOut, Package, Settings, ShoppingBag } from "lucide-react";
 import { NavLink, Outlet } from "react-router";
 
 import { Can, useAuth } from "@/features/auth";
@@ -9,6 +9,8 @@ const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, permission: "dashboard.view" },
   { to: "/pedidos", label: "Pedidos", icon: ShoppingBag, permission: "orders.view" },
   { to: "/produtos", label: "Produtos", icon: Package, permission: "catalog.view" },
+  { to: "/categorias", label: "Categorias", icon: Layers, permission: "catalog.view" },
+  { to: "/opcoes", label: "Opções", icon: ListTree, permission: "catalog.view" },
   { to: "/configuracoes", label: "Configurações", icon: Settings, permission: "settings.manage" },
 ] as const;
 

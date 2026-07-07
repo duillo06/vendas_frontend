@@ -54,6 +54,12 @@ npm run dev:admin
 | `npm run lint` | ESLint |
 | `npm run format` | Prettier |
 
+## Deploy
+
+Build de produção e Docker: [`deploy/Dockerfile`](./deploy/Dockerfile)  
+Guia completo no backend: [`../vendas_backend/deploy/DEPLOY.md`](../vendas_backend/deploy/DEPLOY.md)  
+Checklist go-live: [`docs/14-checklist-e2e-go-live.md`](./docs/14-checklist-e2e-go-live.md)
+
 ## Estrutura
 
 ```
@@ -69,12 +75,14 @@ src/
 
 ## Sprint atual
 
-**Sprint 8 — Dashboard e configurações** (`docs/09-roadmap.md`)
+**Sprint 10 — Deploy MVP e validação** (`docs/09-roadmap.md`)
 
-- [x] Backend: `GET /admin/dashboard/`, `GET/PATCH /admin/settings/`, upload de logo
-- [x] `DashboardService` + `CompanyAdminService`
-- [x] DashboardPage com KPIs e pedidos recentes
-- [x] SettingsPage — empresa, horários, taxas, toggle loja aberta, aparência (tema)
-- [x] Storefront aplica `theme` via `applyTenantTheme`
+- [x] Docker produção (API Gunicorn + Celery + Nginx)
+- [x] `docker-compose.prod.yml` + `deploy/DEPLOY.md`
+- [x] Celery: e-mail de confirmação de pedido
+- [x] `onboard_tenant` — onboarding de cliente real
+- [x] Settings produção (CORS, TLS, Sentry opcional, SMTP)
+- [x] CI: build Docker + deploy staging (template)
+- [x] Checklist E2E go-live (`docs/14-checklist-e2e-go-live.md`)
 
-Próximo: **Sprint 9** — pedidos e catálogo no backoffice.
+Próximo: **Sprint 11** — Clientes e conta (V1).

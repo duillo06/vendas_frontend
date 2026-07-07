@@ -5,6 +5,8 @@ import { OrderStatusBadge, type OrderStatus } from "@/shared/components/OrderSta
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
+import { Link } from "react-router";
+
 import { useDashboard } from "@/features/dashboard";
 
 function formatTime(iso: string) {
@@ -121,10 +123,11 @@ export function DashboardPage() {
           ) : data?.recent_orders.length ? (
             <ul className="divide-y divide-[hsl(var(--border))]">
               {data.recent_orders.map((order) => (
-                <li
-                  key={order.id}
-                  className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between"
-                >
+                <li key={order.id}>
+                  <Link
+                    to={`/pedidos/${order.id}`}
+                    className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
                   <div className="space-y-1">
                     <p className="font-medium">
                       {order.order_number} — {order.customer_name}
@@ -137,6 +140,7 @@ export function DashboardPage() {
                     <OrderStatusBadge status={order.status as OrderStatus} />
                     <PriceDisplay value={order.total} className="font-semibold" />
                   </div>
+                  </Link>
                 </li>
               ))}
             </ul>
