@@ -9,6 +9,12 @@ export interface CompanySettingsPublic {
   payment_methods: string[];
 }
 
+export interface TenantThemePublic {
+  primary?: string;
+  primary_foreground?: string;
+  radius?: string;
+}
+
 export interface BusinessHoursPublic {
   day_of_week: number;
   day_name: string;
@@ -28,4 +34,5 @@ export interface CompanyPublic {
   is_open: boolean;
   settings: CompanySettingsPublic;
   business_hours: BusinessHoursPublic[];
+  theme?: TenantThemePublic | null;
 }

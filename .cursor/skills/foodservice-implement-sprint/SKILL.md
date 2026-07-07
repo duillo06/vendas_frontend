@@ -43,6 +43,8 @@ graph LR
 - **Escopo:** se não está no checklist da fase, não implementar
 - **Diff mínimo:** reutilizar `core/`, `shared/`, convenções existentes
 - **Portas dev:** API `8001`, storefront `5174`, backoffice `5175`
+- **Layout mobile:** checklist em `.cursor/rules/foodservice-frontend-ux.mdc` — obrigatório em layouts e páginas novas
+- **Tema por tenant:** cores customizáveis só Sprint 8 (Settings); até lá usar `--primary` — `.cursor/rules/foodservice-theme-by-tenant.mdc`
 
 ## Sprint 1 — escopo esperado
 

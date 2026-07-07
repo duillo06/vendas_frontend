@@ -8,7 +8,7 @@ type SheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   children: ReactNode;
-  side?: "right" | "left";
+  side?: "right" | "left" | "bottom";
 };
 
 export function Sheet({ open, onOpenChange, children, side = "right" }: SheetProps) {
@@ -24,8 +24,10 @@ export function Sheet({ open, onOpenChange, children, side = "right" }: SheetPro
       />
       <div
         className={cn(
-          "absolute top-0 flex h-full w-full max-w-sm flex-col border-[hsl(var(--border))] bg-[hsl(var(--background))] shadow-lg",
-          side === "right" ? "right-0 border-l" : "left-0 border-r",
+          "absolute flex flex-col border-[hsl(var(--border))] bg-[hsl(var(--background))] shadow-lg",
+          side === "right" && "top-0 right-0 h-full w-full max-w-sm border-l",
+          side === "left" && "top-0 left-0 h-full w-full max-w-sm border-r",
+          side === "bottom" && "right-0 bottom-0 left-0 max-h-[85vh] rounded-t-xl border-t",
         )}
       >
         {children}

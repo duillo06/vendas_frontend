@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router";
 
+import { useAddToCart } from "@/features/cart";
 import { ProductDetailSkeleton, ProductDetailView, useProduct } from "@/features/catalog";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { Button } from "@/shared/components/ui/button";
@@ -7,6 +8,7 @@ import { Button } from "@/shared/components/ui/button";
 export function ProductPage() {
   const { slug } = useParams<{ slug: string }>();
   const { data: product, isLoading, isError } = useProduct(slug);
+  const addToCart = useAddToCart();
 
   if (isLoading) {
     return <ProductDetailSkeleton />;
@@ -26,5 +28,5 @@ export function ProductPage() {
     );
   }
 
-  return <ProductDetailView product={product} />;
+  return <ProductDetailView product={product} onAddToCart={addToCart} />;
 }

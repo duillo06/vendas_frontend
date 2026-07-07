@@ -13,6 +13,29 @@ alwaysApply: false
 - Storefront: mobile first, toques grandes, carrinho acessível em 1 toque
 - Backoffice: ações frequentes em 1 clique; filtros em listas com volume
 
+## Layout mobile (obrigatório em todo layout novo)
+
+Todo `*Layout.tsx`, página e componente de shell deve ser pensado **primeiro no mobile** (320px+) e depois expandir com `sm:` / `md:` / `lg:`.
+
+Checklist antes de considerar pronto:
+
+- [ ] CTA principal visível sem scroll excessivo no mobile
+- [ ] Áreas clicáveis ≥ 44px (botões, links de nav, inputs)
+- [ ] Conteúdo legível: padding lateral (`px-4`), sem texto cortado
+- [ ] Nada estoura a largura da tela (overflow horizontal só se for intencional, ex. `CategoryNav`)
+- [ ] Backoffice: sidebar vira drawer/sheet ou header compacto abaixo de `md` — não esconder navegação sem alternativa
+- [ ] Storefront: ações críticas (carrinho, voltar, adicionar) acessíveis no polegar
+- [ ] Formulários e cards em coluna única no mobile; grid só a partir de `sm` ou `md`
+- [ ] Imagens e hero com `aspect-*` + `object-cover` para não quebrar altura
+
+Testar mentalmente (ou no browser) em **375px** e **768px** antes de fechar a tarefa.
+
+## Cores e marca do tenant
+
+- Usar tokens semânticos (`--primary`, `--muted`, etc.) via `hsl(var(--primary))` — **não** fixar `emerald-*` como cor da marca em layout novo
+- Cores de status de pedido (`OrderStatusBadge`) são fixas do design system — não white-label
+- Customização por estabelecimento: ver rule `foodservice-theme-by-tenant.mdc` (Sprint 8, não antes)
+
 ## Componentes
 
 - shadcn/ui + tokens em `src/styles/globals.css` (`docs/04-design-system.md`)

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:admin": "vite --config vite.config.backoffice.ts index.admin.html",
+    "dev:admin": "vite --config vite.config.backoffice.ts",
     "build": "tsc -b && vite build",
     "build:admin": "tsc -b && vite build --config vite.config.backoffice.ts",
     "preview": "vite preview",

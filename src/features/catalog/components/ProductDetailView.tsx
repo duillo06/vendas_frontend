@@ -15,11 +15,29 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
-type ProductDetailViewProps = {
-  product: ProductDetail;
+export type ProductAddToCartPayload = {
+  productId: string;
+  productSlug: string;
+  productName: string;
+  imageUrl: string | null;
+  basePrice: number;
+  unitPrice: number;
+  selectedOptions: Array<{
+    optionId: string;
+    optionGroupId: string;
+    optionGroupName: string;
+    name: string;
+    priceModifier: number;
+    priceType: "fixed" | "percentage";
+  }>;
 };
 
-export function ProductDetailView({ product }: ProductDetailViewProps) {
+type ProductDetailViewProps = {
+  product: ProductDetail;
+  onAddToCart?: (payload: ProductAddToCartPayload) => void;
+};
+
+export function ProductDetailView({ product, onAddToCart }: ProductDetailViewProps) {
   const [selections, setSelections] = useState<Record<string, string[]>>({});
 
   const selectedOptions = useMemo(
@@ -41,8 +59,33 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
       return;
     }
 
-    toast.info("Carrinho entra na Sprint 6", {
-      description: `${product.name} — ${totalPrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`,
+    if (!onAddToCart) return;
+
+    const optionsPayload: ProductAddToCartPayload["selectedOptions"] = [];
+    for (const group of product.option_groups) {
+      const chosen = selections[group.id] ?? [];
+      for (const optionId of chosen) {
+        const option = group.options.find((o) => o.id === optionId);
+        if (!option) continue;
+        optionsPayload.push({
+          optionId: option.id,
+          optionGroupId: group.id,
+          optionGroupName: group.name,
+          name: option.name,
+          priceModifier: option.price_modifier,
+          priceType: option.price_type,
+        });
+      }
+    }
+
+    onAddToCart({
+      productId: product.id,
+      productSlug: product.slug,
+      productName: product.name,
+      imageUrl: primaryImage?.image_url ?? null,
+      basePrice: product.base_price,
+      unitPrice: totalPrice,
+      selectedOptions: optionsPayload,
     });
   };
 
@@ -105,7 +148,7 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
             type="button"
             size="lg"
             className="flex-1"
-            disabled={!product.is_available}
+            disabled={!product.is_available || !onAddToCart}
             onClick={handleAddToCart}
           >
             Adicionar ao carrinho

@@ -20,9 +20,11 @@ SaaS multi-tenant genérico (não pizza-specific). Fonte de verdade: `docs/` e s
 ## UI/UX (sempre)
 
 - Layout **moderno, bonito e interativo** — Design System Emerald + `docs/11-guia-ui-ux.md`
+- **Mobile first em todo layout** (storefront e backoffice): projetar 320px primeiro; ver checklist em `foodservice-frontend-ux.mdc`
 - **Guiar o usuário**: títulos claros, progresso no checkout, estados vazios/erro com próximo passo
-- **Mobile first** no storefront; eficiência no backoffice (ações em 1 clique quando possível)
+- Storefront: eficiência no polegar; backoffice: ações em 1 clique quando possível
 - Feedback imediato: skeleton, toast, loading em submits, mensagens de erro recuperáveis
+- **Cores da marca**: tokens CSS (`--primary`); customização por tenant só na Sprint 8 — `foodservice-theme-by-tenant.mdc`
 
 ## Dev local
 

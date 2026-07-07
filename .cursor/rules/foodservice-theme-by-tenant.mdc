@@ -1,0 +1,65 @@
+---
+description: White-label por tenant — cores do estabelecimento (quando e como implementar)
+alwaysApply: true
+---
+
+# Tema / cores por estabelecimento
+
+Cada cliente deve poder customizar as cores do sistema pelo **painel (backoffice)**. Isso é requisito do produto, mas **não é Sprint 6**.
+
+## Quando implementar
+
+| Fase | O quê |
+|------|--------|
+| **Agora (Sprints 4–7)** | Só preparar: tokens CSS + API já prevista — **sem** color picker nem injeção dinâmica |
+| **Sprint 8 — Settings** | UI no backoffice + `PATCH` settings com `theme` + storefront aplica cores |
+| **V3+** | Domínio próprio, fontes, dark mode (`docs/09-roadmap.md` white-label) |
+
+Não adiantar color picker ou `ThemeProvider` sem estar na sprint de Settings, salvo pedido explícito.
+
+## Modelo de dados (já existe)
+
+- `company_settings.theme` (JSONB) — ver `docs/03-modelagem-do-banco.md`, `docs/04-design-system.md` §20
+- Expor no `GET /public/company/` (campo `theme`) quando for Sprint 8
+- Backoffice: `PATCH /admin/settings/` com `{ "theme": { ... } }`
+
+Formato sugerido (MVP):
+
+```json
+{
+  "primary": "160 84% 39%",
+  "primary_foreground": "0 0% 100%",
+  "radius": "0.5rem"
+}
+```
+
+Valores em **HSL sem `hsl()`** — iguais aos de `:root` em `globals.css`.
+
+## Como aplicar no storefront (Sprint 8)
+
+1. `useCompanyPublic()` traz `theme`
+2. `applyTenantTheme(theme)` seta CSS variables em `document.documentElement`
+3. Componentes continuam usando `hsl(var(--primary))` — zero refactor visual
+
+```ts
+// lembrete: injeta as vars da loja no :root
+function applyTenantTheme(theme?: TenantTheme | null) {
+  if (!theme?.primary) return;
+  document.documentElement.style.setProperty("--primary", theme.primary);
+  if (theme.primary_foreground) {
+    document.documentElement.style.setProperty("--primary-foreground", theme.primary_foreground);
+  }
+}
+```
+
+## Backoffice (Sprint 8)
+
+- Seção **Aparência** em SettingsPage: preview ao vivo + inputs cor (primary) + reset para Emerald padrão
+- Permissão: `settings.manage`
+- Validar contraste mínimo (WCAG AA) antes de salvar — aviso se `primary` + `primary_foreground` falharem
+
+## O que não white-label
+
+- Cores de status de pedido (`pending`, `preparing`, etc.)
+- Cores semânticas de erro/sucesso globais
+- Backoffice pode manter Emerald fixo no MVP ou herdar primary com moderação

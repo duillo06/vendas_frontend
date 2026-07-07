@@ -69,15 +69,12 @@ src/
 
 ## Sprint atual
 
-**Sprint 5 — Storefront: Cardápio** (`docs/09-roadmap.md`)
+**Sprint 8 — Dashboard e configurações** (`docs/09-roadmap.md`)
 
-- [x] `useCompanyPublic()`, `useCategories()`, `useProducts()`, `useProduct()`
-- [x] HomePage, MenuPage, CategoryPage, ProductPage
-- [x] `OptionGroupSelector` com preço em tempo real
-- [x] Navbar com logo, status aberto/fechado
-- [x] Skeleton loading states
-- [x] API tenant via subdomínio (`demo.localhost:8001` em dev)
+- [x] Backend: `GET /admin/dashboard/`, `GET/PATCH /admin/settings/`, upload de logo
+- [x] `DashboardService` + `CompanyAdminService`
+- [x] DashboardPage com KPIs e pedidos recentes
+- [x] SettingsPage — empresa, horários, taxas, toggle loja aberta, aparência (tema)
+- [x] Storefront aplica `theme` via `applyTenantTheme`
 
-**Dev:** http://localhost:5174 ou http://demo.localhost:5174 — backend em `8001` com `seed_dev`
-
-Próximo: **Sprint 6** — carrinho (Zustand + persistência).
+Próximo: **Sprint 9** — pedidos e catálogo no backoffice.

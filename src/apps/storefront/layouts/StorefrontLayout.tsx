@@ -1,8 +1,9 @@
 import { Link, Outlet } from "react-router";
-import { ShoppingCart } from "lucide-react";
+import { useEffect } from "react";
 
+import { CartNavButton } from "@/features/cart";
 import { useCompanyPublic } from "@/features/company";
-import { Button } from "@/shared/components/ui/button";
+import { applyTenantTheme } from "@/features/settings";
 import { Badge } from "@/shared/components/ui/badge";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
@@ -34,6 +35,10 @@ function StoreStatusBadge({ isOpen }: { isOpen: boolean }) {
 
 export function StorefrontLayout() {
   const { data: company, isLoading: loadingCompany } = useCompanyPublic();
+
+  useEffect(() => {
+    applyTenantTheme(company?.theme);
+  }, [company?.theme]);
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))]">
@@ -73,12 +78,7 @@ export function StorefrontLayout() {
               ))}
             </nav>
 
-            <Link to="/carrinho">
-              <Button variant="outline" size="sm" className="gap-2">
-                <ShoppingCart className="h-4 w-4" />
-                <span className="hidden sm:inline">Carrinho</span>
-              </Button>
-            </Link>
+            <CartNavButton />
           </div>
         </div>
       </header>
