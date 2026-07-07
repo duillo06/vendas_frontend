@@ -1,23 +1,114 @@
-import axios from "axios";
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8001/api/v1";
+import { env, IS_BACKOFFICE } from "@/shared/config/env";
+import { authStorage } from "@/shared/lib/auth-storage";
+import type { ApiErrorBody } from "@/shared/types/api.types";
+
+type RetryConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+
+let isRefreshing = false;
+let refreshQueue: Array<(token: string | null) => void> = [];
+
+function processQueue(token: string | null): void {
+  refreshQueue.forEach((callback) => callback(token));
+  refreshQueue = [];
+}
+
+export function normalizeApiError(error: AxiosError<ApiErrorBody>): Error {
+  const data = error.response?.data;
+  const message =
+    data?.error?.message ?? data?.detail ?? error.message ?? "Erro inesperado";
+  return new Error(message);
+}
+
+async function refreshAccessToken(): Promise<string | null> {
+  const refresh = authStorage.getRefreshToken();
+  if (!refresh) return null;
+
+  try {
+    const { data } = await axios.post<{ access: string }>(
+      `${env.VITE_API_BASE_URL}/auth/refresh/`,
+      { refresh },
+      { headers: { "Content-Type": "application/json" } },
+    );
+    authStorage.setAccessToken(data.access);
+    return data.access;
+  } catch {
+    return null;
+  }
+}
+
+function redirectToLogin(): void {
+  authStorage.clear();
+  if (IS_BACKOFFICE && !window.location.pathname.startsWith("/login")) {
+    window.location.href = "/login";
+  }
+}
 
 export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: env.VITE_API_BASE_URL,
   headers: {
     Accept: "application/json",
     "Content-Type": "application/json",
   },
+  timeout: 30_000,
+});
+
+apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const token = authStorage.getAccessToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  const tenantId = authStorage.getTenantId();
+  if (tenantId) {
+    config.headers["X-Tenant-ID"] = tenantId;
+  }
+
+  return config;
 });
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    const message =
-      error.response?.data?.error?.message ??
-      error.response?.data?.detail ??
-      error.message ??
-      "Erro inesperado";
-    return Promise.reject(new Error(message));
+  async (error: AxiosError<ApiErrorBody>) => {
+    const originalRequest = error.config as RetryConfig | undefined;
+
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes("/auth/login") &&
+      !originalRequest.url?.includes("/auth/refresh")
+    ) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          refreshQueue.push((token: string | null) => {
+            if (!token) {
+              reject(error);
+              return;
+            }
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            resolve(apiClient(originalRequest));
+          });
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const newToken = await refreshAccessToken();
+      isRefreshing = false;
+
+      if (newToken) {
+        processQueue(newToken);
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return apiClient(originalRequest);
+      }
+
+      processQueue(null);
+      redirectToLogin();
+    }
+
+    return Promise.reject(normalizeApiError(error));
   },
 );

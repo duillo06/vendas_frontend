@@ -6,8 +6,8 @@ type AuthLayoutProps = {
 
 export function AuthLayout({ children }: AuthLayoutProps) {
   return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="w-full max-w-sm rounded-lg border border-[hsl(var(--border))] p-6 shadow-sm">
+    <div className="flex min-h-screen items-center justify-center bg-[hsl(var(--muted))]/30 p-4">
+      <div className="w-full max-w-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] p-6 shadow-sm">
         {children}
       </div>
     </div>

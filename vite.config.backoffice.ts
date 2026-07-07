@@ -5,6 +5,9 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  define: {
+    "import.meta.env.VITE_APP_TARGET": JSON.stringify("backoffice"),
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

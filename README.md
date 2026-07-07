@@ -69,14 +69,16 @@ src/
 
 ## Sprint atual
 
-**Sprint 0 — Fundação** (`docs/09-roadmap.md`)
+**Sprint 4 — Frontend base e design system** (`docs/09-roadmap.md`)
 
-- [x] Vite + React + TypeScript
-- [x] Tailwind + tokens Emerald
-- [x] Estrutura `apps/`, `shared/`, `features/` (placeholder)
-- [x] TanStack Query + React Router
-- [x] Dois entrypoints (storefront + backoffice)
-- [x] `api-client` base
-- [x] CI (typecheck + build)
+- [x] Componentes shadcn: Button, Input, Card, Badge, Dialog, Sheet, Skeleton (+ Toast via Sonner)
+- [x] Componentes custom: ProductCard, PriceDisplay, EmptyState, OrderStatusBadge
+- [x] `api-client` com interceptors (auth, tenant, refresh, 401)
+- [x] `AuthProvider` + `useAuth` + `usePermissions` + rotas protegidas
+- [x] Login backoffice conectado à API
+- [x] Layouts storefront e backoffice com navegação
+- [x] Páginas placeholder com rotas
 
-Próximo: **Sprint 1** (backend tenant) em paralelo com **Sprint 4** (design system completo).
+**Login dev (backoffice):** http://localhost:5175/login — `admin@demo.com` / `demo1234` (subdomínio `demo`)
+
+Próximo: **Sprint 5** — cardápio storefront com API pública.
