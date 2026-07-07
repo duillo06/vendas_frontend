@@ -16,6 +16,8 @@ O Food Service é um **projeto secundário** e roda em paralelo ao projeto princ
 |--------------|------------|----------------|
 | `8000` | Django `runserver` | Projeto principal |
 | `5173` | Vite (React) | Projeto principal |
+| `5432` | PostgreSQL | Projeto principal |
+| `6379` | Redis | Projeto principal |
 
 Este repositório usa **portas alternativas fixas** abaixo.
 
@@ -29,8 +31,8 @@ Este repositório usa **portas alternativas fixas** abaixo.
 | **Health check** | `vendas_backend` | **8001** | http://localhost:8001/api/v1/health/ |
 | **Storefront** | `vendas_frontend` | **5174** | http://localhost:5174 |
 | **Backoffice** | `vendas_frontend` | **5175** | http://localhost:5175 |
-| PostgreSQL (Docker) | `vendas_backend` | **5432** | `localhost:5432` |
-| Redis (Docker) | `vendas_backend` | **6379** | `localhost:6379` |
+| PostgreSQL (Docker) | `vendas_backend` | **5433** | `localhost:5433` |
+| Redis (Docker) | `vendas_backend` | **6380** | `localhost:6380` |
 
 ### Subdomínio em desenvolvimento (multi-tenant)
 
@@ -49,8 +51,8 @@ O backend resolve o tenant pelo header `Host` (middleware). Em dev, apontar o su
 ```bash
 DJANGO_ENV=development
 POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-REDIS_URL=redis://localhost:6379/0
+POSTGRES_PORT=5433
+REDIS_URL=redis://localhost:6380/0
 ```
 
 ### Frontend (`vendas_frontend/.env`)

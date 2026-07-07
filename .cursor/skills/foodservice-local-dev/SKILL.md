@@ -15,8 +15,10 @@ description: >-
 | API Django | **8001** | `python manage.py runserver 8001` |
 | Storefront | **5174** | `npm run dev` |
 | Backoffice | **5175** | `npm run dev:admin` |
+| PostgreSQL | **5433** | Docker (`docker-compose.dev.yml`) |
+| Redis | **6380** | Docker (`docker-compose.dev.yml`) |
 
-Reservadas para o **projeto principal**: Django `8000`, Vite `5173`.
+Reservadas para o **projeto principal**: Django `8000`, Vite `5173`, Postgres `5432`, Redis `6379`.
 
 Fonte de verdade: `docs/00-portas-locais.md`
 
@@ -74,4 +76,5 @@ Padrão: `{tenant}.localhost:5174` (ex: `pizzaria-joao.localhost:5174`)
 | Porta 8000 em uso | Usar **8001** — não matar o projeto principal |
 | Porta 5173 em uso | Storefront já está em **5174** via `vite.config.ts` |
 | CORS bloqueado | Conferir `config/settings/development.py` (5174, 5175) |
-| Postgres 5432 em uso | Parar container conflitante ou ajustar `POSTGRES_PORT` no `.env` |
+| Postgres 5432 em uso | Food Service usa **5433** — conferir `POSTGRES_PORT` no `.env` |
+| Redis 6379 em uso | Food Service usa **6380** — conferir `REDIS_URL` no `.env` |
