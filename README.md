@@ -69,16 +69,15 @@ src/
 
 ## Sprint atual
 
-**Sprint 4 — Frontend base e design system** (`docs/09-roadmap.md`)
+**Sprint 5 — Storefront: Cardápio** (`docs/09-roadmap.md`)
 
-- [x] Componentes shadcn: Button, Input, Card, Badge, Dialog, Sheet, Skeleton (+ Toast via Sonner)
-- [x] Componentes custom: ProductCard, PriceDisplay, EmptyState, OrderStatusBadge
-- [x] `api-client` com interceptors (auth, tenant, refresh, 401)
-- [x] `AuthProvider` + `useAuth` + `usePermissions` + rotas protegidas
-- [x] Login backoffice conectado à API
-- [x] Layouts storefront e backoffice com navegação
-- [x] Páginas placeholder com rotas
+- [x] `useCompanyPublic()`, `useCategories()`, `useProducts()`, `useProduct()`
+- [x] HomePage, MenuPage, CategoryPage, ProductPage
+- [x] `OptionGroupSelector` com preço em tempo real
+- [x] Navbar com logo, status aberto/fechado
+- [x] Skeleton loading states
+- [x] API tenant via subdomínio (`demo.localhost:8001` em dev)
 
-**Login dev (backoffice):** http://localhost:5175/login — `admin@demo.com` / `demo1234` (subdomínio `demo`)
+**Dev:** http://localhost:5174 ou http://demo.localhost:5174 — backend em `8001` com `seed_dev`
 
-Próximo: **Sprint 5** — cardápio storefront com API pública.
+Próximo: **Sprint 6** — carrinho (Zustand + persistência).

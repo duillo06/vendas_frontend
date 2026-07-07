@@ -1,50 +1,85 @@
-import { Link, NavLink, Outlet } from "react-router";
+import { Link, Outlet } from "react-router";
 import { ShoppingCart } from "lucide-react";
 
+import { useCompanyPublic } from "@/features/company";
 import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
 
-const navLinks: Array<{ to: string; label: string; end?: boolean }> = [
-  { to: "/", label: "Início", end: true },
+const navLinks: Array<{ to: string; label: string }> = [
+  { to: "/", label: "Início" },
   { to: "/cardapio", label: "Cardápio" },
-  { to: "/carrinho", label: "Carrinho" },
 ];
 
+function StoreStatusBadge({ isOpen }: { isOpen: boolean }) {
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        "gap-1.5",
+        isOpen
+          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+          : "border-amber-200 bg-amber-50 text-amber-700",
+      )}
+    >
+      <span
+        className={cn("h-2 w-2 rounded-full", isOpen ? "bg-emerald-500" : "bg-amber-500")}
+        aria-hidden
+      />
+      {isOpen ? "Aberto" : "Fechado"}
+    </Badge>
+  );
+}
+
 export function StorefrontLayout() {
+  const { data: company, isLoading: loadingCompany } = useCompanyPublic();
+
   return (
     <div className="min-h-screen bg-[hsl(var(--background))]">
       <header className="sticky top-0 z-40 border-b border-[hsl(var(--border))] bg-[hsl(var(--background))]/95 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4">
-          <Link to="/" className="text-lg font-semibold text-[hsl(var(--primary))]">
-            Food Service
+          <Link to="/" className="flex min-w-0 items-center gap-3">
+            {company?.logo_url ? (
+              <img src={company.logo_url} alt="" className="h-9 w-9 rounded-md object-cover" />
+            ) : (
+              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-[hsl(var(--primary))] text-sm font-bold text-white">
+                {company?.trade_name?.charAt(0) ?? "F"}
+              </span>
+            )}
+            <div className="min-w-0">
+              {loadingCompany ? (
+                <Skeleton className="h-5 w-32" />
+              ) : (
+                <span className="block truncate text-lg font-semibold">
+                  {company?.trade_name ?? "Food Service"}
+                </span>
+              )}
+            </div>
           </Link>
 
-          <nav className="hidden items-center gap-1 sm:flex">
-            {navLinks.map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                end={link.end}
-                className={({ isActive }) =>
-                  cn(
-                    "rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-[hsl(var(--muted))] text-[hsl(var(--foreground))]"
-                      : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]",
-                  )
-                }
-              >
-                {link.label}
-              </NavLink>
-            ))}
-          </nav>
+          <div className="flex items-center gap-3">
+            {!loadingCompany && company ? <StoreStatusBadge isOpen={company.is_open} /> : null}
 
-          <Link to="/carrinho">
-            <Button variant="outline" size="sm" className="gap-2">
-              <ShoppingCart className="h-4 w-4" />
-              <span className="hidden sm:inline">Carrinho</span>
-            </Button>
-          </Link>
+            <nav className="hidden items-center gap-1 sm:flex">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="rounded-md px-3 py-2 text-sm font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+
+            <Link to="/carrinho">
+              <Button variant="outline" size="sm" className="gap-2">
+                <ShoppingCart className="h-4 w-4" />
+                <span className="hidden sm:inline">Carrinho</span>
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
