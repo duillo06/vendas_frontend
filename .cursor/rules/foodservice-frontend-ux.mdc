@@ -1,0 +1,39 @@
+---
+description: Padrões React/UX Food Service — UI moderna e guiada
+globs: vendas_frontend/src/**/*.{tsx,ts}
+alwaysApply: false
+---
+
+# Frontend — UX e Código Legível
+
+## UX obrigatória
+
+- Usuário sempre sabe **onde está** (título, breadcrumb ou stepper) e **o que fazer** (CTA primário visível)
+- Estados: loading (Skeleton), vazio (EmptyState + ação), erro (mensagem + como corrigir)
+- Storefront: mobile first, toques grandes, carrinho acessível em 1 toque
+- Backoffice: ações frequentes em 1 clique; filtros em listas com volume
+
+## Componentes
+
+- shadcn/ui + tokens em `src/styles/globals.css` (`docs/04-design-system.md`)
+- `cn()` para classes; variantes com CVA quando repetir estilos
+
+Comentário curto, tom seu — informal, direto:
+
+```tsx
+// manda pro backend e zera o carrinho se der certo
+export function useCreateOrder() {
+  return useMutation({
+    mutationFn: checkoutApi.create,
+    onSuccess: () => cartStore.getState().clear(),
+  });
+}
+```
+
+Evitar: `// Este hook...`, `// Responsável por...`, explicações longas ou numeradas.
+
+## Não fazer
+
+- Telas sem feedback durante submit
+- Jargão técnico em mensagens ao usuário final
+- Importar feature de outra feature (usar `shared/`)

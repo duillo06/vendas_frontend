@@ -1324,7 +1324,7 @@ graph LR
 
 | Ambiente | Propósito | URL |
 |----------|-----------|-----|
-| **development** | Local (Docker Compose dev) | `localhost:5173` / `localhost:8000` |
+| **development** | Local (Docker Compose dev) | `localhost:5174` / `localhost:5175` / `localhost:8001` |
 | **staging** | Testes integrados | `staging.foodservice.app` |
 | **production** | Clientes reais | `*.foodservice.app` |
 

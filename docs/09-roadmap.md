@@ -218,8 +218,9 @@ gantt
 
 ```bash
 docker compose up -d          # DB + Redis
-python manage.py runserver    # GET /api/v1/health/ → 200
-npm run dev                   # Frontend abre em localhost:5173
+python manage.py runserver 8001    # GET /api/v1/health/ → 200
+npm run dev                   # Storefront em localhost:5174
+npm run dev:admin             # Backoffice em localhost:5175
 ```
 
 ---
@@ -345,7 +346,7 @@ npm run dev                   # Frontend abre em localhost:5173
 - [ ] Responsivo mobile first
 
 **Resultado esperado:**
-- `pizzaria-joao.localhost:5173` exibe cardápio completo
+- `pizzaria-joao.localhost:5174` exibe cardápio completo
 - Personalização de produto funciona na UI (preço atualiza)
 
 ---
@@ -813,6 +814,7 @@ Recalibrar roadmap a cada 3 sprints.
 
 | # | Documento | Relação |
 |---|-----------|---------|
+| 00 | `00-portas-locais.md` | Portas locais (dev) |
 | 10 | `10-padroes-de-codigo.md` | Como codificar cada sprint |
 | 11 | `11-guia-ui-ux.md` | Fluxos de UX por sprint |
 | 12 | `12-checklist-mvp.md` | Escopo fechado do MVP |

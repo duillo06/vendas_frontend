@@ -1,0 +1,35 @@
+---
+description: Filosofia do Food Service — código legível e UX guiada (sempre ativo)
+alwaysApply: true
+---
+
+# Food Service — Princípios do Projeto
+
+SaaS multi-tenant genérico (não pizza-specific). Fonte de verdade: `docs/` e skills em `.cursor/skills/`.
+
+## Código (manutenção pelo dono do projeto)
+
+- **Limpo e legível** antes de “esperto”: nomes explícitos, funções pequenas, fluxo fácil de seguir
+- **Comentários como nota sua**: curtos (1 linha), português informal do dia a dia — como se você tivesse deixado um lembrete no código
+- Pode comentar o óbvio para se guiar; em regra de negócio, uma linha direta (sem tom de tutorial)
+- **Não** soar como IA: sem “Este método…”, listas numeradas, tom de documentação ou frases perfeitas demais
+- **Otimizado com critério**: só o necessário; sem abstração prematura (ver `docs/10-padroes-de-codigo.md`)
+- **Diff mínimo**: reutilize padrões existentes; não refatore fora do escopo
+- Backend: regras críticas nos **services**; frontend: Zod para UX, servidor é fonte da verdade
+
+## UI/UX (sempre)
+
+- Layout **moderno, bonito e interativo** — Design System Emerald + `docs/11-guia-ui-ux.md`
+- **Guiar o usuário**: títulos claros, progresso no checkout, estados vazios/erro com próximo passo
+- **Mobile first** no storefront; eficiência no backoffice (ações em 1 clique quando possível)
+- Feedback imediato: skeleton, toast, loading em submits, mensagens de erro recuperáveis
+
+## Dev local
+
+Portas alternativas (projeto secundário): API **8001**, storefront **5174**, backoffice **5175** — `docs/00-portas-locais.md`
+
+## Ao implementar
+
+1. Conferir checklist da sprint (`12-checklist-mvp.md` etc.)
+2. Seguir `foodservice-implement-sprint` skill
+3. Explicar fluxos novos em comentários breves + README se setup não for óbvio

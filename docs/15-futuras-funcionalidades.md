@@ -596,6 +596,7 @@ Com a aprovação deste documento, a **série de 15 documentos** do Food Service
 
 | # | Documento | Tipo |
 |---|-----------|------|
+| 00 | `00-portas-locais.md` | Referência dev local |
 | 01 | `01-visao-do-produto.md` | Visão |
 | 02 | `02-arquitetura.md` | Arquitetura |
 | 03 | `03-modelagem-do-banco.md` | Dados |

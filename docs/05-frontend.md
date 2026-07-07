@@ -1732,7 +1732,7 @@ features/catalog/
 
 ```bash
 # .env.example
-VITE_API_URL=http://localhost:8000/api/v1
+VITE_API_BASE_URL=http://localhost:8001/api/v1
 VITE_APP_NAME=Food Service
 VITE_APP_ENV=development
 ```
@@ -1800,7 +1800,7 @@ location / {
 }
 
 location /api/ {
-    proxy_pass http://backend:8000;
+    proxy_pass http://backend:8000;  # porta interna do container em produção
 }
 ```
 

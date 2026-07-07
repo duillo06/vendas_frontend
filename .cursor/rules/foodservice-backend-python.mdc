@@ -1,0 +1,44 @@
+---
+description: Padrões Python/Django Food Service — código legível e comentado
+globs: vendas_backend/**/*.py
+alwaysApply: false
+---
+
+# Backend — Qualidade e Comentários
+
+## Estrutura
+
+- Views finas → **services** com a lógica (`docs/06-backend.md`)
+- Uma responsabilidade por service; métodos nomeados como verbos de negócio (`create_from_checkout`)
+
+## Comentários (tom humano, nota sua)
+
+Curtos, português natural — lembrete que **você** deixaria no código, não texto de manual.
+
+```python
+# pega o tenant pelo subdomínio
+tenant = self._resolve_from_host(request)
+
+# loja fechada = não deixa finalizar
+if not StoreHoursService.is_store_open(tenant):
+    raise BusinessError("STORE_CLOSED", ...)
+```
+
+**Evitar (cara de IA):**
+- `# Este método busca o tenant a partir do header Host`
+- `# Regra E-15: loja fechada bloqueia checkout`
+- `# 1) valida 2) calcula 3) salva`
+
+**Ok:** `# salva`, `# valida telefone`, `# só do tenant atual`
+
+## Qualidade
+
+- Type hints em services e funções públicas
+- `transaction.atomic()` em pedidos e mutações críticas
+- Testes pytest nos services que mexem em dinheiro, tenant ou status
+
+## Não fazer
+
+- Regra de negócio só no serializer ou na view
+- Query sem tenant em dados de negócio
+- Comentários desatualizados — prefira código claro + comentário só no “por quê”

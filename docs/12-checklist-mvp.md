@@ -175,8 +175,8 @@ Itens **explicitamente excluídos**. Implementar qualquer um deles **invalida** 
 
 - [ ] **P0** Docker Compose: PostgreSQL 16+
 - [ ] **P0** Docker Compose: Redis
-- [ ] **P0** Backend sobe com `docker compose up` + `runserver`
-- [ ] **P0** Frontend sobe com `npm run dev` (localhost:5173)
+- [ ] **P0** Backend sobe com `docker compose up` + `runserver 8001`
+- [ ] **P0** Frontend sobe com `npm run dev` (localhost:5174)
 - [ ] **P1** Celery worker local (para e-mail assíncrono)
 
 ### 5.3 CI/CD
@@ -497,7 +497,7 @@ Itens **explicitamente excluídos**. Implementar qualquer um deles **invalida** 
 ### 9.11 Roteamento Multi-Tenant
 
 - [ ] **P0** Storefront resolve tenant por subdomínio
-- [ ] **P0** Dev local: `{subdomain}.localhost:5173`
+- [ ] **P0** Dev local: `{subdomain}.localhost:5174`
 - [ ] **P0** Backoffice em domínio central (`admin.foodservice.app` ou path dedicado)
 - [ ] **P0** API pública usa header `Host` com subdomínio
 

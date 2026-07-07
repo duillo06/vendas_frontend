@@ -775,6 +775,7 @@ Este documento estabelece a **visão e o porquê** da plataforma. Os próximos d
 
 | # | Documento | Conteúdo |
 |---|-----------|----------|
+| 00 | `00-portas-locais.md` | Portas de dev local (projeto secundário) |
 | 02 | `02-arquitetura.md` | Arquitetura técnica, multi-tenant, pastas, módulos |
 | 03 | `03-modelagem-do-banco.md` | Entidades, relacionamentos, diagramas ER |
 | 04 | `04-design-system.md` | Tokens, componentes, padrões visuais |

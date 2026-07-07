@@ -1096,7 +1096,7 @@ REDIS_URL=redis://...
 
 ```bash
 # .env.example
-VITE_API_URL=http://localhost:8000/api/v1
+VITE_API_BASE_URL=http://localhost:8001/api/v1
 VITE_APP_NAME=Food Service
 ```
 

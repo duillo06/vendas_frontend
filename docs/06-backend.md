@@ -159,7 +159,7 @@ sentry-sdk>=2.13,<3.0
 django-admin startproject config .
 python manage.py migrate
 python manage.py createsuperuser  # apenas dev/suporte
-python manage.py runserver
+python manage.py runserver 8001
 ```
 
 ---
@@ -461,7 +461,7 @@ CELERY_RESULT_BACKEND=redis://localhost:6379/2
 JWT_ACCESS_LIFETIME_MINUTES=15
 JWT_REFRESH_LIFETIME_DAYS=7
 
-CORS_ALLOWED_ORIGINS=http://localhost:5173,https://*.foodservice.app
+CORS_ALLOWED_ORIGINS=http://localhost:5174,http://localhost:5175,https://*.foodservice.app
 
 EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
 DEFAULT_FROM_EMAIL=noreply@foodservice.app
@@ -1920,11 +1920,11 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.dev
-    command: python manage.py runserver 0.0.0.0:8000
+    command: python manage.py runserver 0.0.0.0:8001
     volumes:
       - .:/app
     ports:
-      - "8000:8000"
+      - "8001:8001"
     env_file: .env
     depends_on:
       - db
@@ -1962,7 +1962,7 @@ python manage.py migrate
 python scripts/seed_dev.py
 
 # 5. Rodar
-python manage.py runserver
+python manage.py runserver 8001
 # Em outro terminal:
 celery -A config worker -l info
 ```

@@ -6,7 +6,7 @@
 > **Status:** Aprovado  
 > **Última atualização:** Julho/2026  
 > **Depende de:** `03-modelagem-do-banco.md`, `05-frontend.md`, `06-backend.md` (aprovados)  
-> **Base URL:** `https://api.foodservice.app/api/v1` *(produção)* | `http://localhost:8000/api/v1` *(dev)*
+> **Base URL:** `https://api.foodservice.app/api/v1` *(produção)* | `http://localhost:8001/api/v1` *(dev — ver `00-portas-locais.md`)*
 
 ---
 
