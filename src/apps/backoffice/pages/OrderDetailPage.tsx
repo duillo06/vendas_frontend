@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ArrowRight, Banknote } from "lucide-react";
 import { Link, useParams } from "react-router";
 
 import type { OrderStatus } from "@/features/checkout/types/checkout.types";
@@ -11,10 +12,12 @@ import {
 } from "@/features/orders/types/order-admin.types";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { OrderStatusBadge } from "@/shared/components/OrderStatusBadge";
+import { UiHint } from "@/shared/components/UiHint";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { adminCopy } from "@/shared/copy/admin";
 
 const ACTION_LABELS: Partial<Record<OrderStatus, string>> = {
   confirmed: "Confirmar",
@@ -37,9 +40,19 @@ function OrderActions({ order }: { order: OrderAdminDetail }) {
   const [cancelNotes, setCancelNotes] = useState("");
 
   const nextStatuses = ORDER_NEXT_STATUS[order.status] ?? [];
+  const statusHint = adminCopy.orders.detail.statusHints[order.status];
 
   return (
     <div className="space-y-4">
+      {statusHint ? (
+        <UiHint
+          icon={ArrowRight}
+          tone={order.status === "completed" ? "success" : order.status === "cancelled" ? "neutral" : "warm"}
+        >
+          {statusHint}
+        </UiHint>
+      ) : null}
+
       <div className="flex flex-wrap gap-2">
         {nextStatuses.map((status) => (
           <Button
@@ -64,17 +77,29 @@ function OrderActions({ order }: { order: OrderAdminDetail }) {
       </div>
 
       {nextStatuses.includes("cancelled") ? (
-        <Input
-          placeholder="Motivo do cancelamento (obrigatório)"
-          value={cancelNotes}
-          onChange={(event) => setCancelNotes(event.target.value)}
-        />
+        <div className="space-y-2">
+          <Input
+            placeholder="Motivo do cancelamento (obrigatório)"
+            value={cancelNotes}
+            onChange={(event) => setCancelNotes(event.target.value)}
+          />
+          <p className="text-xs text-[hsl(var(--muted-foreground))]">
+            {adminCopy.orders.detail.cancelHint}
+          </p>
+        </div>
       ) : null}
 
       {order.payment?.status === "pending" ? (
-        <Button type="button" variant="outline" disabled={paying} onClick={() => updatePayment()}>
-          Registrar pagamento recebido
-        </Button>
+        <div className="space-y-2">
+          <UiHint icon={Banknote} tone="neutral">
+            {adminCopy.orders.detail.paymentPending}
+          </UiHint>
+          <Button type="button" variant="outline" disabled={paying} onClick={() => updatePayment()}>
+            Registrar pagamento recebido
+          </Button>
+        </div>
+      ) : order.payment?.status === "paid" ? (
+        <UiHint tone="success">{adminCopy.orders.detail.paymentPaid}</UiHint>
       ) : null}
     </div>
   );
@@ -101,14 +126,16 @@ export function OrderDetailPage() {
             ← Voltar aos pedidos
           </Link>
           <h1 className="text-2xl font-bold">{order.order_number}</h1>
-          <p className="text-[hsl(var(--muted-foreground))]">{order.customer.name}</p>
+          <p className="text-[hsl(var(--muted-foreground))]">
+            {order.customer.name} · {order.delivery_type === "delivery" ? "Entrega" : "Retirada"}
+          </p>
         </div>
         <OrderStatusBadge status={order.status} />
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Ações</CardTitle>
+          <CardTitle className="text-base">{adminCopy.orders.detail.actionsTitle}</CardTitle>
         </CardHeader>
         <CardContent>
           <OrderActions order={order} />

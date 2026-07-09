@@ -9,10 +9,12 @@ import {
 } from "@/features/catalog/api/catalogAdminApi";
 import { catalogAdminKeys } from "@/features/catalog/constants/catalog-admin-keys";
 import { CurrencyInput } from "@/shared/components/CurrencyInput";
+import { UiHint } from "@/shared/components/UiHint";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useConfirm } from "@/shared/hooks/useConfirm";
+import { adminCopy } from "@/shared/copy/admin";
 import { formatCurrency } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 
@@ -134,7 +136,7 @@ export function OptionGroupEditor({ group, defaultExpanded = false }: OptionGrou
       };
       setSnapshot(saved);
       setDraft(saved);
-      toast.success("Alterações salvas");
+      toast.success(adminCopy.optionGroups.editor.saved);
       invalidate();
     },
     onError: (error: Error) => {
@@ -161,7 +163,7 @@ export function OptionGroupEditor({ group, defaultExpanded = false }: OptionGrou
         sort_order: group.options.length,
       }),
     onSuccess: () => {
-      toast.success("Opção adicionada");
+      toast.success(adminCopy.optionGroups.editor.optionAdded);
       setNewOptionName("");
       setNewOptionPrice(0);
       invalidate();
@@ -255,6 +257,10 @@ export function OptionGroupEditor({ group, defaultExpanded = false }: OptionGrou
 
       {expanded ? (
         <div className="space-y-5 border-t border-[hsl(var(--border))] px-4 py-5 sm:px-5">
+          {dirty ? (
+            <UiHint tone="warm">{adminCopy.optionGroups.editor.saveReminder}</UiHint>
+          ) : null}
+
           <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
             <div className="space-y-2">
               <Label htmlFor={`group-name-${group.id}`}>Nome do grupo</Label>
@@ -272,7 +278,7 @@ export function OptionGroupEditor({ group, defaultExpanded = false }: OptionGrou
               <div>
                 <p className="text-sm font-medium">Seleção obrigatória</p>
                 <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                  Cliente precisa escolher
+                  {draft.is_required ? "Cliente precisa escolher" : "Cliente pode pular"}
                 </p>
               </div>
               <input
@@ -286,12 +292,16 @@ export function OptionGroupEditor({ group, defaultExpanded = false }: OptionGrou
             </label>
           </div>
 
+          <UiHint tone="neutral" className="text-xs">
+            {adminCopy.optionGroups.editor.requiredHelp}
+          </UiHint>
+
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-2">
               <div>
                 <p className="text-sm font-medium">Opções do grupo</p>
                 <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                  Valor em branco ou R$ 0,00 = sem acréscimo no produto
+                  {adminCopy.optionGroups.editor.priceHelp}
                 </p>
               </div>
             </div>
@@ -299,10 +309,7 @@ export function OptionGroupEditor({ group, defaultExpanded = false }: OptionGrou
             {draft.options.length === 0 ? (
               <div className="rounded-lg border border-dashed border-[hsl(var(--border))] px-4 py-8 text-center">
                 <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                  Nenhuma opção cadastrada ainda.
-                </p>
-                <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">
-                  Adicione opções como Pequena, Média, Grande...
+                  {adminCopy.optionGroups.editor.optionsEmpty}
                 </p>
               </div>
             ) : (

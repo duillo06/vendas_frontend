@@ -6,11 +6,13 @@ import type { ZodIssue } from "zod";
 import { useCart } from "@/features/cart";
 import { useCompanyPublic } from "@/features/company";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
+import { UiHint } from "@/shared/components/UiHint";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { cn } from "@/shared/lib/utils";
+import { storefrontCopy } from "@/shared/copy/storefront";
 
 import { CHECKOUT_STEPS, CheckoutStepper } from "./CheckoutStepper";
 import { useCreateOrder } from "../hooks/useCreateOrder";
@@ -148,6 +150,8 @@ export function CheckoutForm() {
       className="space-y-6"
     >
       <CheckoutStepper currentStep={step} />
+
+      <UiHint tone="warm">{storefrontCopy.checkout.steps[step as 1 | 2 | 3 | 4]}</UiHint>
 
       {step === 1 ? (
         <Card>

@@ -3,6 +3,7 @@ import { toast } from "sonner";
 
 import { ordersAdminApi } from "../api/ordersAdminApi";
 import { orderAdminKeys } from "../constants/order-admin-keys";
+import { adminCopy } from "@/shared/copy/admin";
 import type { OrderAdminDetail } from "../types/order-admin.types";
 
 export function useUpdateOrderStatus(orderId: string) {
@@ -22,14 +23,14 @@ export function useUpdateOrderStatus(orderId: string) {
       }
       return { previous };
     },
-    onError: (_error, _variables, context) => {
+    onError: (error, _variables, context) => {
       if (context?.previous) {
         queryClient.setQueryData(orderAdminKeys.detail(orderId), context.previous);
       }
-      toast.error("Não foi possível atualizar o status");
+      toast.error(error.message || "Não foi possível atualizar o status");
     },
     onSuccess: () => {
-      toast.success("Status atualizado");
+      toast.success(adminCopy.orders.toasts.statusUpdated);
       void queryClient.invalidateQueries({ queryKey: orderAdminKeys.all });
     },
   });

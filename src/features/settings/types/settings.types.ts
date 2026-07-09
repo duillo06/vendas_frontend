@@ -1,6 +1,8 @@
 export interface TenantTheme {
   primary?: string;
   primary_foreground?: string;
+  accent?: string;
+  accent_foreground?: string;
   radius?: string;
 }
 

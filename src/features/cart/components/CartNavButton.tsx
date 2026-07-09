@@ -9,6 +9,7 @@ import { useMediaQuery } from "@/shared/hooks/useMediaQuery";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Sheet, SheetContent } from "@/shared/components/ui/sheet";
+import { cn } from "@/shared/lib/utils";
 
 export function CartNavButton() {
   const { totalItems } = useCart();
@@ -49,9 +50,16 @@ export function CartNavButton() {
 
   return (
     <Link to="/carrinho" className="relative inline-flex">
-      <Button variant="outline" size="sm" className="gap-2">
+      <Button
+        variant={totalItems > 0 ? "default" : "outline"}
+        size="sm"
+        className={cn(
+          "gap-2 transition-transform active:scale-95",
+          totalItems > 0 && "bg-brand shadow-md shadow-[hsl(var(--primary)/0.35)] hover:brightness-95",
+        )}
+      >
         <ShoppingCart className="h-4 w-4" />
-        Carrinho
+        <span className="hidden sm:inline">Carrinho</span>
       </Button>
       {badge}
     </Link>

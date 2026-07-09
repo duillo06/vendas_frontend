@@ -1,16 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Layers, Plus } from "lucide-react";
+import { Layers, Lightbulb, Link2, ListTree, Plus, Sparkles } from "lucide-react";
+import { Link } from "react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { OptionGroupEditor } from "@/features/catalog/components/OptionGroupEditor";
 import { catalogAdminApi } from "@/features/catalog/api/catalogAdminApi";
 import { catalogAdminKeys } from "@/features/catalog/constants/catalog-admin-keys";
+import { UiHint } from "@/shared/components/UiHint";
+import { PageHeader } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { adminCopy } from "@/shared/copy/admin";
 
 export function OptionGroupsPage() {
   const queryClient = useQueryClient();
@@ -33,7 +37,7 @@ export function OptionGroupsPage() {
         sort_order: data?.length ?? 0,
       }),
     onSuccess: () => {
-      toast.success("Grupo criado");
+      toast.success(adminCopy.optionGroups.editor.created);
       setGroupName("");
       void queryClient.invalidateQueries({ queryKey: catalogAdminKeys.optionGroups() });
     },
@@ -42,28 +46,50 @@ export function OptionGroupsPage() {
 
   const groups = data ?? [];
 
+  const applyExample = (example: string) => {
+    setGroupName(example);
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Grupos de opções</h1>
-        <p className="text-[hsl(var(--muted-foreground))]">
-          Tamanhos, bordas, adicionais e outras variações do cardápio
-        </p>
-      </div>
+      <PageHeader
+        title="Grupos de opções"
+        subtitle={adminCopy.optionGroups.subtitle}
+        icon={ListTree}
+        accent="chart-4"
+      />
 
-      <Card className="border-[hsl(var(--primary))]/20 bg-[hsl(var(--primary))]/5">
+      <UiHint icon={Sparkles} tone="warm">
+        {adminCopy.optionGroups.guidance}
+      </UiHint>
+
+      <Card className="border-brand-soft bg-brand-soft/40">
         <CardContent className="space-y-4 pt-6">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]">
+            <div className="tile-brand flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
               <Plus className="h-5 w-5" />
             </div>
             <div className="space-y-1">
-              <p className="font-medium">Criar novo grupo</p>
+              <p className="font-medium">{adminCopy.optionGroups.createTitle}</p>
               <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                Depois de criar, expanda o grupo para cadastrar as opções
+                {adminCopy.optionGroups.createHint}
               </p>
             </div>
           </div>
+
+          <div className="flex flex-wrap gap-2">
+            {adminCopy.optionGroups.examples.map((example) => (
+              <button
+                key={example}
+                type="button"
+                className="rounded-full border border-[hsl(var(--border))] bg-white px-3 py-1 text-xs font-medium text-[hsl(var(--foreground))] transition hover:border-[hsl(var(--primary)/0.35)] hover:bg-brand-soft"
+                onClick={() => applyExample(example)}
+              >
+                {example}
+              </button>
+            ))}
+          </div>
+
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="flex-1 space-y-2">
               <Label htmlFor="new-group-name">Nome do grupo</Label>
@@ -103,18 +129,27 @@ export function OptionGroupsPage() {
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[hsl(var(--muted))]">
             <Layers className="h-6 w-6 text-[hsl(var(--muted-foreground))]" />
           </div>
-          <p className="font-medium">Nenhum grupo cadastrado</p>
+          <p className="font-medium">{adminCopy.optionGroups.empty.title}</p>
           <p className="mt-1 max-w-sm text-sm text-[hsl(var(--muted-foreground))]">
-            Crie grupos como Tamanho, Borda ou Adicionais e vincule aos produtos no cadastro de
-            produtos.
+            {adminCopy.optionGroups.empty.description}
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {groups.map((group, index) => (
-            <OptionGroupEditor key={group.id} group={group} defaultExpanded={index === 0} />
-          ))}
-        </div>
+        <>
+          <UiHint icon={Lightbulb} tone="neutral">
+            {adminCopy.optionGroups.linkProducts}
+            <Link to="/produtos" className="ml-1 inline-flex items-center gap-1 font-medium text-brand underline">
+              <Link2 className="h-3.5 w-3.5" />
+              Ir para produtos
+            </Link>
+          </UiHint>
+
+          <div className="space-y-3">
+            {groups.map((group, index) => (
+              <OptionGroupEditor key={group.id} group={group} defaultExpanded={index === 0} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

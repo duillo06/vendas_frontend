@@ -7,16 +7,19 @@ import {
   hexToHslComponents,
   hslComponentsToHex,
   useSettings,
+  useTenantTheme,
   useUpdateSettings,
   useUploadLogo,
   type SettingsData,
 } from "@/features/settings";
 import type { BusinessHoursAdmin } from "@/features/settings/types/settings.types";
+import { UiHint } from "@/shared/components/UiHint";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { adminCopy } from "@/shared/copy/admin";
 import { cn } from "@/shared/lib/utils";
 
 function ToggleRow({
@@ -82,6 +85,8 @@ export function SettingsForm() {
     setContrastWarning(hasLowContrast(theme.primary, theme.primary_foreground));
   }, [form?.settings.theme]);
 
+  useTenantTheme(form?.settings.theme);
+
   if (isLoading || !form) {
     return (
       <div className="space-y-4">
@@ -130,6 +135,31 @@ export function SettingsForm() {
 
   const primaryHex =
     hslComponentsToHex(form.settings.theme?.primary ?? DEFAULT_THEME.primary) ?? "#10b981";
+  const accentHex =
+    hslComponentsToHex(form.settings.theme?.accent ?? DEFAULT_THEME.accent) ?? "#eab308";
+
+  const patchTheme = (patch: Partial<NonNullable<SettingsData["settings"]["theme"]>>) => {
+    setForm((current) =>
+      current
+        ? {
+            ...current,
+            settings: {
+              ...current.settings,
+              theme: {
+                primary: current.settings.theme?.primary ?? DEFAULT_THEME.primary,
+                primary_foreground:
+                  current.settings.theme?.primary_foreground ?? DEFAULT_THEME.primary_foreground,
+                accent: current.settings.theme?.accent ?? DEFAULT_THEME.accent,
+                accent_foreground:
+                  current.settings.theme?.accent_foreground ?? DEFAULT_THEME.accent_foreground,
+                radius: current.settings.theme?.radius ?? DEFAULT_THEME.radius,
+                ...patch,
+              },
+            },
+          }
+        : current,
+    );
+  };
 
   const handleSave = () => {
     saveSettings({
@@ -164,6 +194,9 @@ export function SettingsForm() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Empresa</CardTitle>
+          <p className="text-sm text-[hsl(var(--muted-foreground))]">
+            {adminCopy.settings.sections.company}
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -249,6 +282,9 @@ export function SettingsForm() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Operação</CardTitle>
+          <p className="text-sm text-[hsl(var(--muted-foreground))]">
+            {adminCopy.settings.sections.operation}
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <ToggleRow
@@ -310,6 +346,9 @@ export function SettingsForm() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Horários</CardTitle>
+          <p className="text-sm text-[hsl(var(--muted-foreground))]">
+            {adminCopy.settings.sections.hours}
+          </p>
         </CardHeader>
         <CardContent className="space-y-3">
           {form.business_hours.map((row) => (
@@ -348,9 +387,12 @@ export function SettingsForm() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Aparência</CardTitle>
+          <p className="text-sm text-[hsl(var(--muted-foreground))]">
+            {adminCopy.settings.sections.appearance}
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+          <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
             <div className="space-y-2">
               <Label htmlFor="primary_color">Cor principal</Label>
               <Input
@@ -361,23 +403,21 @@ export function SettingsForm() {
                 onChange={(event) => {
                   const hsl = hexToHslComponents(event.target.value);
                   if (!hsl) return;
-                  setForm((current) =>
-                    current
-                      ? {
-                          ...current,
-                          settings: {
-                            ...current.settings,
-                            theme: {
-                              primary: hsl,
-                              primary_foreground:
-                                current.settings.theme?.primary_foreground ??
-                                DEFAULT_THEME.primary_foreground,
-                              radius: current.settings.theme?.radius ?? DEFAULT_THEME.radius,
-                            },
-                          },
-                        }
-                      : current,
-                  );
+                  patchTheme({ primary: hsl });
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="accent_color">Cor de destaque</Label>
+              <Input
+                id="accent_color"
+                type="color"
+                value={accentHex}
+                className="h-11 w-full max-w-[8rem] cursor-pointer p-1"
+                onChange={(event) => {
+                  const hsl = hexToHslComponents(event.target.value);
+                  if (!hsl) return;
+                  patchTheme({ accent: hsl });
                 }}
               />
             </div>
@@ -402,20 +442,28 @@ export function SettingsForm() {
             </Button>
           </div>
 
-          <div
-            className="rounded-lg p-4 text-sm"
-            style={{
-              background: `hsl(${form.settings.theme?.primary ?? DEFAULT_THEME.primary})`,
-              color: `hsl(${form.settings.theme?.primary_foreground ?? DEFAULT_THEME.primary_foreground})`,
-            }}
-          >
-            Preview da cor no cardápio
+          <div className="overflow-hidden rounded-xl border border-brand-soft shadow-sm">
+            <div className="gradient-hero px-4 py-5 text-[hsl(var(--primary-foreground))]">
+              <p className="text-sm font-medium opacity-90">Preview do cardápio</p>
+              <p className="mt-1 text-lg font-bold">{form.company.trade_name || "Sua loja"}</p>
+            </div>
+            <div className="grid gap-3 bg-white p-4 sm:grid-cols-3">
+              <div className="tile-brand flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium">
+                <span className="h-2 w-2 rounded-full bg-brand" />
+                Botão principal
+              </div>
+              <div className="tile-chart-2 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium">
+                <span className="h-2 w-2 rounded-full bg-[hsl(var(--accent))]" />
+                Destaque
+              </div>
+              <div className="tile-chart-3 rounded-lg px-3 py-2 text-sm font-medium">Ícones e cards</div>
+            </div>
           </div>
 
           {contrastWarning ? (
-            <p className="text-xs text-amber-700">
-              Contraste baixo entre cor principal e texto — pode prejudicar a leitura.
-            </p>
+            <UiHint tone="warm" className="text-xs">
+              {adminCopy.settings.contrastWarning}
+            </UiHint>
           ) : null}
         </CardContent>
       </Card>

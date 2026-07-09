@@ -2,6 +2,46 @@
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --animate-success-pop: success-pop 0.55s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  --animate-fade-up: fade-up 0.45s ease-out both;
+  --animate-cart-bump: cart-bump 0.42s ease-out;
+}
+
+@keyframes success-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  70% {
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cart-bump {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 :root {
@@ -9,10 +49,25 @@
   --foreground: 220 25% 10%;
   --primary: 160 84% 39%;
   --primary-foreground: 0 0% 100%;
+  --accent: 45 93% 47%;
+  --accent-foreground: 0 0% 100%;
+  --primary-soft: 160 40% 96%;
+  --primary-muted: 160 45% 92%;
+  --accent-soft: 45 55% 96%;
+  --hero-from: 160 84% 34%;
+  --hero-to: 176 82% 41%;
+  --sidebar-from: 160 45% 17%;
+  --sidebar-to: 220 25% 11%;
   --muted: 220 14% 96%;
   --muted-foreground: 220 10% 40%;
   --border: 220 13% 91%;
   --radius: 0.5rem;
+  --surface: 160 40% 97%;
+  --surface-accent: 45 70% 97%;
+  --chart-1: 160 84% 39%;
+  --chart-2: 45 93% 47%;
+  --chart-3: 212 80% 42%;
+  --chart-4: 288 65% 48%;
 }
 
 * {
@@ -26,4 +81,164 @@ body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   -webkit-font-smoothing: antialiased;
+}
+
+/* Tailwind v4 não põe pointer em botão — restaura o esperado em clicáveis */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href],
+label[for],
+select:not(:disabled),
+summary {
+  cursor: pointer;
+}
+
+button:disabled,
+select:disabled {
+  cursor: not-allowed;
+}
+
+/* utilitários de marca — leem as vars injetadas pelo tema da loja */
+.text-brand {
+  color: hsl(var(--primary));
+}
+
+.text-brand-accent {
+  color: hsl(var(--accent));
+}
+
+.bg-brand {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.bg-brand-soft {
+  background-color: hsl(var(--primary-soft));
+}
+
+.bg-accent-soft {
+  background-color: hsl(var(--accent-soft));
+}
+
+.border-brand {
+  border-color: hsl(var(--primary) / 0.28);
+}
+
+.border-brand-soft {
+  border-color: hsl(var(--primary) / 0.15);
+}
+
+.ring-brand {
+  --tw-ring-color: hsl(var(--primary) / 0.35);
+}
+
+.gradient-hero {
+  background-image: linear-gradient(
+    to bottom right,
+    hsl(var(--hero-from)),
+    hsl(var(--hero-to))
+  );
+}
+
+.gradient-sidebar {
+  background-image: linear-gradient(
+    to bottom,
+    hsl(var(--sidebar-from)),
+    hsl(var(--sidebar-to))
+  );
+}
+
+.tile-brand {
+  background-color: hsl(var(--primary-soft));
+  color: hsl(var(--primary));
+  --tw-ring-color: hsl(var(--primary) / 0.2);
+}
+
+.tile-chart-1 {
+  background-color: hsl(var(--chart-1) / 0.14);
+  color: hsl(var(--chart-1));
+}
+
+.tile-chart-2 {
+  background-color: hsl(var(--chart-2) / 0.14);
+  color: hsl(var(--chart-2));
+}
+
+.tile-chart-3 {
+  background-color: hsl(var(--chart-3) / 0.14);
+  color: hsl(var(--chart-3));
+}
+
+.tile-chart-4 {
+  background-color: hsl(var(--chart-4) / 0.14);
+  color: hsl(var(--chart-4));
+}
+
+.hint-brand {
+  border-color: hsl(var(--primary) / 0.22);
+  background-image: linear-gradient(
+    to right,
+    hsl(var(--primary-soft)),
+    hsl(var(--accent-soft))
+  );
+}
+
+.hint-accent {
+  border-color: hsl(var(--accent) / 0.25);
+  background-color: hsl(var(--accent-soft));
+}
+
+.app-shell-storefront {
+  background-color: hsl(var(--background));
+  background-image:
+    radial-gradient(ellipse 90% 60% at 50% -30%, hsl(var(--primary) / 0.14), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 100% 0%, hsl(var(--accent) / 0.12), transparent 50%),
+    radial-gradient(ellipse 40% 30% at 0% 100%, hsl(var(--chart-3) / 0.08), transparent 45%);
+}
+
+.app-shell-backoffice {
+  background-color: hsl(220 20% 98%);
+  background-image:
+    radial-gradient(ellipse 70% 50% at 0% 0%, hsl(var(--primary) / 0.09), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 100% 100%, hsl(var(--accent) / 0.07), transparent 50%);
+}
+
+.interactive-card {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.interactive-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 25px -12px hsl(var(--primary) / 0.28),
+    0 4px 12px -6px rgb(0 0 0 / 0.08);
+  border-color: hsl(var(--primary) / 0.28);
+}
+
+.nav-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid hsl(var(--border));
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.nav-pill:hover {
+  border-color: hsl(var(--primary) / 0.35);
+  background: hsl(var(--primary-soft));
+  transform: translateY(-1px);
+}
+
+.nav-pill-active {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  box-shadow: 0 4px 14px -4px hsl(var(--primary) / 0.55);
 }

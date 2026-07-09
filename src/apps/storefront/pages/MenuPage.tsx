@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { Search, UtensilsCrossed } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import {
@@ -10,7 +10,9 @@ import {
   useProducts,
 } from "@/features/catalog";
 import { EmptyState } from "@/shared/components/EmptyState";
+import { PageHeader } from "@/shared/components/visual";
 import { Input } from "@/shared/components/ui/input";
+import { storefrontCopy } from "@/shared/copy/storefront";
 
 export function MenuPage() {
   const [search, setSearch] = useState("");
@@ -31,20 +33,25 @@ export function MenuPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Cardápio</h1>
-        <p className="text-[hsl(var(--muted-foreground))]">
-          {productsPage ? `${productsPage.count} produto(s)` : "Carregando..."}
-        </p>
-      </div>
+      <PageHeader
+        variant="hero"
+        accent="chart-1"
+        icon={UtensilsCrossed}
+        title="Cardápio"
+        subtitle={
+          productsPage
+            ? storefrontCopy.menu.count(productsPage.count)
+            : storefrontCopy.menu.subtitle
+        }
+      />
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[hsl(var(--muted-foreground))]" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand" />
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar produtos..."
-          className="pl-9"
+          placeholder={storefrontCopy.menu.searchPlaceholder}
+          className="border-brand-soft bg-white pl-9 shadow-sm ring-brand focus-visible:ring-2"
         />
       </div>
 

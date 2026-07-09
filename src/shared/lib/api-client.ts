@@ -26,9 +26,11 @@ async function refreshAccessToken(): Promise<string | null> {
   const refresh = authStorage.getRefreshToken();
   if (!refresh) return null;
 
+  const refreshPath = IS_BACKOFFICE ? "/auth/refresh/" : "/auth/customer/refresh/";
+
   try {
     const { data } = await axios.post<{ access: string }>(
-      `${env.VITE_API_BASE_URL}/auth/refresh/`,
+      `${IS_BACKOFFICE ? env.VITE_API_BASE_URL : resolveStorefrontApiBaseUrl()}${refreshPath}`,
       { refresh },
       { headers: { "Content-Type": "application/json" } },
     );
@@ -43,6 +45,8 @@ function redirectToLogin(): void {
   authStorage.clear();
   if (IS_BACKOFFICE && !window.location.pathname.startsWith("/login")) {
     window.location.href = "/login";
+  } else if (!IS_BACKOFFICE && !window.location.pathname.startsWith("/entrar")) {
+    window.location.href = "/entrar";
   }
 }
 
@@ -84,7 +88,9 @@ apiClient.interceptors.response.use(
       originalRequest &&
       !originalRequest._retry &&
       !originalRequest.url?.includes("/auth/login") &&
-      !originalRequest.url?.includes("/auth/refresh")
+      !originalRequest.url?.includes("/auth/refresh") &&
+      !originalRequest.url?.includes("/auth/customer/login") &&
+      !originalRequest.url?.includes("/auth/customer/refresh")
     ) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {

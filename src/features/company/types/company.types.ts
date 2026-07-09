@@ -12,6 +12,8 @@ export interface CompanySettingsPublic {
 export interface TenantThemePublic {
   primary?: string;
   primary_foreground?: string;
+  accent?: string;
+  accent_foreground?: string;
   radius?: string;
 }
 

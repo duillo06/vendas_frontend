@@ -80,9 +80,15 @@ export function OrderStatusBadge({ status, className }: OrderStatusBadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm ring-1 ring-inset",
         config.textClass,
         config.bgClass,
+        status === "pending" && "ring-amber-200",
+        status === "preparing" && "ring-orange-200",
+        status === "ready" && "ring-emerald-200",
+        status === "completed" && "ring-green-200",
+        status === "cancelled" && "ring-red-200",
+        (status === "confirmed" || status === "out_for_delivery") && "ring-blue-200",
         className,
       )}
     >

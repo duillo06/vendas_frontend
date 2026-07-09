@@ -12,33 +12,40 @@ type CategoryNavProps = {
   className?: string;
 };
 
+const chipHover = [
+  "hover:border-[hsl(var(--chart-1)/0.35)] hover:bg-[hsl(var(--chart-1)/0.08)]",
+  "hover:border-[hsl(var(--chart-2)/0.35)] hover:bg-[hsl(var(--chart-2)/0.08)]",
+  "hover:border-[hsl(var(--chart-3)/0.35)] hover:bg-[hsl(var(--chart-3)/0.08)]",
+  "hover:border-[hsl(var(--chart-4)/0.35)] hover:bg-[hsl(var(--chart-4)/0.08)]",
+];
+
 export function CategoryNav({ categories, activeSlug, className }: CategoryNavProps) {
   return (
     <nav className={cn("flex gap-2 overflow-x-auto pb-1", className)}>
       <Link
         to="/cardapio"
-        className={cn(
-          "shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition-colors",
-          !activeSlug
-            ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
-            : "border-[hsl(var(--border))] hover:bg-[hsl(var(--muted))]",
-        )}
+        className={cn("nav-pill shrink-0", !activeSlug && "nav-pill-active")}
       >
         Todos
       </Link>
-      {categories.map((category) => (
+      {categories.map((category, index) => (
         <Link
           key={category.id}
           to={`/categoria/${category.slug}`}
           className={cn(
-            "flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors",
-            activeSlug === category.slug
-              ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
-              : "border-[hsl(var(--border))] hover:bg-[hsl(var(--muted))]",
+            "nav-pill flex shrink-0 items-center gap-2",
+            chipHover[index % chipHover.length],
+            activeSlug === category.slug && "nav-pill-active",
           )}
         >
           {category.name}
-          <Badge variant="secondary" className="text-[10px]">
+          <Badge
+            variant="secondary"
+            className={cn(
+              "border-0 text-[10px]",
+              activeSlug === category.slug ? "bg-white/20 text-white" : "bg-white",
+            )}
+          >
             {category.product_count}
           </Badge>
         </Link>
@@ -51,7 +58,7 @@ export function CategoryNavSkeleton() {
   return (
     <div className="flex gap-2 overflow-hidden">
       {Array.from({ length: 4 }).map((_, i) => (
-        <Skeleton key={i} className="h-9 w-24 shrink-0 rounded-full" />
+        <Skeleton key={i} className="h-10 w-28 shrink-0 rounded-full" />
       ))}
     </div>
   );

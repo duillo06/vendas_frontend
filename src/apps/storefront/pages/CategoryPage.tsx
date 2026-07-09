@@ -9,6 +9,7 @@ import {
   useProducts,
 } from "@/features/catalog";
 import { EmptyState } from "@/shared/components/EmptyState";
+import { storefrontCopy } from "@/shared/copy/storefront";
 
 export function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -27,7 +28,9 @@ export function CategoryPage() {
         <h1 className="text-2xl font-bold">{category?.name ?? "Categoria"}</h1>
         {category?.description ? (
           <p className="text-[hsl(var(--muted-foreground))]">{category.description}</p>
-        ) : null}
+        ) : (
+          <p className="text-[hsl(var(--muted-foreground))]">{storefrontCopy.menu.categoryFallback}</p>
+        )}
       </div>
 
       {loadingCategories ? (

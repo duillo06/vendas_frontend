@@ -1,3 +1,4 @@
+export { useTenantTheme } from "./hooks/useTenantTheme";
 export { useSettings } from "./hooks/useSettings";
 export { useUpdateSettings } from "./hooks/useUpdateSettings";
 export { useUploadLogo } from "./hooks/useUploadLogo";

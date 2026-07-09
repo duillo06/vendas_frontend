@@ -1,31 +1,33 @@
-import { Link, Outlet } from "react-router";
-import { useEffect } from "react";
+import { Home, UtensilsCrossed, User } from "lucide-react";
+import { Link, NavLink, Outlet } from "react-router";
 
 import { CartNavButton } from "@/features/cart";
 import { useCompanyPublic } from "@/features/company";
-import { applyTenantTheme } from "@/features/settings";
+import { useCustomerAuth } from "@/features/customer-auth";
+import { useTenantTheme } from "@/features/settings";
 import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
 
-const navLinks: Array<{ to: string; label: string }> = [
-  { to: "/", label: "Início" },
-  { to: "/cardapio", label: "Cardápio" },
-];
+const navLinks = [
+  { to: "/", label: "Início", icon: Home },
+  { to: "/cardapio", label: "Cardápio", icon: UtensilsCrossed },
+] as const;
 
 function StoreStatusBadge({ isOpen }: { isOpen: boolean }) {
   return (
     <Badge
       variant="outline"
       className={cn(
-        "gap-1.5",
+        "gap-1.5 shadow-sm",
         isOpen
-          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-          : "border-amber-200 bg-amber-50 text-amber-700",
+          ? "border-brand bg-brand-soft text-brand"
+          : "hint-accent text-brand-accent",
       )}
     >
       <span
-        className={cn("h-2 w-2 rounded-full", isOpen ? "bg-emerald-500" : "bg-amber-500")}
+        className={cn("h-2 w-2 rounded-full", isOpen ? "bg-brand animate-pulse" : "bg-[hsl(var(--accent))]")}
         aria-hidden
       />
       {isOpen ? "Aberto" : "Fechado"}
@@ -35,20 +37,23 @@ function StoreStatusBadge({ isOpen }: { isOpen: boolean }) {
 
 export function StorefrontLayout() {
   const { data: company, isLoading: loadingCompany } = useCompanyPublic();
+  const { isAuthenticated, isLoading: loadingAuth } = useCustomerAuth();
 
-  useEffect(() => {
-    applyTenantTheme(company?.theme);
-  }, [company?.theme]);
+  useTenantTheme(company?.theme);
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--background))]">
-      <header className="sticky top-0 z-40 border-b border-[hsl(var(--border))] bg-[hsl(var(--background))]/95 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4">
-          <Link to="/" className="flex min-w-0 items-center gap-3">
+    <div className="app-shell-storefront min-h-screen">
+      <header className="sticky top-0 z-40 border-b border-brand-soft bg-white/85 shadow-sm backdrop-blur-md">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
+          <Link to="/" className="group flex min-w-0 items-center gap-3">
             {company?.logo_url ? (
-              <img src={company.logo_url} alt="" className="h-9 w-9 rounded-md object-cover" />
+              <img
+                src={company.logo_url}
+                alt=""
+                className="h-10 w-10 rounded-xl object-cover ring-2 ring-[hsl(var(--primary)/0.15)] transition group-hover:ring-[hsl(var(--primary)/0.35)]"
+              />
             ) : (
-              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-[hsl(var(--primary))] text-sm font-bold text-white">
+              <span className="gradient-hero flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold shadow-md">
                 {company?.trade_name?.charAt(0) ?? "F"}
               </span>
             )}
@@ -56,34 +61,50 @@ export function StorefrontLayout() {
               {loadingCompany ? (
                 <Skeleton className="h-5 w-32" />
               ) : (
-                <span className="block truncate text-lg font-semibold">
-                  {company?.trade_name ?? "Food Service"}
-                </span>
+                <span className="block truncate text-lg font-bold tracking-tight">{company?.trade_name ?? "Food Service"}</span>
               )}
             </div>
           </Link>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {!loadingCompany && company ? <StoreStatusBadge isOpen={company.is_open} /> : null}
 
             <nav className="hidden items-center gap-1 sm:flex">
               {navLinks.map((link) => (
-                <Link
+                <NavLink
                   key={link.to}
                   to={link.to}
-                  className="rounded-md px-3 py-2 text-sm font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                  end={link.to === "/"}
+                  className={({ isActive }) =>
+                    cn(
+                      "inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-all",
+                      isActive
+                        ? "bg-brand shadow-md shadow-[hsl(var(--primary)/0.3)]"
+                        : "text-[hsl(var(--muted-foreground))] hover:bg-brand-soft hover:text-brand",
+                    )
+                  }
                 >
+                  <link.icon className="h-4 w-4" />
                   {link.label}
-                </Link>
+                </NavLink>
               ))}
             </nav>
+
+            {!loadingAuth ? (
+              <Link to={isAuthenticated ? "/conta" : "/entrar"}>
+                <Button type="button" variant="outline" size="sm" className="gap-2 border-brand-soft bg-brand-soft/50 hover:bg-brand-soft">
+                  <User className="h-4 w-4 text-brand" />
+                  <span className="hidden sm:inline">{isAuthenticated ? "Minha conta" : "Entrar"}</span>
+                </Button>
+              </Link>
+            ) : null}
 
             <CartNavButton />
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-8">
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
         <Outlet />
       </main>
     </div>

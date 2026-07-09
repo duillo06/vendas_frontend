@@ -1,6 +1,8 @@
 import { OrderStatusBadge, type OrderStatus } from "@/shared/components/OrderStatusBadge";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
+import { UiHint } from "@/shared/components/UiHint";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { storefrontCopy } from "@/shared/copy/storefront";
 
 import type { Order } from "@/features/checkout/types/checkout.types";
 
@@ -8,12 +10,30 @@ type OrderTrackingViewProps = {
   order: Order;
 };
 
+const STATUS_MESSAGES: Partial<Record<OrderStatus, string>> = {
+  pending: "Recebemos seu pedido e em breve a loja vai confirmar.",
+  confirmed: "Tudo certo — seu pedido já está na fila de preparo.",
+  preparing: "Estamos preparando com cuidado. Falta pouco!",
+  ready: "Seu pedido está pronto. Pode vir buscar ou aguardar a entrega.",
+  out_for_delivery: "Saiu para entrega. Fique de olho no celular.",
+  completed: "Pedido concluído. Esperamos que tenha gostado!",
+  cancelled: "Este pedido foi cancelado. Se tiver dúvidas, fale com a loja.",
+};
+
 export function OrderTrackingView({ order }: OrderTrackingViewProps) {
+  const statusMessage = STATUS_MESSAGES[order.status as OrderStatus];
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-bold">{order.order_number}</h1>
-        <OrderStatusBadge status={order.status as OrderStatus} />
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-bold">{order.order_number}</h1>
+          <OrderStatusBadge status={order.status as OrderStatus} />
+        </div>
+        {statusMessage ? <UiHint tone="warm">{statusMessage}</UiHint> : null}
+        <p className="text-sm text-[hsl(var(--muted-foreground))]">
+          {storefrontCopy.order.tracking}
+        </p>
       </div>
 
       <Card>

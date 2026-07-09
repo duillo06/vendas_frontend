@@ -1,14 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router";
+import { Lightbulb, Package, Plus } from "lucide-react";
+import { Link, useNavigate } from "react-router";
 
 import { catalogAdminApi } from "@/features/catalog/api/catalogAdminApi";
 import { catalogAdminKeys } from "@/features/catalog/constants/catalog-admin-keys";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
+import { UiHint } from "@/shared/components/UiHint";
+import { PageHeader } from "@/shared/components/visual";
+import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { adminCopy } from "@/shared/copy/admin";
 import { cn } from "@/shared/lib/utils";
 
 export function ProductsPage() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: catalogAdminKeys.products(),
@@ -25,18 +31,22 @@ export function ProductsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Produtos</h1>
-          <p className="text-[hsl(var(--muted-foreground))]">Gerencie o cardápio</p>
-        </div>
-        <Link
-          to="/produtos/novo"
-          className="inline-flex h-10 items-center justify-center rounded-md bg-[hsl(var(--primary))] px-4 text-sm font-medium text-[hsl(var(--primary-foreground))]"
-        >
-          Novo produto
-        </Link>
-      </div>
+      <PageHeader
+        title="Produtos"
+        subtitle={adminCopy.products.subtitle}
+        icon={Package}
+        accent="chart-2"
+        action={
+          <Button type="button" className="w-full gap-2 sm:w-auto" onClick={() => navigate("/produtos/novo")}>
+            <Plus className="h-4 w-4" />
+            Novo produto
+          </Button>
+        }
+      />
+
+      <UiHint icon={Lightbulb} tone="neutral">
+        {adminCopy.products.tip}
+      </UiHint>
 
       {isLoading ? (
         <Skeleton className="h-40 w-full" />
@@ -44,7 +54,7 @@ export function ProductsPage() {
         <ul className="space-y-3">
           {data.results.map((product) => (
             <li key={product.id}>
-              <Card>
+              <Card className="interactive-card">
                 <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">
                     {product.image_url ? (
@@ -74,7 +84,7 @@ export function ProductsPage() {
                       className={cn(
                         "rounded-full px-2 py-1 text-xs font-medium",
                         product.is_available
-                          ? "bg-emerald-50 text-emerald-700"
+                          ? "bg-brand-soft text-brand"
                           : "bg-red-50 text-red-700",
                       )}
                       onClick={() =>
@@ -93,7 +103,20 @@ export function ProductsPage() {
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-[hsl(var(--muted-foreground))]">Nenhum produto cadastrado.</p>
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[hsl(var(--border))] px-6 py-16 text-center">
+          <p className="font-medium">{adminCopy.products.empty.title}</p>
+          <p className="mt-1 max-w-sm text-sm text-[hsl(var(--muted-foreground))]">
+            {adminCopy.products.empty.description}
+          </p>
+          <Button
+            type="button"
+            className="mt-4 gap-2"
+            onClick={() => navigate("/produtos/novo")}
+          >
+            <Plus className="h-4 w-4" />
+            Novo produto
+          </Button>
+        </div>
       )}
     </div>
   );

@@ -1,19 +1,100 @@
+import { DEFAULT_THEME } from "../constants/defaults";
 import type { TenantTheme } from "../types/settings.types";
 
+type Hsl = { h: number; s: number; l: number };
+
+const THEME_VAR_KEYS = [
+  "primary",
+  "primary-foreground",
+  "accent",
+  "accent-foreground",
+  "primary-soft",
+  "primary-muted",
+  "accent-soft",
+  "hero-from",
+  "hero-to",
+  "sidebar-from",
+  "sidebar-to",
+  "surface",
+  "surface-accent",
+  "chart-1",
+  "chart-2",
+  "chart-3",
+  "chart-4",
+  "radius",
+] as const;
+
+export function parseHslComponents(hsl: string): Hsl | null {
+  const match = hsl.match(/^(\d+)\s+(\d+)%\s+(\d+)%$/);
+  if (!match) return null;
+  return { h: Number(match[1]), s: Number(match[2]), l: Number(match[3]) };
+}
+
+export function formatHslComponents({ h, s, l }: Hsl): string {
+  return `${Math.round(h)} ${Math.round(s)}% ${Math.round(l)}%`;
+}
+
+function shiftHue(hsl: Hsl, degrees: number): Hsl {
+  return { ...hsl, h: (hsl.h + degrees + 360) % 360 };
+}
+
+export function deriveThemeTokens(theme?: TenantTheme | null) {
+  const base = parseHslComponents(theme?.primary ?? DEFAULT_THEME.primary);
+  if (!base) {
+    return null;
+  }
+
+  const accentBase = theme?.accent
+    ? parseHslComponents(theme.accent)
+    : shiftHue({ ...base, s: Math.min(base.s, 78), l: Math.min(base.l + 8, 52) }, 32);
+
+  const accent = accentBase ?? base;
+
+  const primarySoft: Hsl = { h: base.h, s: Math.min(base.s * 0.4, 42), l: 96 };
+  const primaryMuted: Hsl = { h: base.h, s: Math.min(base.s * 0.5, 48), l: 92 };
+  const accentSoft: Hsl = { h: accent.h, s: Math.min(accent.s * 0.4, 42), l: 96 };
+  const heroFrom: Hsl = { h: base.h, s: base.s, l: Math.max(base.l - 5, 26) };
+  const heroTo: Hsl = shiftHue(
+    { h: base.h, s: Math.min(base.s + 4, 90), l: Math.min(base.l + 3, 46) },
+    16,
+  );
+  const sidebarFrom: Hsl = { h: base.h, s: Math.min(base.s * 0.55, 58), l: 17 };
+  const sidebarTo: Hsl = { h: 220, s: 25, l: 11 };
+
+  return {
+    primary: formatHslComponents(base),
+    "primary-foreground": theme?.primary_foreground ?? DEFAULT_THEME.primary_foreground,
+    accent: formatHslComponents(accent),
+    "accent-foreground": theme?.accent_foreground ?? DEFAULT_THEME.accent_foreground,
+    "primary-soft": formatHslComponents(primarySoft),
+    "primary-muted": formatHslComponents(primaryMuted),
+    "accent-soft": formatHslComponents(accentSoft),
+    "hero-from": formatHslComponents(heroFrom),
+    "hero-to": formatHslComponents(heroTo),
+    "sidebar-from": formatHslComponents(sidebarFrom),
+    "sidebar-to": formatHslComponents(sidebarTo),
+    surface: formatHslComponents(primarySoft),
+    "surface-accent": formatHslComponents(accentSoft),
+    "chart-1": formatHslComponents(base),
+    "chart-2": formatHslComponents(accent),
+    "chart-3": formatHslComponents(shiftHue(base, 52)),
+    "chart-4": formatHslComponents(shiftHue(base, 128)),
+    radius: theme?.radius ?? DEFAULT_THEME.radius,
+  };
+}
+
 export function applyTenantTheme(theme?: TenantTheme | null) {
-  if (!theme?.primary) {
-    return;
-  }
+  const tokens = deriveThemeTokens(theme ?? DEFAULT_THEME);
+  if (!tokens) return;
 
-  document.documentElement.style.setProperty("--primary", theme.primary);
-
-  if (theme.primary_foreground) {
-    document.documentElement.style.setProperty("--primary-foreground", theme.primary_foreground);
+  const root = document.documentElement;
+  for (const [key, value] of Object.entries(tokens)) {
+    root.style.setProperty(`--${key}`, value);
   }
+}
 
-  if (theme.radius) {
-    document.documentElement.style.setProperty("--radius", theme.radius);
-  }
+export function resetTenantTheme() {
+  applyTenantTheme(DEFAULT_THEME);
 }
 
 export function hexToHslComponents(hex: string): string | null {
@@ -86,11 +167,9 @@ export function hslComponentsToHex(hsl: string): string | null {
 }
 
 function parseHslLuminance(hsl: string): number | null {
-  const match = hsl.match(/^(\d+)\s+(\d+)%\s+(\d+)%$/);
-  if (!match) {
-    return null;
-  }
-  return Number(match[3]) / 100;
+  const parsed = parseHslComponents(hsl);
+  if (!parsed) return null;
+  return parsed.l / 100;
 }
 
 export function hasLowContrast(primary: string, foreground: string): boolean {
@@ -101,3 +180,5 @@ export function hasLowContrast(primary: string, foreground: string): boolean {
   }
   return Math.abs(primaryL - foregroundL) < 0.35;
 }
+
+export { THEME_VAR_KEYS };

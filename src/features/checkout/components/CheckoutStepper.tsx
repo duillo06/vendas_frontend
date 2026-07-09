@@ -25,9 +25,8 @@ export function CheckoutStepper({ currentStep }: CheckoutStepperProps) {
             <span
               className={cn(
                 "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors",
-                (isCurrent || isCompleted) &&
-                  "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]",
-                isCurrent && "ring-2 ring-[hsl(var(--primary))] ring-offset-2",
+                (isCurrent || isCompleted) && "bg-brand text-[hsl(var(--primary-foreground))]",
+                isCurrent && "ring-2 ring-brand ring-offset-2",
                 !isCurrent && !isCompleted && "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]",
               )}
             >

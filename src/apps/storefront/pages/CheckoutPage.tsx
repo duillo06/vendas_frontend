@@ -1,8 +1,12 @@
+import { Sparkles } from "lucide-react";
+import { Link } from "react-router";
+
 import { useCart } from "@/features/cart";
 import { CheckoutForm } from "@/features/checkout";
 import { EmptyState } from "@/shared/components/EmptyState";
+import { PageHeader } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
-import { Link } from "react-router";
+import { storefrontCopy } from "@/shared/copy/storefront";
 
 export function CheckoutPage() {
   const { isEmpty } = useCart();
@@ -10,8 +14,8 @@ export function CheckoutPage() {
   if (isEmpty) {
     return (
       <EmptyState
-        title="Carrinho vazio"
-        description="Adicione itens antes de finalizar o pedido."
+        title={storefrontCopy.checkout.empty.title}
+        description={storefrontCopy.checkout.empty.description}
         action={
           <Link to="/cardapio">
             <Button>Ver cardápio</Button>
@@ -23,10 +27,13 @@ export function CheckoutPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Checkout</h1>
-        <p className="text-[hsl(var(--muted-foreground))]">Finalize seu pedido em poucos passos</p>
-      </div>
+      <PageHeader
+        variant="hero"
+        accent="chart-1"
+        icon={Sparkles}
+        title={storefrontCopy.checkout.title}
+        subtitle={storefrontCopy.checkout.subtitle}
+      />
       <CheckoutForm />
     </div>
   );

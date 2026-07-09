@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
+import { Check, Flame, Heart } from "lucide-react";
 import { toast } from "sonner";
 
 import { OptionGroupSelector } from "./OptionGroupSelector";
@@ -11,9 +12,12 @@ import {
 } from "../utils/priceCalculator";
 
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
+import { UiHint } from "@/shared/components/UiHint";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { storefrontCopy } from "@/shared/copy/storefront";
+import { cn } from "@/shared/lib/utils";
 
 export type ProductAddToCartPayload = {
   productId: string;
@@ -39,6 +43,7 @@ type ProductDetailViewProps = {
 
 export function ProductDetailView({ product, onAddToCart }: ProductDetailViewProps) {
   const [selections, setSelections] = useState<Record<string, string[]>>({});
+  const [justAdded, setJustAdded] = useState(false);
 
   const selectedOptions = useMemo(
     () => getSelectedOptions(product, selections),
@@ -51,6 +56,9 @@ export function ProductDetailView({ product, onAddToCart }: ProductDetailViewPro
   );
 
   const primaryImage = product.images.find((img) => img.is_primary) ?? product.images[0];
+  const isPopular = product.tags.some((tag) =>
+    ["destaque", "popular", "favorito"].includes(tag.toLowerCase()),
+  );
 
   const handleAddToCart = () => {
     const error = validateOptionSelections(product.option_groups, selections);
@@ -87,6 +95,9 @@ export function ProductDetailView({ product, onAddToCart }: ProductDetailViewPro
       unitPrice: totalPrice,
       selectedOptions: optionsPayload,
     });
+
+    setJustAdded(true);
+    window.setTimeout(() => setJustAdded(false), 500);
   };
 
   return (
@@ -121,6 +132,14 @@ export function ProductDetailView({ product, onAddToCart }: ProductDetailViewPro
           {!product.is_available ? <Badge variant="outline">Indisponível</Badge> : null}
         </div>
 
+        {product.is_available ? (
+          <UiHint icon={isPopular ? Flame : Heart} tone="warm">
+            {isPopular ? storefrontCopy.product.favorite : "Monte do seu jeito e adicione ao carrinho."}
+          </UiHint>
+        ) : (
+          <UiHint tone="neutral">{storefrontCopy.product.unavailable}</UiHint>
+        )}
+
         <div className="flex items-baseline gap-3">
           <PriceDisplay value={totalPrice} className="text-2xl font-bold text-[hsl(var(--primary))]" />
           {totalPrice !== product.base_price ? (
@@ -147,11 +166,18 @@ export function ProductDetailView({ product, onAddToCart }: ProductDetailViewPro
           <Button
             type="button"
             size="lg"
-            className="flex-1"
+            className={cn("flex-1 transition-transform", justAdded && "animate-cart-bump")}
             disabled={!product.is_available || !onAddToCart}
             onClick={handleAddToCart}
           >
-            Adicionar ao carrinho
+            {justAdded ? (
+              <span className="inline-flex items-center gap-2">
+                <Check className="h-5 w-5" />
+                Adicionado!
+              </span>
+            ) : (
+              "Adicionar ao carrinho"
+            )}
           </Button>
           <Link to="/cardapio">
             <Button type="button" variant="outline" size="lg">

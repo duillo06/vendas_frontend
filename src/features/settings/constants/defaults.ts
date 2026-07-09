@@ -1,6 +1,8 @@
 export const DEFAULT_THEME = {
   primary: "160 84% 39%",
   primary_foreground: "0 0% 100%",
+  accent: "45 93% 47%",
+  accent_foreground: "0 0% 100%",
   radius: "0.5rem",
 } as const;
 

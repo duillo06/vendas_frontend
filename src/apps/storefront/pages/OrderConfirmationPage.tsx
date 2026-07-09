@@ -1,10 +1,12 @@
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Heart, Sparkles } from "lucide-react";
 import { Link, Navigate, useLocation, useParams } from "react-router";
 
 import type { Order } from "@/features/checkout";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
+import { UiHint } from "@/shared/components/UiHint";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
+import { storefrontCopy } from "@/shared/copy/storefront";
 
 export function OrderConfirmationPage() {
   const { id } = useParams<{ id: string }>();
@@ -21,34 +23,60 @@ export function OrderConfirmationPage() {
   return (
     <div className="mx-auto max-w-lg space-y-6 text-center">
       <div className="flex flex-col items-center gap-3">
-        <CheckCircle className="h-16 w-16 text-[hsl(var(--primary))]" />
-        <h1 className="text-2xl font-bold">Pedido confirmado!</h1>
-        <p className="text-[hsl(var(--muted-foreground))]">
-          Recebemos seu pedido <strong>{orderNumber}</strong>
+        <div className="tile-brand flex h-20 w-20 animate-success-pop items-center justify-center rounded-full">
+          <CheckCircle className="h-12 w-12 text-brand" />
+        </div>
+        <h1 className="animate-fade-up text-2xl font-bold" style={{ animationDelay: "80ms" }}>
+          {storefrontCopy.order.confirmed.title}
+        </h1>
+        <p
+          className="max-w-md animate-fade-up text-[hsl(var(--muted-foreground))]"
+          style={{ animationDelay: "140ms" }}
+        >
+          {storefrontCopy.order.confirmed.subtitle}
+        </p>
+        <p
+          className="animate-fade-up text-sm text-[hsl(var(--muted-foreground))]"
+          style={{ animationDelay: "200ms" }}
+        >
+          Pedido <strong className="text-[hsl(var(--foreground))]">{orderNumber}</strong>
         </p>
         {total !== undefined ? (
-          <p className="text-lg">
-            Total: <PriceDisplay value={total} className="font-semibold text-[hsl(var(--primary))]" />
+          <p className="animate-fade-up text-lg" style={{ animationDelay: "260ms" }}>
+            Total: <PriceDisplay value={total} className="font-semibold text-brand" />
           </p>
         ) : null}
       </div>
 
-      <Card>
-        <CardContent className="space-y-2 p-6 text-sm text-[hsl(var(--muted-foreground))]">
-          <p>Você pode acompanhar o status do pedido em tempo real.</p>
+      <div className="animate-fade-up" style={{ animationDelay: "320ms" }}>
+        <UiHint icon={Sparkles} tone="success" className="text-left">
+          {storefrontCopy.order.confirmed.detail}
+        </UiHint>
+      </div>
+
+      <Card className="animate-fade-up" style={{ animationDelay: "380ms" }}>
+        <CardContent className="space-y-3 p-6 text-left text-sm">
+          <p className="font-medium">O que acontece agora?</p>
+          <ul className="space-y-2 text-[hsl(var(--muted-foreground))]">
+            <li>1. Confirmamos seu pedido com a cozinha</li>
+            <li>2. Você acompanha cada etapa em tempo real</li>
+            <li>3. Avisamos quando estiver pronto ou a caminho</li>
+          </ul>
           {order?.estimated_prep_at ? (
-            <p>
+            <p className="border-t border-[hsl(var(--border))] pt-3 text-[hsl(var(--muted-foreground))]">
               Previsão de preparo:{" "}
-              {new Date(order.estimated_prep_at).toLocaleTimeString("pt-BR", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              <strong className="text-[hsl(var(--foreground))]">
+                {new Date(order.estimated_prep_at).toLocaleTimeString("pt-BR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </strong>
             </p>
           ) : null}
         </CardContent>
       </Card>
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+      <div className="animate-fade-up flex flex-col gap-2 sm:flex-row sm:justify-center" style={{ animationDelay: "440ms" }}>
         {id ? (
           <Link to={`/pedido/${id}`}>
             <Button className="w-full sm:w-auto">Acompanhar pedido</Button>
@@ -59,6 +87,12 @@ export function OrderConfirmationPage() {
             Voltar ao cardápio
           </Button>
         </Link>
+      </div>
+
+      <div className="animate-fade-up" style={{ animationDelay: "500ms" }}>
+        <UiHint icon={Heart} tone="warm" className="text-left">
+          {storefrontCopy.order.delivered}
+        </UiHint>
       </div>
     </div>
   );

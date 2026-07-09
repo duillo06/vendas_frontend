@@ -2,6 +2,8 @@ import { createBrowserRouter, RouterProvider } from "react-router";
 
 import { BackofficeLayout } from "@/apps/backoffice/layouts/BackofficeLayout";
 import { CategoriesPage } from "@/apps/backoffice/pages/CategoriesPage";
+import { CustomerDetailPage } from "@/apps/backoffice/pages/CustomerDetailPage";
+import { CustomersPage } from "@/apps/backoffice/pages/CustomersPage";
 import { DashboardPage } from "@/apps/backoffice/pages/DashboardPage";
 import { LoginPage } from "@/apps/backoffice/pages/LoginPage";
 import { OptionGroupsPage } from "@/apps/backoffice/pages/OptionGroupsPage";
@@ -28,6 +30,8 @@ export const backofficeRouter = createBrowserRouter([
       { index: true, element: <DashboardPage /> },
       { path: "pedidos", element: <OrdersPage /> },
       { path: "pedidos/:id", element: <OrderDetailPage /> },
+      { path: "clientes", element: <CustomersPage /> },
+      { path: "clientes/:id", element: <CustomerDetailPage /> },
       { path: "produtos", element: <ProductsPage /> },
       { path: "produtos/novo", element: <ProductFormPage /> },
       { path: "produtos/:id", element: <ProductFormPage /> },
