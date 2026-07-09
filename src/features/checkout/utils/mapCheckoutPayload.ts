@@ -3,11 +3,16 @@ import type { CartItem } from "@/features/cart/types/cart.types";
 import type { CheckoutFormValues } from "../schemas/checkout.schema";
 import type { CheckoutPayload } from "../types/checkout.types";
 
-export function mapCheckoutPayload(items: CartItem[], form: CheckoutFormValues): CheckoutPayload {
+export function mapCheckoutPayload(
+  items: CartItem[],
+  form: CheckoutFormValues,
+  customerId?: string,
+): CheckoutPayload {
   return {
     customer_name: form.customerName.trim(),
     customer_phone: form.customerPhone.trim(),
     customer_email: form.customerEmail?.trim() || undefined,
+    customer_id: customerId,
     delivery_type: form.deliveryType,
     payment_method: form.paymentMethod,
     notes: form.notes?.trim() || undefined,

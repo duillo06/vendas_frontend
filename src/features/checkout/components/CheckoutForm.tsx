@@ -1,6 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { User } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useForm, type FieldPath } from "react-hook-form";
+import { Link } from "react-router";
 import type { ZodIssue } from "zod";
 
 import { useCart } from "@/features/cart";
@@ -15,6 +17,7 @@ import { cn } from "@/shared/lib/utils";
 import { storefrontCopy } from "@/shared/copy/storefront";
 
 import { CHECKOUT_STEPS, CheckoutStepper } from "./CheckoutStepper";
+import { useCheckoutPrefill } from "../hooks/useCheckoutPrefill";
 import { useCreateOrder } from "../hooks/useCreateOrder";
 import {
   checkoutSchema,
@@ -32,9 +35,12 @@ const PAYMENT_LABELS: Record<string, string> = {
 
 export function CheckoutForm() {
   const [step, setStep] = useState(1);
+  const prefillApplied = useRef(false);
   const { items, subtotal } = useCart();
   const { data: company } = useCompanyPublic();
   const { mutate: createOrder, isPending } = useCreateOrder();
+  const { prefillValues, isPrefillReady, customer, isAuthenticated, authLoading } =
+    useCheckoutPrefill(company);
 
   const paymentMethods = company?.settings.payment_methods ?? ["cash", "pix", "card_on_delivery"];
 
@@ -44,6 +50,7 @@ export function CheckoutForm() {
     watch,
     getValues,
     setValue,
+    reset,
     setError,
     clearErrors,
     formState: { errors },
@@ -57,6 +64,18 @@ export function CheckoutForm() {
       customerEmail: "",
     },
   });
+
+  useEffect(() => {
+    if (!isPrefillReady || prefillApplied.current || !prefillValues) {
+      return;
+    }
+
+    reset((current) => ({
+      ...current,
+      ...prefillValues,
+    }));
+    prefillApplied.current = true;
+  }, [isPrefillReady, prefillValues, reset]);
 
   const deliveryType = watch("deliveryType");
   const paymentMethod = watch("paymentMethod");
@@ -150,6 +169,22 @@ export function CheckoutForm() {
       className="space-y-6"
     >
       <CheckoutStepper currentStep={step} />
+
+      {!authLoading && isAuthenticated && customer ? (
+        <UiHint tone="success" icon={User} title={`Olá, ${customer.first_name}!`}>
+          {storefrontCopy.account.checkoutLoggedIn(customer.full_name)}
+        </UiHint>
+      ) : null}
+
+      {!authLoading && !isAuthenticated ? (
+        <UiHint tone="info">
+          {storefrontCopy.account.guestCheckout}{" "}
+          <Link to="/entrar" state={{ from: "/checkout" }} className="font-medium text-brand underline">
+            {storefrontCopy.account.checkoutLoginLink}
+          </Link>
+          .
+        </UiHint>
+      ) : null}
 
       <UiHint tone="warm">{storefrontCopy.checkout.steps[step as 1 | 2 | 3 | 4]}</UiHint>
 

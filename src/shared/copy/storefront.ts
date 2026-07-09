@@ -71,6 +71,9 @@ export const storefrontCopy = {
     addressesTitle: "Meus endereços",
     addressesEmpty: "Cadastre um endereço para agilizar suas próximas entregas.",
     guestCheckout: "Prefere não criar conta? Continue como visitante no checkout.",
+    checkoutLoggedIn: (name: string) =>
+      `Logado como ${name}. Seus dados e endereço padrão já foram preenchidos — você pode editar se quiser.`,
+    checkoutLoginLink: "Entrar para agilizar",
   },
 } as const;
 
