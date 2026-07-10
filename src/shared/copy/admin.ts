@@ -28,6 +28,14 @@ export const adminCopy = {
         "Vincule grupos como Tamanho e Adicionais para o cliente montar o item sem erro.",
       successNew: "Produto cadastrado com sucesso",
       successEdit: "Produto atualizado com sucesso",
+      imagesHelp:
+        "Adicione até 5 fotos. Toque em «Capa» na foto que deve aparecer no cardápio e na listagem.",
+      imageLimit: "Limite de 5 fotos por produto. Remova uma para adicionar outra.",
+      imageUploaded: "Foto adicionada",
+      imageDeleted: "Foto removida",
+      primarySet: "Capa atualizada",
+      previewTitle: "Prévia no cardápio",
+      previewHint: "É assim que o cliente vê o produto na vitrine.",
     },
   },
   optionGroups: {
@@ -90,8 +98,17 @@ export const adminCopy = {
     subtitle: "Organize o cardápio em seções — o cliente navega por elas no app.",
     guidance: "Crie categorias antes dos produtos. Nomes curtos funcionam melhor no mobile.",
     createTitle: "Nova categoria",
-    createHint: "Exemplos: Pizzas, Bebidas, Sobremesas. Depois cadastre produtos em cada uma.",
-    examples: ["Pizzas", "Bebidas", "Sobremesas", "Combos"],
+    createHint: "Exemplos: Pizzas 🍕, Bebidas 🥤. O emoji aparece na navegação do cardápio.",
+    emojiLabel: "Emoji (opcional)",
+    emojiPlaceholder: "Ex: 🍕",
+    emojiHelp: "Toque em um emoji abaixo ou cole o seu — deixa a categoria mais visual no app.",
+    examples: [
+      { name: "Pizzas", emoji: "🍕" },
+      { name: "Bebidas", emoji: "🥤" },
+      { name: "Sobremesas", emoji: "🍰" },
+      { name: "Combos", emoji: "🍱" },
+    ] as const,
+    emojiSuggestions: ["🍕", "🍔", "🌮", "🍟", "🍣", "🥤", "☕", "🍰", "🍱", "🥗", "🍗", "🌭"],
     empty: {
       title: "Nenhuma categoria ainda",
       description: "Comece com as principais do seu cardápio. Em seguida, cadastre os produtos.",
@@ -100,6 +117,7 @@ export const adminCopy = {
     deleteConfirm: "Produtos desta categoria não serão excluídos — só a organização muda.",
     toasts: {
       created: "Categoria criada",
+      updated: "Categoria atualizada",
       removed: "Categoria removida",
     },
   },
@@ -110,6 +128,7 @@ export const adminCopy = {
       count === 1
         ? "Você tem 1 pedido aguardando confirmação."
         : `Você tem ${count} pedidos aguardando confirmação.`,
+    progressLabel: "Progresso do dia",
     emptyOrders: {
       title: "Dia tranquilo por aqui",
       description: "Quando chegar o primeiro pedido, ele aparece nesta lista automaticamente.",

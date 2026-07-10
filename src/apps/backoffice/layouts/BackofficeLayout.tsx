@@ -13,33 +13,46 @@ import { NavLink, Outlet } from "react-router";
 
 import { Can, useAuth } from "@/features/auth";
 import { useSettings, useTenantTheme } from "@/features/settings";
+import { useDashboard } from "@/features/dashboard";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/lib/utils";
 
 const navItems = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, permission: "dashboard.view", tile: "tile-chart-1" },
-  { to: "/pedidos", label: "Pedidos", icon: ShoppingBag, permission: "orders.view", tile: "tile-chart-3" },
-  { to: "/clientes", label: "Clientes", icon: Users, permission: "customers.view", tile: "tile-chart-4" },
-  { to: "/produtos", label: "Produtos", icon: Package, permission: "catalog.view", tile: "tile-chart-2" },
-  { to: "/categorias", label: "Categorias", icon: Layers, permission: "catalog.view", tile: "tile-chart-4" },
-  { to: "/opcoes", label: "Opções", icon: ListTree, permission: "catalog.view", tile: "tile-chart-3" },
-  { to: "/configuracoes", label: "Configurações", icon: Settings, permission: "settings.manage", tile: "tile-chart-2" },
+  { to: "/", label: "Dashboard", icon: LayoutDashboard, permission: "dashboard.view" },
+  { to: "/pedidos", label: "Pedidos", icon: ShoppingBag, permission: "orders.view" },
+  { to: "/clientes", label: "Clientes", icon: Users, permission: "customers.view" },
+  { to: "/produtos", label: "Produtos", icon: Package, permission: "catalog.view" },
+  { to: "/categorias", label: "Categorias", icon: Layers, permission: "catalog.view" },
+  { to: "/opcoes", label: "Opções", icon: ListTree, permission: "catalog.view" },
+  { to: "/configuracoes", label: "Configurações", icon: Settings, permission: "settings.manage" },
 ] as const;
 
 export function BackofficeLayout() {
   const { user, tenant, logout } = useAuth();
   const { data: settings } = useSettings();
+  const { data: dashboard } = useDashboard();
 
   useTenantTheme(settings?.settings.theme);
+
+  const logoUrl = settings?.company.logo_url;
+  const pendingOrders = dashboard?.today.pending_orders ?? 0;
 
   return (
     <div className="flex min-h-screen">
       <aside className="gradient-sidebar hidden w-60 flex-col text-white shadow-xl md:flex">
         <div className="border-b border-white/10 p-5">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
-              <Sparkles className="h-5 w-5" />
-            </span>
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt=""
+                className="h-10 w-10 shrink-0 rounded-xl object-cover ring-1 ring-white/20"
+              />
+            ) : (
+              <span className="sidebar-nav-icon flex h-10 w-10 items-center justify-center rounded-xl">
+                <Sparkles className="h-5 w-5" />
+              </span>
+            )}
             <div className="min-w-0">
               <p className="font-bold tracking-tight">Food Service</p>
               <p className="truncate text-xs text-white/75">{tenant?.trade_name ?? "Backoffice"}</p>
@@ -57,8 +70,8 @@ export function BackofficeLayout() {
                   cn(
                     "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
                     isActive
-                      ? "bg-white/15 text-white shadow-lg ring-1 ring-white/20"
-                      : "text-white/75 hover:bg-white/10 hover:text-white",
+                      ? "sidebar-nav-link-active"
+                      : "text-white/80 hover:bg-[hsl(var(--primary)/0.1)] hover:text-white",
                   )
                 }
               >
@@ -67,12 +80,19 @@ export function BackofficeLayout() {
                     <span
                       className={cn(
                         "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
-                        isActive ? "bg-white/20" : item.tile,
+                        isActive ? "sidebar-nav-icon-active" : "sidebar-nav-icon",
                       )}
                     >
                       <item.icon className="h-4 w-4" />
                     </span>
-                    {item.label}
+                    <span className="flex flex-1 items-center justify-between gap-2">
+                      {item.label}
+                      {item.to === "/pedidos" && pendingOrders > 0 ? (
+                        <span className="sidebar-nav-badge rounded-full px-2 py-0.5 text-xs font-bold tabular-nums">
+                          {pendingOrders > 99 ? "99+" : pendingOrders}
+                        </span>
+                      ) : null}
+                    </span>
                   </>
                 )}
               </NavLink>
@@ -81,7 +101,7 @@ export function BackofficeLayout() {
         </nav>
 
         <div className="border-t border-white/10 p-3">
-          <div className="rounded-xl bg-white/10 px-3 py-2">
+          <div className="rounded-xl bg-[hsl(var(--primary)/0.12)] px-3 py-2 ring-1 ring-[hsl(var(--primary)/0.2)]">
             <p className="truncate text-sm font-medium">{user ? `${user.first_name} ${user.last_name}` : ""}</p>
             <p className="truncate text-xs text-white/70">{user?.email}</p>
           </div>
@@ -89,7 +109,7 @@ export function BackofficeLayout() {
             type="button"
             variant="ghost"
             size="sm"
-            className="mt-2 w-full justify-start gap-2 text-white/80 hover:bg-white/10 hover:text-white"
+            className="mt-2 w-full justify-start gap-2 text-white/80 hover:bg-[hsl(var(--primary)/0.12)] hover:text-white"
             onClick={() => void logout()}
           >
             <LogOut className="h-4 w-4" />
@@ -100,7 +120,12 @@ export function BackofficeLayout() {
 
       <div className="app-shell-backoffice flex min-h-screen flex-1 flex-col">
         <header className="flex items-center justify-between border-b border-[hsl(var(--border))] bg-white/70 px-4 py-3 backdrop-blur md:hidden">
-          <span className="font-bold text-brand">Food Service</span>
+          <div className="flex min-w-0 items-center gap-2">
+            {logoUrl ? (
+              <img src={logoUrl} alt="" className="h-8 w-8 shrink-0 rounded-lg object-cover" />
+            ) : null}
+            <span className="truncate font-bold text-brand">{tenant?.trade_name ?? "Food Service"}</span>
+          </div>
           <Button type="button" variant="outline" size="sm" onClick={() => void logout()}>
             Sair
           </Button>

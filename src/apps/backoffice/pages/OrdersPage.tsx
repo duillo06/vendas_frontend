@@ -1,17 +1,15 @@
 import { useState } from "react";
 import { ClipboardList, RefreshCw, ShoppingBag } from "lucide-react";
-import { Link, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 
 import { useOrders } from "@/features/orders/hooks/useOrders";
-import { PriceDisplay } from "@/shared/components/PriceDisplay";
-import { OrderStatusBadge, type OrderStatus } from "@/shared/components/OrderStatusBadge";
+import { EmptyState } from "@/shared/components/EmptyState";
 import { UiHint } from "@/shared/components/UiHint";
-import { PageHeader } from "@/shared/components/visual";
-import { Button } from "@/shared/components/ui/button";
-import { Card, CardContent } from "@/shared/components/ui/card";
+import { AdminFilterPills, AdminOrderCard, BackLink, PageHeader } from "@/shared/components/visual";
 import { Input } from "@/shared/components/ui/input";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { adminCopy } from "@/shared/copy/admin";
+import type { OrderStatus } from "@/shared/components/OrderStatusBadge";
 
 const STATUS_FILTERS: Array<{ value: string; label: string }> = [
   { value: "", label: "Todos" },
@@ -53,96 +51,78 @@ export function OrdersPage() {
 
   return (
     <div className="space-y-6">
+      <BackLink to="/" label="Dashboard" />
+
       <PageHeader
+        variant="hero"
         title="Pedidos"
         subtitle={adminCopy.orders.subtitle}
         icon={ShoppingBag}
-        accent="chart-3"
       />
 
       <UiHint icon={RefreshCw} tone="warm">
         {adminCopy.orders.guidance}
       </UiHint>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="space-y-1 sm:max-w-xs sm:flex-1">
-          <Input
-            placeholder="Buscar número, nome ou telefone"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-          <p className="text-xs text-[hsl(var(--muted-foreground))]">{adminCopy.orders.searchHint}</p>
-        </div>
-        <label className="flex items-center gap-2 text-sm sm:self-start sm:pt-2">
-          <input
-            type="checkbox"
-            checked={activeOnly}
-            onChange={(event) => setActiveOnly(event.target.checked)}
-          />
-          <span>
-            Só ativos
-            <span className="mt-0.5 block text-xs text-[hsl(var(--muted-foreground))]">
-              {adminCopy.orders.activeOnlyHelp}
+      <div className="glass-panel rounded-2xl p-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+          <div className="space-y-1 sm:max-w-md sm:flex-1">
+            <Input
+              placeholder="Buscar número, nome ou telefone"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="border-brand-soft bg-white"
+            />
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">{adminCopy.orders.searchHint}</p>
+          </div>
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[hsl(var(--border))] bg-white px-4 py-3 text-sm transition hover:border-brand-soft">
+            <input
+              type="checkbox"
+              className="mt-1 h-4 w-4 accent-[hsl(var(--primary))]"
+              checked={activeOnly}
+              onChange={(event) => setActiveOnly(event.target.checked)}
+            />
+            <span>
+              Só ativos
+              <span className="mt-0.5 block text-xs text-[hsl(var(--muted-foreground))]">
+                {adminCopy.orders.activeOnlyHelp}
+              </span>
             </span>
-          </span>
-        </label>
+          </label>
+        </div>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {STATUS_FILTERS.map((filter) => (
-          <Button
-            key={filter.value || "all"}
-            type="button"
-            size="sm"
-            variant={status === filter.value ? "default" : "outline"}
-            onClick={() => setStatus(filter.value)}
-          >
-            {filter.label}
-          </Button>
-        ))}
-      </div>
+      <AdminFilterPills options={STATUS_FILTERS} value={status} onChange={setStatus} />
 
       {isLoading ? (
         <div className="space-y-3">
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-24 w-full rounded-2xl" />
+          <Skeleton className="h-24 w-full rounded-2xl" />
         </div>
       ) : orders.length ? (
         <ul className="space-y-3">
           {orders.map((order) => (
             <li key={order.id}>
-              <Link to={`/pedidos/${order.id}`}>
-                <Card className="interactive-card transition-colors hover:border-[hsl(var(--primary)/0.35)]">
-                  <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="space-y-1">
-                      <p className="font-semibold">
-                        {order.order_number} — {order.customer_name}
-                      </p>
-                      <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                        {formatDateTime(order.created_at)} · {order.items_count} itens ·{" "}
-                        {order.delivery_type === "delivery" ? "Entrega" : "Retirada"}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <OrderStatusBadge status={order.status as OrderStatus} />
-                      <PriceDisplay value={order.total} className="font-semibold" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+              <AdminOrderCard
+                id={order.id}
+                orderNumber={order.order_number}
+                customerName={order.customer_name}
+                createdAt={formatDateTime(order.created_at)}
+                status={order.status as OrderStatus}
+                total={order.total}
+                itemsCount={order.items_count}
+                deliveryType={order.delivery_type as "delivery" | "pickup"}
+              />
             </li>
           ))}
         </ul>
       ) : (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[hsl(var(--border))] px-6 py-16 text-center">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[hsl(var(--muted))]">
-            <ClipboardList className="h-6 w-6 text-[hsl(var(--muted-foreground))]" />
-          </div>
-          <p className="font-medium">{adminCopy.orders.empty.title}</p>
-          <p className="mt-1 max-w-sm text-sm text-[hsl(var(--muted-foreground))]">
-            {hasFilters ? adminCopy.orders.empty.filtered : adminCopy.orders.empty.waiting}
-          </p>
-        </div>
+        <EmptyState
+          icon={ClipboardList}
+          title={adminCopy.orders.empty.title}
+          description={hasFilters ? adminCopy.orders.empty.filtered : adminCopy.orders.empty.waiting}
+          accent="chart-3"
+        />
       )}
     </div>
   );

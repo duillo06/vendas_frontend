@@ -18,12 +18,30 @@ type StatCardProps = {
   hint?: ReactNode;
   icon: LucideIcon;
   accent?: VisualAccent;
+  highlight?: boolean;
   className?: string;
 };
 
-export function StatCard({ label, value, hint, icon: Icon, accent = "chart-1", className }: StatCardProps) {
+export function StatCard({
+  label,
+  value,
+  hint,
+  icon: Icon,
+  accent = "chart-1",
+  highlight = false,
+  className,
+}: StatCardProps) {
   return (
-    <Card className={cn("interactive-card overflow-hidden", className)}>
+    <Card
+      className={cn(
+        "interactive-card overflow-hidden",
+        highlight && "border-brand-soft shadow-md ring-1 ring-[hsl(var(--primary)/0.12)]",
+        className,
+      )}
+    >
+      {highlight ? (
+        <div className="h-1 w-full bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))]" />
+      ) : null}
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-2">

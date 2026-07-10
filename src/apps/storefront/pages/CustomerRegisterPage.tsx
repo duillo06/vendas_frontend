@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import { useCustomerAuth } from "@/features/customer-auth";
 import { UiHint } from "@/shared/components/UiHint";
+import { BackLink } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
@@ -55,6 +56,8 @@ export function CustomerRegisterPage() {
 
   return (
     <div className="mx-auto max-w-md space-y-6">
+      <BackLink to="/entrar" label="Entrar" />
+
       <div className="space-y-2 text-center">
         <h1 className="text-2xl font-bold">{storefrontCopy.account.registerTitle}</h1>
         <p className="text-sm text-[hsl(var(--muted-foreground))]">

@@ -6,7 +6,7 @@ import { useState } from "react";
 import { customersAdminApi } from "@/features/customers";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { UiHint } from "@/shared/components/UiHint";
-import { PageHeader } from "@/shared/components/visual";
+import { BackLink, PageHeader } from "@/shared/components/visual";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Skeleton } from "@/shared/components/ui/skeleton";
@@ -34,18 +34,20 @@ export function CustomersPage() {
 
   return (
     <div className="space-y-6">
+      <BackLink to="/" label="Dashboard" />
+
       <PageHeader
+        variant="hero"
         title="Clientes"
         subtitle={adminCopy.customers.subtitle}
         icon={Users}
-        accent="chart-4"
       />
 
       <UiHint icon={Users} tone="warm">
         {adminCopy.customers.guidance}
       </UiHint>
 
-      <div className="space-y-1 sm:max-w-xs">
+      <div className="glass-panel space-y-1 rounded-2xl p-4 sm:max-w-md">
         <Input
           placeholder="Buscar nome, telefone ou e-mail"
           value={search}

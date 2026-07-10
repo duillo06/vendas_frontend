@@ -28,28 +28,46 @@ export function CategoryNav({ categories, activeSlug, className }: CategoryNavPr
       >
         Todos
       </Link>
-      {categories.map((category, index) => (
+      {categories.map((category, index) => {
+        const isActive = activeSlug === category.slug;
+
+        return (
         <Link
           key={category.id}
           to={`/categoria/${category.slug}`}
           className={cn(
             "nav-pill flex shrink-0 items-center gap-2",
-            chipHover[index % chipHover.length],
-            activeSlug === category.slug && "nav-pill-active",
+            !isActive && chipHover[index % chipHover.length],
+            isActive && "nav-pill-active",
           )}
         >
-          {category.name}
+          {(() => {
+            const emoji = category.emoji?.trim();
+            return emoji ? (
+              <>
+                <span className="text-base leading-none" aria-hidden>
+                  {emoji}
+                </span>
+                <span>{category.name}</span>
+              </>
+            ) : (
+              category.name
+            );
+          })()}
           <Badge
             variant="secondary"
             className={cn(
               "border-0 text-[10px]",
-              activeSlug === category.slug ? "bg-white/20 text-white" : "bg-white",
+              isActive
+                ? "bg-white/20 text-[hsl(var(--primary-foreground))]"
+                : "bg-[hsl(var(--muted))] text-[hsl(var(--foreground))]",
             )}
           >
             {category.product_count}
           </Badge>
         </Link>
-      ))}
+      );
+      })}
     </nav>
   );
 }

@@ -20,6 +20,10 @@ type PageHeaderProps = {
   accent?: VisualAccent;
   action?: ReactNode;
   variant?: "default" | "hero";
+  /** compact = faixa fina (storefront); comfortable = bloco maior (backoffice) */
+  density?: "compact" | "comfortable";
+  /** esconde o hero no mobile — útil no storefront onde o header já identifica a loja */
+  mobileHidden?: boolean;
   className?: string;
 };
 
@@ -30,13 +34,43 @@ export function PageHeader({
   accent = "chart-1",
   action,
   variant = "default",
+  density = "compact",
+  mobileHidden = false,
   className,
 }: PageHeaderProps) {
   if (variant === "hero") {
+    if (density === "compact") {
+      return (
+        <section
+          className={cn(
+            "gradient-hero relative overflow-hidden rounded-xl px-4 py-3 text-[hsl(var(--primary-foreground))] shadow-md sm:rounded-2xl sm:px-5 sm:py-3.5",
+            mobileHidden && "hidden sm:block",
+            className,
+          )}
+        >
+          <div className="relative flex items-center gap-3">
+            {Icon ? (
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/20 ring-1 ring-white/25 sm:h-10 sm:w-10 sm:rounded-xl">
+                <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+              </span>
+            ) : null}
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-base font-bold tracking-tight sm:text-lg">{title}</h1>
+              {subtitle ? (
+                <p className="truncate text-xs text-white/85 sm:text-sm">{subtitle}</p>
+              ) : null}
+            </div>
+            {action ? <div className="shrink-0">{action}</div> : null}
+          </div>
+        </section>
+      );
+    }
+
     return (
       <section
         className={cn(
           "gradient-hero relative overflow-hidden rounded-2xl p-6 text-[hsl(var(--primary-foreground))] shadow-lg sm:p-8",
+          mobileHidden && "hidden sm:block",
           className,
         )}
       >

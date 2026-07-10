@@ -1,7 +1,9 @@
 import { Link } from "react-router";
-import { Gift, ShoppingCart, Sparkles } from "lucide-react";
+import { Gift, PartyPopper, ShoppingCart, Sparkles } from "lucide-react";
 
+import { CartUpsell } from "./CartUpsell";
 import { useCompanyPublic } from "@/features/company";
+import { useProducts } from "@/features/catalog";
 import { useCart } from "../hooks/useCart";
 import { CartItemRow } from "./CartItemRow";
 
@@ -19,6 +21,7 @@ type CartPanelProps = {
 export function CartPanel({ compact = false, onClose }: CartPanelProps) {
   const { items, subtotal, isEmpty, removeItem, updateQuantity } = useCart();
   const { data: company } = useCompanyPublic();
+  const { data: catalogPage } = useProducts({ page_size: 48 });
 
   const deliveryHint = getFreeDeliveryHint(
     subtotal,
@@ -30,7 +33,7 @@ export function CartPanel({ compact = false, onClose }: CartPanelProps) {
     return (
       <EmptyState
         icon={ShoppingCart}
-        title={storefrontCopy.cart.empty.title}
+        title={`${storefrontCopy.cart.empty.emoji} ${storefrontCopy.cart.empty.title}`}
         description={storefrontCopy.cart.empty.description}
         action={
           <Link to="/cardapio" onClick={onClose}>
@@ -43,16 +46,17 @@ export function CartPanel({ compact = false, onClose }: CartPanelProps) {
 
   return (
     <div className="flex h-full flex-col gap-4">
+      <UiHint icon={PartyPopper} tone="success" title="Excelente escolha!">
+        {storefrontCopy.cart.withItems}
+      </UiHint>
+
       <UiHint icon={Sparkles} tone="warm">
-        {storefrontCopy.cart.withItems(items.length)}
+        {storefrontCopy.cart.almostThere}
       </UiHint>
 
       {deliveryHint ? (
-        <UiHint
-          icon={Gift}
-          tone={deliveryHint.type === "unlocked" ? "success" : "warm"}
-        >
-          {deliveryHint.message}
+        <UiHint icon={Gift} tone={deliveryHint.type === "unlocked" ? "success" : "warm"}>
+          {deliveryHint.type === "unlocked" ? `🎁 ${deliveryHint.message}` : deliveryHint.message}
         </UiHint>
       ) : null}
 
@@ -68,10 +72,17 @@ export function CartPanel({ compact = false, onClose }: CartPanelProps) {
         ))}
       </ul>
 
+      {catalogPage?.results ? (
+        <CartUpsell
+          products={catalogPage.results}
+          cartProductIds={items.map((item) => item.productId)}
+        />
+      ) : null}
+
       <div className="mt-auto space-y-3 border-t border-[hsl(var(--border))] pt-4">
         <div className="flex items-center justify-between text-sm">
           <span className="text-[hsl(var(--muted-foreground))]">Subtotal (estimativa)</span>
-          <PriceDisplay value={subtotal} className="text-lg font-bold" />
+          <PriceDisplay value={subtotal} className="text-lg font-bold text-brand" />
         </div>
 
         <p className="text-xs text-[hsl(var(--muted-foreground))]">
@@ -80,8 +91,9 @@ export function CartPanel({ compact = false, onClose }: CartPanelProps) {
 
         <div className="flex flex-col gap-2">
           <Link to="/checkout" onClick={onClose}>
-            <Button className="w-full" size="lg">
+            <Button className="w-full gap-2" size="lg">
               Continuar para checkout
+              <span aria-hidden>🚀</span>
             </Button>
           </Link>
           {compact ? (

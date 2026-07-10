@@ -12,7 +12,7 @@ import {
   useUploadLogo,
   type SettingsData,
 } from "@/features/settings";
-import type { BusinessHoursAdmin } from "@/features/settings/types/settings.types";
+import type { BusinessHoursAdmin, TenantTheme } from "@/features/settings/types/settings.types";
 import { UiHint } from "@/shared/components/UiHint";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
@@ -146,6 +146,7 @@ export function SettingsForm() {
             settings: {
               ...current.settings,
               theme: {
+                ...current.settings.theme,
                 primary: current.settings.theme?.primary ?? DEFAULT_THEME.primary,
                 primary_foreground:
                   current.settings.theme?.primary_foreground ?? DEFAULT_THEME.primary_foreground,
@@ -159,6 +160,16 @@ export function SettingsForm() {
           }
         : current,
     );
+  };
+
+  const patchStorefront = (patch: Partial<NonNullable<TenantTheme["storefront"]>>) => {
+    const currentTheme = form?.settings.theme;
+    patchTheme({
+      storefront: {
+        ...currentTheme?.storefront,
+        ...patch,
+      },
+    });
   };
 
   const handleSave = () => {
@@ -457,6 +468,74 @@ export function SettingsForm() {
                 Destaque
               </div>
               <div className="tile-chart-3 rounded-lg px-3 py-2 text-sm font-medium">Ícones e cards</div>
+            </div>
+          </div>
+
+          <div className="space-y-3 rounded-xl border border-[hsl(var(--border))] p-4">
+            <p className="text-sm font-medium">Vitrine do cardápio (opcional)</p>
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">
+              Slogan, avaliação e promoções aparecem no hero da home. Use a descrição da empresa como texto de apoio.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="storefront_slogan">Slogan curto</Label>
+                <Input
+                  id="storefront_slogan"
+                  placeholder="Ex: A melhor pizza da cidade"
+                  value={form.settings.theme?.storefront?.slogan ?? ""}
+                  onChange={(event) => patchStorefront({ slogan: event.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="storefront_rating">Avaliação (ex: 4.9)</Label>
+                <Input
+                  id="storefront_rating"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="5"
+                  value={form.settings.theme?.storefront?.rating ?? ""}
+                  onChange={(event) =>
+                    patchStorefront({
+                      rating: event.target.value ? Number(event.target.value) : undefined,
+                      show_rating: Boolean(event.target.value),
+                    })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="storefront_orders">Pedidos entregues</Label>
+                <Input
+                  id="storefront_orders"
+                  type="number"
+                  min="0"
+                  value={form.settings.theme?.storefront?.orders_count ?? ""}
+                  onChange={(event) =>
+                    patchStorefront({
+                      orders_count: event.target.value ? Number(event.target.value) : undefined,
+                      show_orders_count: Boolean(event.target.value),
+                    })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="promo_label">Botão de promoção</Label>
+                <Input
+                  id="promo_label"
+                  placeholder="Ver promoções"
+                  value={form.settings.theme?.storefront?.promo_label ?? ""}
+                  onChange={(event) => patchStorefront({ promo_label: event.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="promo_url">Link da promoção</Label>
+                <Input
+                  id="promo_url"
+                  placeholder="/cardapio"
+                  value={form.settings.theme?.storefront?.promo_url ?? ""}
+                  onChange={(event) => patchStorefront({ promo_url: event.target.value })}
+                />
+              </div>
             </div>
           </div>
 

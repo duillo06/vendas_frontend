@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { User } from "lucide-react";
+import { Banknote, CreditCard, MapPin, ShieldCheck, Smartphone, Store, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm, type FieldPath } from "react-hook-form";
 import { Link } from "react-router";
@@ -17,6 +17,7 @@ import { cn } from "@/shared/lib/utils";
 import { storefrontCopy } from "@/shared/copy/storefront";
 
 import { CHECKOUT_STEPS, CheckoutStepper } from "./CheckoutStepper";
+import { CheckoutOrderSummary } from "./CheckoutOrderSummary";
 import { useCheckoutPrefill } from "../hooks/useCheckoutPrefill";
 import { useCreateOrder } from "../hooks/useCreateOrder";
 import {
@@ -166,10 +167,12 @@ export function CheckoutForm() {
       onSubmit={(event) => {
         event.preventDefault();
       }}
-      className="space-y-6"
+      className="space-y-6 pb-24 lg:pb-0"
     >
       <CheckoutStepper currentStep={step} />
 
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
+        <div className="space-y-6">
       {!authLoading && isAuthenticated && customer ? (
         <UiHint tone="success" icon={User} title={`Olá, ${customer.first_name}!`}>
           {storefrontCopy.account.checkoutLoggedIn(customer.full_name)}
@@ -189,9 +192,12 @@ export function CheckoutForm() {
       <UiHint tone="warm">{storefrontCopy.checkout.steps[step as 1 | 2 | 3 | 4]}</UiHint>
 
       {step === 1 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Seus dados</CardTitle>
+        <Card className="border-brand-soft/60 shadow-sm">
+          <CardHeader className="border-b border-[hsl(var(--border))] bg-brand-soft/20">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <User className="h-4 w-4 text-brand" />
+              Seus dados
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -226,20 +232,21 @@ export function CheckoutForm() {
       ) : null}
 
       {step === 2 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Entrega ou retirada</CardTitle>
+        <Card className="border-brand-soft/60 shadow-sm">
+          <CardHeader className="border-b border-[hsl(var(--border))] bg-brand-soft/20">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <MapPin className="h-4 w-4 text-brand" />
+              Entrega ou retirada
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {company?.settings.accepts_pickup !== false ? (
                 <button
                   type="button"
                   className={cn(
-                    "rounded-lg border px-4 py-3 text-sm font-medium transition-colors",
-                    deliveryType === "pickup"
-                      ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
-                      : "border-[hsl(var(--border))]",
+                    "checkout-option",
+                    deliveryType === "pickup" && "checkout-option-selected",
                   )}
                   onClick={() => {
                     setValue("deliveryType", "pickup");
@@ -247,17 +254,23 @@ export function CheckoutForm() {
                     clearErrors("address");
                   }}
                 >
-                  Retirada
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">
+                    <Store className="h-4 w-4" />
+                  </span>
+                  <span>
+                    <span className="block font-semibold">Retirada</span>
+                    <span className="text-xs font-normal text-[hsl(var(--muted-foreground))]">
+                      Busque no balcão quando estiver pronto
+                    </span>
+                  </span>
                 </button>
               ) : null}
               {company?.settings.accepts_delivery !== false ? (
                 <button
                   type="button"
                   className={cn(
-                    "rounded-lg border px-4 py-3 text-sm font-medium transition-colors",
-                    deliveryType === "delivery"
-                      ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
-                      : "border-[hsl(var(--border))]",
+                    "checkout-option",
+                    deliveryType === "delivery" && "checkout-option-selected",
                   )}
                   onClick={() => {
                     setValue("deliveryType", "delivery");
@@ -273,7 +286,15 @@ export function CheckoutForm() {
                     });
                   }}
                 >
-                  Entrega
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">
+                    <MapPin className="h-4 w-4" />
+                  </span>
+                  <span>
+                    <span className="block font-semibold">Entrega</span>
+                    <span className="text-xs font-normal text-[hsl(var(--muted-foreground))]">
+                      Levamos até o seu endereço
+                    </span>
+                  </span>
                 </button>
               ) : null}
             </div>
@@ -342,21 +363,26 @@ export function CheckoutForm() {
       ) : null}
 
       {step === 3 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Pagamento</CardTitle>
+        <Card className="border-brand-soft/60 shadow-sm">
+          <CardHeader className="border-b border-[hsl(var(--border))] bg-brand-soft/20">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <CreditCard className="h-4 w-4 text-brand" />
+              Pagamento
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              {paymentMethods.map((method) => (
+              {paymentMethods.map((method) => {
+                const PaymentIcon =
+                  method === "cash" ? Banknote : method === "pix" ? Smartphone : CreditCard;
+
+                return (
                 <button
                   key={method}
                   type="button"
                   className={cn(
-                    "flex w-full rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors",
-                    paymentMethod === method
-                      ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
-                      : "border-[hsl(var(--border))]",
+                    "checkout-option",
+                    paymentMethod === method && "checkout-option-selected",
                   )}
                   onClick={() => {
                     setValue("paymentMethod", method as CheckoutFormValues["paymentMethod"]);
@@ -366,9 +392,13 @@ export function CheckoutForm() {
                     }
                   }}
                 >
-                  {PAYMENT_LABELS[method] ?? method}
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">
+                    <PaymentIcon className="h-4 w-4" />
+                  </span>
+                  <span className="font-semibold">{PAYMENT_LABELS[method] ?? method}</span>
                 </button>
-              ))}
+              );
+              })}
             </div>
 
             {paymentMethod === "cash" ? (
@@ -405,14 +435,17 @@ export function CheckoutForm() {
       ) : null}
 
       {step === 4 ? (
-        <Card>
-          <CardHeader>
+        <Card className="border-brand-soft/60 shadow-sm">
+          <CardHeader className="border-b border-[hsl(var(--border))] bg-brand-soft/20">
             <CardTitle>Revisão do pedido</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <ul className="space-y-2 text-sm">
               {items.map((item) => (
-                <li key={item.id} className="flex justify-between gap-2">
+                <li
+                  key={item.id}
+                  className="flex justify-between gap-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/20 p-3"
+                >
                   <span>
                     {item.quantity}x {item.productName}
                   </span>
@@ -430,13 +463,18 @@ export function CheckoutForm() {
                   <span className="text-[hsl(var(--muted-foreground))]">Entrega</span>
                   <PriceDisplay value={deliveryFee} />
                 </div>
+              ) : deliveryType === "delivery" ? (
+                <div className="flex justify-between">
+                  <span className="text-[hsl(var(--muted-foreground))]">Entrega</span>
+                  <span className="font-medium text-brand">Grátis</span>
+                </div>
               ) : null}
               <div className="flex justify-between text-base font-semibold">
                 <span>Total estimado</span>
-                <PriceDisplay value={estimatedTotal} className="text-[hsl(var(--primary))]" />
+                <PriceDisplay value={estimatedTotal} className="text-brand" />
               </div>
             </div>
-            <div className="rounded-lg bg-[hsl(var(--muted))]/50 p-3 text-sm">
+            <div className="rounded-xl bg-brand-soft/50 p-4 text-sm">
               <p>
                 <strong>{formValues.customerName}</strong> — {formValues.customerPhone}
               </p>
@@ -445,28 +483,57 @@ export function CheckoutForm() {
                 {PAYMENT_LABELS[paymentMethod] ?? paymentMethod}
               </p>
             </div>
+
+            <UiHint icon={ShieldCheck} tone="success">
+              {storefrontCopy.checkout.confirmReassurance}
+            </UiHint>
           </CardContent>
         </Card>
       ) : null}
 
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+      <UiHint tone="neutral" className="text-xs lg:hidden">
+        {storefrontCopy.checkout.secureNote}
+      </UiHint>
+        </div>
+
+        <div className="space-y-4">
+          <CheckoutOrderSummary
+            className="lg:sticky lg:top-24"
+            items={items}
+            subtotal={subtotal}
+            deliveryFee={deliveryFee}
+            deliveryType={deliveryType}
+            freeDeliveryAbove={company?.settings.free_delivery_above}
+            baseDeliveryFee={company?.settings.delivery_fee ?? 0}
+            compact={step < 4}
+          />
+          <UiHint icon={ShieldCheck} tone="neutral" className="hidden text-xs lg:block">
+            {storefrontCopy.checkout.secureNote}
+          </UiHint>
+        </div>
+      </div>
+
+      <div className="checkout-sticky-actions lg:static lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+        <div className="mx-auto flex max-w-5xl flex-col-reverse gap-2 sm:flex-row sm:justify-between lg:max-w-none">
         <Button
           type="button"
           variant="outline"
           disabled={step === 1 || isPending}
           onClick={() => setStep((s) => Math.max(1, s - 1))}
+          className="lg:flex-none"
         >
           Voltar
         </Button>
         {step < CHECKOUT_STEPS ? (
-          <Button type="button" onClick={goNext}>
+          <Button type="button" onClick={goNext} className="lg:flex-none">
             Continuar
           </Button>
         ) : (
-          <Button type="button" disabled={isPending} onClick={handleConfirm}>
-            {isPending ? "Finalizando..." : "Confirmar pedido"}
+          <Button type="button" disabled={isPending} onClick={handleConfirm} className="gap-2 lg:flex-none">
+            {isPending ? "Finalizando..." : "Confirmar pedido 🎉"}
           </Button>
         )}
+        </div>
       </div>
     </form>
   );

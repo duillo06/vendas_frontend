@@ -8,7 +8,7 @@ import { OptionGroupEditor } from "@/features/catalog/components/OptionGroupEdit
 import { catalogAdminApi } from "@/features/catalog/api/catalogAdminApi";
 import { catalogAdminKeys } from "@/features/catalog/constants/catalog-admin-keys";
 import { UiHint } from "@/shared/components/UiHint";
-import { PageHeader } from "@/shared/components/visual";
+import { BackLink, PageHeader } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
@@ -52,11 +52,13 @@ export function OptionGroupsPage() {
 
   return (
     <div className="space-y-6">
+      <BackLink to="/" label="Dashboard" />
+
       <PageHeader
+        variant="hero"
         title="Grupos de opções"
         subtitle={adminCopy.optionGroups.subtitle}
         icon={ListTree}
-        accent="chart-4"
       />
 
       <UiHint icon={Sparkles} tone="warm">

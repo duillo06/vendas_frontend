@@ -15,6 +15,16 @@ export interface TenantThemePublic {
   accent?: string;
   accent_foreground?: string;
   radius?: string;
+  storefront?: {
+    slogan?: string;
+    show_rating?: boolean;
+    rating?: number;
+    show_orders_count?: boolean;
+    orders_count?: number;
+    promo_label?: string;
+    promo_url?: string;
+    show_delivery_time?: boolean;
+  };
 }
 
 export interface BusinessHoursPublic {

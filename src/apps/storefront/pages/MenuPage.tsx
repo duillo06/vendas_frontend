@@ -1,5 +1,4 @@
-import { Search, UtensilsCrossed } from "lucide-react";
-import { useEffect, useState } from "react";
+import { UtensilsCrossed } from "lucide-react";
 
 import {
   CategoryNav,
@@ -9,19 +8,14 @@ import {
   useCategories,
   useProducts,
 } from "@/features/catalog";
+import { CatalogSearchSection } from "@/features/storefront/components/CatalogSearchSection";
+import { useCatalogSearch } from "@/features/storefront/hooks/useCatalogSearch";
 import { EmptyState } from "@/shared/components/EmptyState";
-import { PageHeader } from "@/shared/components/visual";
-import { Input } from "@/shared/components/ui/input";
+import { BackLink, PageHeader } from "@/shared/components/visual";
 import { storefrontCopy } from "@/shared/copy/storefront";
 
 export function MenuPage() {
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 300);
-    return () => window.clearTimeout(timer);
-  }, [search]);
+  const { search, setSearch, debouncedSearch } = useCatalogSearch();
 
   const { data: categories, isLoading: loadingCategories } = useCategories();
   const { data: productsPage, isLoading: loadingProducts, isError } = useProducts({
@@ -30,37 +24,46 @@ export function MenuPage() {
   });
 
   const products = productsPage?.results ?? [];
+  const hasSearch = Boolean(debouncedSearch);
+  const showEmpty = !loadingProducts && !isError && products.length === 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
+      <BackLink to="/" label="Início" />
+
       <PageHeader
         variant="hero"
+        density="compact"
+        mobileHidden
         accent="chart-1"
         icon={UtensilsCrossed}
         title="Cardápio"
         subtitle={
-          productsPage
-            ? storefrontCopy.menu.count(productsPage.count)
-            : storefrontCopy.menu.subtitle
+          hasSearch && productsPage
+            ? storefrontCopy.menu.searchResults(productsPage.count, debouncedSearch)
+            : productsPage
+              ? storefrontCopy.menu.count(productsPage.count)
+              : storefrontCopy.menu.subtitle
         }
       />
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand" />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={storefrontCopy.menu.searchPlaceholder}
-          className="border-brand-soft bg-white pl-9 shadow-sm ring-brand focus-visible:ring-2"
-        />
-      </div>
-
-      {loadingCategories ? <CategoryNavSkeleton /> : categories ? <CategoryNav categories={categories} /> : null}
+      <CatalogSearchSection value={search} onChange={setSearch}>
+        {loadingCategories ? <CategoryNavSkeleton /> : categories ? <CategoryNav categories={categories} /> : null}
+      </CatalogSearchSection>
 
       {loadingProducts ? (
         <ProductListSkeleton />
       ) : isError ? (
-        <EmptyState title="Erro ao carregar cardápio" />
+        <EmptyState title="Erro ao carregar cardápio" accent="chart-1" />
+      ) : showEmpty ? (
+        <EmptyState
+          icon={UtensilsCrossed}
+          title={hasSearch ? storefrontCopy.menu.searchEmpty.title : storefrontCopy.menu.empty.title}
+          description={
+            hasSearch ? storefrontCopy.menu.searchEmpty.description : storefrontCopy.menu.empty.description
+          }
+          accent="chart-2"
+        />
       ) : (
         <ProductList products={products} />
       )}

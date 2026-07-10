@@ -4,13 +4,13 @@ import { Link } from "react-router";
 
 import { useDashboard } from "@/features/dashboard";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
-import { OrderStatusBadge, type OrderStatus } from "@/shared/components/OrderStatusBadge";
 import { UiHint } from "@/shared/components/UiHint";
-import { PageHeader, StatCard } from "@/shared/components/visual";
+import { AdminOrderCard, PageHeader, StatCard } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { adminCopy } from "@/shared/copy/admin";
+import type { OrderStatus } from "@/shared/components/OrderStatusBadge";
 
 function formatTime(iso: string) {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -31,14 +31,24 @@ export function DashboardPage() {
   }, []);
 
   const pendingOrders = data?.today.pending_orders ?? 0;
+  const totalOrders = data?.today.total_orders ?? 0;
+  const progressPercent = totalOrders > 0 ? Math.round(((totalOrders - pendingOrders) / totalOrders) * 100) : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
+        variant="hero"
         title="Dashboard"
         subtitle={adminCopy.dashboard.subtitle(greeting)}
         icon={LayoutDashboard}
-        accent="chart-1"
+        action={
+          <Link to="/pedidos">
+            <Button size="lg" className="gap-2 bg-white text-brand shadow-lg hover:bg-[hsl(var(--primary-soft))]">
+              <ShoppingBag className="h-4 w-4" />
+              Ver pedidos
+            </Button>
+          </Link>
+        }
       />
 
       {isError ? (
@@ -50,7 +60,7 @@ export function DashboardPage() {
       </UiHint>
 
       {!isLoading && pendingOrders > 0 ? (
-        <UiHint icon={ClipboardList} tone="warm">
+        <UiHint icon={ClipboardList} tone="warm" title="Atenção">
           {adminCopy.dashboard.pendingAlert(pendingOrders)}
           <Link to="/pedidos?status=pending" className="ml-1 font-medium text-brand underline">
             Ver pendentes
@@ -58,18 +68,36 @@ export function DashboardPage() {
         </UiHint>
       ) : null}
 
+      {!isLoading && totalOrders > 0 ? (
+        <div className="glass-panel rounded-2xl p-4">
+          <div className="mb-2 flex items-center justify-between text-sm">
+            <span className="font-medium">{adminCopy.dashboard.progressLabel}</span>
+            <span className="text-[hsl(var(--muted-foreground))]">
+              {totalOrders - pendingOrders}/{totalOrders} em andamento
+            </span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-[hsl(var(--muted))]">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))] transition-all duration-500"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+      ) : null}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Pedidos hoje"
           icon={ShoppingBag}
           accent="chart-1"
-          value={isLoading ? <Skeleton className="h-9 w-16" /> : (data?.today.total_orders ?? 0)}
+          highlight={pendingOrders > 0}
+          value={isLoading ? <Skeleton className="h-9 w-16" /> : totalOrders}
           hint={
             isLoading ? (
               <Skeleton className="h-4 w-24" />
             ) : (
               <>
-                {data?.today.pending_orders ?? 0} pendentes · {data?.today.preparing_orders ?? 0} em preparo
+                {pendingOrders} pendentes · {data?.today.preparing_orders ?? 0} em preparo
                 <p className="mt-1">{adminCopy.dashboard.metrics.ordersToday}</p>
               </>
             )
@@ -79,6 +107,7 @@ export function DashboardPage() {
           label="Faturamento"
           icon={TrendingUp}
           accent="chart-3"
+          highlight
           value={
             isLoading ? <Skeleton className="h-9 w-28" /> : <PriceDisplay value={data?.today.revenue ?? 0} />
           }
@@ -115,8 +144,8 @@ export function DashboardPage() {
         />
       </div>
 
-      <Card className="interactive-card">
-        <CardHeader className="flex flex-row items-center justify-between gap-2">
+      <Card className="overflow-hidden border-brand-soft/60 shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between gap-2 border-b border-[hsl(var(--border))] bg-brand-soft/30">
           <CardTitle className="text-base">Pedidos recentes</CardTitle>
           <Link to="/pedidos">
             <Button type="button" variant="outline" size="sm">
@@ -124,40 +153,32 @@ export function DashboardPage() {
             </Button>
           </Link>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4">
           {isLoading ? (
             <div className="space-y-3">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-20 w-full rounded-2xl" />
+              <Skeleton className="h-20 w-full rounded-2xl" />
             </div>
           ) : data?.recent_orders.length ? (
-            <ul className="divide-y divide-[hsl(var(--border))]">
+            <ul className="space-y-3">
               {data.recent_orders.map((order) => (
                 <li key={order.id}>
-                  <Link
-                    to={`/pedidos/${order.id}`}
-                    className="flex flex-col gap-2 rounded-lg py-3 transition-colors hover:bg-brand-soft/50 sm:flex-row sm:items-center sm:justify-between sm:px-2"
-                  >
-                    <div className="space-y-1">
-                      <p className="font-medium">
-                        {order.order_number} — {order.customer_name}
-                      </p>
-                      <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                        {formatTime(order.created_at)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <OrderStatusBadge status={order.status as OrderStatus} />
-                      <PriceDisplay value={order.total} className="font-semibold" />
-                    </div>
-                  </Link>
+                  <AdminOrderCard
+                    id={order.id}
+                    orderNumber={order.order_number}
+                    customerName={order.customer_name}
+                    createdAt={formatTime(order.created_at)}
+                    status={order.status as OrderStatus}
+                    total={order.total}
+                    compact
+                  />
                 </li>
               ))}
             </ul>
           ) : (
-            <div className="rounded-xl border border-dashed border-brand-soft bg-brand-soft/40 px-4 py-10 text-center">
-              <p className="font-medium">{adminCopy.dashboard.emptyOrders.title}</p>
-              <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
+            <div className="rounded-2xl border border-dashed border-brand-soft bg-brand-soft/40 px-4 py-12 text-center">
+              <p className="text-lg font-semibold">{adminCopy.dashboard.emptyOrders.title}</p>
+              <p className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
                 {adminCopy.dashboard.emptyOrders.description}
               </p>
             </div>

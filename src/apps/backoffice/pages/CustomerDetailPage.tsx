@@ -5,6 +5,7 @@ import { customersAdminApi } from "@/features/customers";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { OrderStatusBadge, type OrderStatus } from "@/shared/components/OrderStatusBadge";
 import { UiHint } from "@/shared/components/UiHint";
+import { BackLink } from "@/shared/components/visual";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { adminCopy } from "@/shared/copy/admin";
@@ -37,10 +38,9 @@ export function CustomerDetailPage() {
 
   return (
     <div className="space-y-6">
+      <BackLink to="/clientes" label="Clientes" />
+
       <div>
-        <Link to="/clientes" className="text-sm text-brand hover:underline">
-          ← Voltar aos clientes
-        </Link>
         <h1 className="text-2xl font-bold">{customer.full_name}</h1>
         <p className="text-[hsl(var(--muted-foreground))]">
           {customer.phone}

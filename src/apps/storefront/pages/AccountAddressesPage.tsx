@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Link } from "react-router";
 import { toast } from "sonner";
 
 import { customerAuthApi, type CustomerAddressPayload } from "@/features/customer-auth";
 import { useConfirm } from "@/shared/hooks/useConfirm";
+import { BackLink } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
@@ -77,9 +77,7 @@ export function AccountAddressesPage() {
     <div className="mx-auto max-w-lg space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-2">
-          <Link to="/conta" className="text-sm text-brand hover:underline">
-            ← Minha conta
-          </Link>
+          <BackLink to="/conta" label="Minha conta" />
           <h1 className="text-2xl font-bold">{storefrontCopy.account.addressesTitle}</h1>
         </div>
         <Button type="button" onClick={() => setShowForm((value) => !value)}>

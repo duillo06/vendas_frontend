@@ -1,19 +1,31 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, FolderOpen, ImagePlus, Save, Sparkles, Tag } from "lucide-react";
+import { CheckCircle2, Eye, FolderOpen, Save, Sparkles, Tag } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 
 import { catalogAdminApi } from "@/features/catalog/api/catalogAdminApi";
+import { formatCategoryLabel } from "@/features/catalog/utils/categoryLabel";
+import { ProductImageGallery } from "@/features/catalog/components/ProductImageGallery";
 import { catalogAdminKeys } from "@/features/catalog/constants/catalog-admin-keys";
 import { CurrencyInput } from "@/shared/components/CurrencyInput";
+import { ProductCard } from "@/shared/components/ProductCard";
 import { UiHint } from "@/shared/components/UiHint";
+import { PageHeader, BackLink } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { adminCopy } from "@/shared/copy/admin";
+
+const MAX_IMAGES = 5;
+
+type PendingImage = {
+  key: string;
+  file: File;
+  previewUrl: string;
+};
 
 export function ProductFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -46,8 +58,7 @@ export function ProductFormPage() {
     is_available: true,
     option_group_ids: [] as string[],
   });
-  const [pendingImage, setPendingImage] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
 
   useEffect(() => {
     if (product) {
@@ -60,9 +71,7 @@ export function ProductFormPage() {
         is_available: product.is_available,
         option_group_ids: product.option_group_ids,
       });
-      const primary = product.images.find((image) => image.is_primary) ?? product.images[0];
-      setPreviewUrl(primary?.image_url ?? null);
-      setPendingImage(null);
+      setPendingImages([]);
     } else if (isNew && categories?.length) {
       setForm((current) => ({
         ...current,
@@ -72,21 +81,76 @@ export function ProductFormPage() {
   }, [product, isNew, categories]);
 
   useEffect(() => {
-    if (!pendingImage) return;
-    const objectUrl = URL.createObjectURL(pendingImage);
-    setPreviewUrl(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [pendingImage]);
+    return () => {
+      pendingImages.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+    };
+  }, [pendingImages]);
+
+  const savedImages = product?.images ?? [];
+  const totalImageCount = savedImages.length + pendingImages.length;
+
+  const previewImageUrl =
+    pendingImages[0]?.previewUrl ??
+    savedImages.find((image) => image.is_primary)?.image_url ??
+    savedImages[0]?.image_url ??
+    null;
+
+  const previewSlug =
+    product?.slug ??
+    (form.name.trim()
+      ? form.name
+          .trim()
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "")
+      : "preview");
 
   const checklist = useMemo(
     () => ({
-      photo: Boolean(previewUrl),
+      photo: totalImageCount > 0,
       name: form.name.trim().length >= 3,
       price: form.base_price > 0,
       category: Boolean(form.category_id),
     }),
-    [previewUrl, form.name, form.base_price, form.category_id],
+    [totalImageCount, form.name, form.base_price, form.category_id],
   );
+
+  const invalidateProductQueries = (productId: string) => {
+    void queryClient.invalidateQueries({ queryKey: catalogAdminKeys.product(productId) });
+    void queryClient.invalidateQueries({ queryKey: catalogAdminKeys.products() });
+    void queryClient.invalidateQueries({ queryKey: ["catalog"] });
+  };
+
+  const uploadImage = useMutation({
+    mutationFn: (file: File) => catalogAdminApi.uploadProductImage(id!, file),
+    onSuccess: () => {
+      toast.success(adminCopy.products.form.imageUploaded);
+      invalidateProductQueries(id!);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Não foi possível enviar a imagem");
+    },
+  });
+
+  const deleteImage = useMutation({
+    mutationFn: (imageId: string) => catalogAdminApi.deleteProductImage(id!, imageId),
+    onSuccess: () => {
+      toast.success(adminCopy.products.form.imageDeleted);
+      invalidateProductQueries(id!);
+    },
+    onError: () => toast.error("Não foi possível remover a imagem"),
+  });
+
+  const setPrimaryImage = useMutation({
+    mutationFn: (imageId: string) => catalogAdminApi.setPrimaryProductImage(id!, imageId),
+    onSuccess: () => {
+      toast.success(adminCopy.products.form.primarySet);
+      invalidateProductQueries(id!);
+    },
+    onError: () => toast.error("Não foi possível definir a capa"),
+  });
 
   const save = useMutation({
     mutationFn: async () => {
@@ -111,8 +175,12 @@ export function ProductFormPage() {
         ? await catalogAdminApi.createProduct(payload)
         : await catalogAdminApi.updateProduct(id!, payload);
 
-      if (pendingImage) {
-        await catalogAdminApi.uploadProductImage(saved.id, pendingImage);
+      if (pendingImages.length) {
+        for (const [index, item] of pendingImages.entries()) {
+          await catalogAdminApi.uploadProductImage(saved.id, item.file, {
+            isPrimary: index === 0,
+          });
+        }
       }
 
       return saved;
@@ -127,27 +195,43 @@ export function ProductFormPage() {
     },
   });
 
-  const uploadImage = useMutation({
-    mutationFn: (file: File) => catalogAdminApi.uploadProductImage(id!, file),
-    onSuccess: () => {
-      toast.success("Imagem enviada");
-      setPendingImage(null);
-      void queryClient.invalidateQueries({ queryKey: catalogAdminKeys.product(id!) });
-      void queryClient.invalidateQueries({ queryKey: catalogAdminKeys.products() });
-    },
-    onError: () => toast.error("Não foi possível enviar a imagem"),
-  });
+  const handleAddFiles = (files: FileList | File[]) => {
+    const incoming = Array.from(files);
+    const availableSlots = MAX_IMAGES - totalImageCount;
 
-  const handleImagePick = (file: File | undefined) => {
-    if (!file) return;
-
-    if (isNew) {
-      setPendingImage(file);
+    if (availableSlots <= 0) {
+      toast.error(adminCopy.products.form.imageLimit);
       return;
     }
 
-    setPendingImage(file);
-    uploadImage.mutate(file);
+    const nextFiles = incoming.slice(0, availableSlots);
+    if (nextFiles.length < incoming.length) {
+      toast.error(adminCopy.products.form.imageLimit);
+    }
+
+    if (isNew) {
+      setPendingImages((current) => [
+        ...current,
+        ...nextFiles.map((file) => ({
+          key: `${file.name}-${file.lastModified}-${crypto.randomUUID()}`,
+          file,
+          previewUrl: URL.createObjectURL(file),
+        })),
+      ]);
+      return;
+    }
+
+    nextFiles.forEach((file) => uploadImage.mutate(file));
+  };
+
+  const removePendingImage = (key: string) => {
+    setPendingImages((current) => {
+      const target = current.find((item) => item.key === key);
+      if (target) {
+        URL.revokeObjectURL(target.previewUrl);
+      }
+      return current.filter((item) => item.key !== key);
+    });
   };
 
   if (!isNew && isLoading) {
@@ -157,19 +241,18 @@ export function ProductFormPage() {
   const noCategories = !categories?.length;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div className="space-y-2">
-        <Link to="/produtos" className="text-sm text-[hsl(var(--primary))] hover:underline">
-          ← Voltar aos produtos
-        </Link>
-        <h1 className="text-2xl font-bold">
-          {isNew ? adminCopy.products.form.titleNew : adminCopy.products.form.titleEdit}
-        </h1>
-        <p className="text-sm text-[hsl(var(--muted-foreground))]">
-          {isNew ? adminCopy.products.form.subtitleNew : adminCopy.products.form.subtitleEdit}
-        </p>
-      </div>
+    <div className="space-y-6">
+      <BackLink to="/produtos" label="Produtos" />
 
+      <PageHeader
+        variant="hero"
+        title={isNew ? adminCopy.products.form.titleNew : adminCopy.products.form.titleEdit}
+        subtitle={isNew ? adminCopy.products.form.subtitleNew : adminCopy.products.form.subtitleEdit}
+        icon={Sparkles}
+      />
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
+        <div className="space-y-6">
       <UiHint icon={Sparkles} tone="warm">
         {adminCopy.products.form.guidance}
       </UiHint>
@@ -200,35 +283,22 @@ export function ProductFormPage() {
           </div>
 
           <div className="space-y-2">
-            <Label>Foto do produto</Label>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--muted))]">
-                {previewUrl ? (
-                  <img src={previewUrl} alt="Prévia do produto" className="h-full w-full object-cover" />
-                ) : (
-                  <ImagePlus className="h-8 w-8 text-[hsl(var(--muted-foreground))]" />
-                )}
-              </div>
-              <div className="space-y-2">
-                <Input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  disabled={uploadImage.isPending}
-                  onChange={(event) => {
-                    handleImagePick(event.target.files?.[0]);
-                    event.target.value = "";
-                  }}
-                />
-                <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                  {isNew
-                    ? "A foto será enviada junto com o cadastro do produto."
-                    : uploadImage.isPending
-                      ? "Enviando imagem..."
-                      : "JPG ou PNG. A nova foto vira capa do produto."}
-                </p>
-              </div>
-            </div>
+            <Label>Fotos do produto</Label>
+            <ProductImageGallery
+              images={savedImages}
+              pendingPreviews={pendingImages.map((item) => ({
+                key: item.key,
+                url: item.previewUrl,
+              }))}
+              isUploading={uploadImage.isPending || save.isPending}
+              onAddFiles={handleAddFiles}
+              onSetPrimary={!isNew ? (imageId) => setPrimaryImage.mutate(imageId) : undefined}
+              onDelete={!isNew ? (imageId) => deleteImage.mutate(imageId) : undefined}
+              onRemovePending={isNew ? removePendingImage : undefined}
+            />
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">
+              {adminCopy.products.form.imagesHelp}
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -271,7 +341,7 @@ export function ProductFormPage() {
                 {!categories?.length ? <option value="">Sem categorias</option> : null}
                 {categories?.map((category) => (
                   <option key={category.id} value={category.id}>
-                    {category.name}
+                    {formatCategoryLabel(category)}
                   </option>
                 ))}
               </select>
@@ -328,6 +398,32 @@ export function ProductFormPage() {
           </Button>
         </CardContent>
       </Card>
+        </div>
+
+        <Card className="sticky top-6 border-brand-soft/60 shadow-sm lg:top-8">
+          <CardHeader className="border-b border-[hsl(var(--border))] bg-brand-soft/20">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Eye className="h-4 w-4 text-brand" />
+              {adminCopy.products.form.previewTitle}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 pt-4">
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">{adminCopy.products.form.previewHint}</p>
+            <div className="pointer-events-none mx-auto max-w-[260px]">
+              <ProductCard
+                id={product?.id ?? "preview"}
+                slug={previewSlug}
+                name={form.name.trim() || "Nome do produto"}
+                description={form.description.trim() || undefined}
+                price={form.base_price || 0}
+                imageUrl={previewImageUrl}
+                unavailable={!form.is_available}
+                className="scale-in"
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

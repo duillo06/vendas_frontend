@@ -5,6 +5,7 @@ export interface CategoryAdmin {
   id: string;
   name: string;
   slug: string;
+  emoji: string | null;
   description: string | null;
   is_active: boolean;
   sort_order: number;
@@ -24,6 +25,14 @@ export interface ProductAdminListItem {
   created_at: string;
 }
 
+export interface ProductImageAdmin {
+  id: string;
+  image_url: string;
+  alt_text: string;
+  is_primary: boolean;
+  sort_order: number;
+}
+
 export interface ProductAdminDetail {
   id: string;
   name: string;
@@ -39,13 +48,7 @@ export interface ProductAdminDetail {
   sort_order: number;
   prep_time: number | null;
   option_group_ids: string[];
-  images: Array<{
-    id: string;
-    image_url: string;
-    alt_text: string;
-    is_primary: boolean;
-    sort_order: number;
-  }>;
+  images: ProductImageAdmin[];
 }
 
 export interface OptionAdmin {
@@ -88,13 +91,28 @@ export const catalogAdminApi = {
 
   deleteProduct: (id: string) => apiClient.delete(`/admin/products/${id}/`),
 
-  uploadProductImage: (id: string, file: File) => {
+  uploadProductImage: (id: string, file: File, options?: { isPrimary?: boolean }) => {
     const formData = new FormData();
     formData.append("image", file);
-    return apiClient.post(`/admin/products/${id}/images/`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    if (options?.isPrimary) {
+      formData.append("is_primary", "true");
+    }
+    return apiClient
+      .post<ProductImageAdmin>(`/admin/products/${id}/images/`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((response) => response.data);
   },
+
+  deleteProductImage: (productId: string, imageId: string) =>
+    apiClient.delete(`/admin/products/${productId}/images/${imageId}/`),
+
+  setPrimaryProductImage: (productId: string, imageId: string) =>
+    apiClient
+      .patch<ProductImageAdmin>(`/admin/products/${productId}/images/${imageId}/`, {
+        is_primary: true,
+      })
+      .then((response) => response.data),
 
   listCategories: () =>
     apiClient.get<CategoryAdmin[]>("/admin/categories/").then((response) => response.data),

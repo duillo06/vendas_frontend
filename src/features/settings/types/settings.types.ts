@@ -1,9 +1,21 @@
+export interface StorefrontThemeConfig {
+  slogan?: string;
+  show_rating?: boolean;
+  rating?: number;
+  show_orders_count?: boolean;
+  orders_count?: number;
+  promo_label?: string;
+  promo_url?: string;
+  show_delivery_time?: boolean;
+}
+
 export interface TenantTheme {
   primary?: string;
   primary_foreground?: string;
   accent?: string;
   accent_foreground?: string;
   radius?: string;
+  storefront?: StorefrontThemeConfig;
 }
 
 export interface CompanySettingsAdmin {
