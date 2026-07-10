@@ -39,8 +39,10 @@ export function CartItemRow({ item, onQuantityChange, onRemove }: CartItemRowPro
             {item.selectedOptions.length > 0 ? (
               <ul className="mt-1 space-y-0.5 text-xs text-[hsl(var(--muted-foreground))]">
                 {item.selectedOptions.map((option) => (
-                  <li key={option.optionId}>
-                    {option.optionGroupName}: {option.name}
+                  <li key={`${option.optionId}-${option.quantity}`}>
+                    {option.optionGroupName}:{" "}
+                    {option.quantity > 1 ? `${option.quantity}x ` : ""}
+                    {option.name}
                   </li>
                 ))}
               </ul>

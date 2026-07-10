@@ -37,14 +37,48 @@ export interface ProductImage {
 }
 
 export type OptionSelectionType = "single" | "multiple";
+export type OptionSelectionMode = "pick" | "quantity";
 export type OptionPriceType = "fixed" | "percentage";
+
+export type OptionDisplayType =
+  | "list"
+  | "radio"
+  | "checkbox"
+  | "cards"
+  | "image_cards"
+  | "dropdown"
+  | "stepper"
+  | "icon_chips"
+  | "color_swatch";
+
+export type PricingConfig =
+  | { strategy: "additive" }
+  | { strategy: "charge_extras_only"; included_count: number }
+  | { strategy: "first_n_free"; free_count: number }
+  | { strategy: "quantity_multiplier" }
+  | { strategy: "tiered"; tiers: Array<{ from: number; to?: number; unit_price: number }> };
+
+export type OptionUiConfig = {
+  hint?: string;
+  success_message?: string;
+  emoji?: string;
+  show_when?: {
+    group_id: string;
+    option_ids?: string[];
+  };
+};
 
 export interface Option {
   id: string;
   name: string;
+  description?: string | null;
   price_modifier: number;
   price_type: OptionPriceType;
   is_available: boolean;
+  image_url?: string | null;
+  icon?: string | null;
+  stock_quantity?: number | null;
+  metadata?: { color?: string } | Record<string, unknown> | null;
 }
 
 export interface OptionGroup {
@@ -52,11 +86,19 @@ export interface OptionGroup {
   name: string;
   description: string | null;
   selection_type: OptionSelectionType;
+  selection_mode?: OptionSelectionMode;
+  display_type?: OptionDisplayType;
   min_selections: number;
   max_selections: number;
   is_required: boolean;
   sort_order: number;
   options: Option[];
+  icon?: string | null;
+  image_url?: string | null;
+  visibility?: "always" | "hidden" | "conditional";
+  pricing_config?: PricingConfig;
+  ui_config?: OptionUiConfig;
+  default_option_ids?: string[];
 }
 
 export interface ProductDetail {
@@ -80,4 +122,5 @@ export interface ProductFilters {
   page_size?: number;
 }
 
+/** @deprecated use OptionSelectionItem[] from product-builder */
 export type OptionSelections = Record<string, string[]>;

@@ -148,7 +148,7 @@ export function OptionGroupsPage() {
 
           <div className="space-y-3">
             {groups.map((group, index) => (
-              <OptionGroupEditor key={group.id} group={group} defaultExpanded={index === 0} />
+              <OptionGroupEditor key={group.id} group={group} allGroups={groups} defaultExpanded={index === 0} />
             ))}
           </div>
         </>

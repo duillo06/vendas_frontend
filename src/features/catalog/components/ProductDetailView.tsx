@@ -1,22 +1,26 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Link } from "react-router";
 import { Check, Clock, Flame, Heart } from "lucide-react";
 import { toast } from "sonner";
 
 import { useFavorites } from "@/features/favorites";
+import {
+  ProductBuilder,
+  scrollToOptionGroup,
+  validateAllGroups,
+  calculateProductPrice,
+  flattenSelectionsForCart,
+  buildInitialSelections,
+  pruneHiddenSelections,
+  type ProductBuilderState,
+} from "@/features/product-builder";
 import { ProductFeatureChips } from "@/features/storefront/components/ProductFeatureChips";
 import {
   getProductBadges,
   getProductFeatureChips,
 } from "@/features/storefront/utils/productBadges";
-import { OptionGroupSelector } from "./OptionGroupSelector";
 import { ProductImageCarousel } from "./ProductImageCarousel";
 import type { ProductDetail, ProductListItem } from "../types/catalog.types";
-import {
-  calculateItemPrice,
-  getSelectedOptions,
-  validateOptionSelections,
-} from "../utils/priceCalculator";
 
 import { ProductCard } from "@/shared/components/ProductCard";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
@@ -41,6 +45,7 @@ export type ProductAddToCartPayload = {
     name: string;
     priceModifier: number;
     priceType: "fixed" | "percentage";
+    quantity: number;
   }>;
 };
 
@@ -51,19 +56,33 @@ type ProductDetailViewProps = {
 };
 
 export function ProductDetailView({ product, relatedProducts = [], onAddToCart }: ProductDetailViewProps) {
-  const [selections, setSelections] = useState<Record<string, string[]>>({});
+  const [selections, setSelections] = useState<ProductBuilderState>(() =>
+    buildInitialSelections(product.option_groups),
+  );
+  const [invalidGroupId, setInvalidGroupId] = useState<string | null>(null);
   const [justAdded, setJustAdded] = useState(false);
+  const [priceBump, setPriceBump] = useState(false);
+  const isFirstPriceRender = useRef(true);
   const { isFavorite, toggle } = useFavorites();
 
-  const selectedOptions = useMemo(
-    () => getSelectedOptions(product, selections),
+  useEffect(() => {
+    setSelections(buildInitialSelections(product.option_groups));
+  }, [product.id]);
+
+  const totalPrice = useMemo(
+    () => calculateProductPrice(product, selections),
     [product, selections],
   );
 
-  const totalPrice = useMemo(
-    () => calculateItemPrice(product.base_price, selectedOptions),
-    [product.base_price, selectedOptions],
-  );
+  useEffect(() => {
+    if (isFirstPriceRender.current) {
+      isFirstPriceRender.current = false;
+      return;
+    }
+    setPriceBump(true);
+    const timer = window.setTimeout(() => setPriceBump(false), 350);
+    return () => window.clearTimeout(timer);
+  }, [totalPrice]);
 
   const primaryImage = product.images.find((img) => img.is_primary) ?? product.images[0];
   const isPopular = product.tags.some((tag) =>
@@ -76,30 +95,27 @@ export function ProductDetailView({ product, relatedProducts = [], onAddToCart }
   const favorite = isFavorite(product.id);
 
   const handleAddToCart = () => {
-    const error = validateOptionSelections(product.option_groups, selections);
-    if (error) {
-      toast.error(error);
+    const validation = validateAllGroups(product.option_groups, selections);
+    if (validation) {
+      setInvalidGroupId(validation.groupId);
+      toast.error(validation.message);
+      scrollToOptionGroup(validation.groupId);
       return;
     }
 
+    setInvalidGroupId(null);
+
     if (!onAddToCart) return;
 
-    const optionsPayload: ProductAddToCartPayload["selectedOptions"] = [];
-    for (const group of product.option_groups) {
-      const chosen = selections[group.id] ?? [];
-      for (const optionId of chosen) {
-        const option = group.options.find((o) => o.id === optionId);
-        if (!option) continue;
-        optionsPayload.push({
-          optionId: option.id,
-          optionGroupId: group.id,
-          optionGroupName: group.name,
-          name: option.name,
-          priceModifier: option.price_modifier,
-          priceType: option.price_type,
-        });
-      }
-    }
+    const optionsPayload = flattenSelectionsForCart(product, selections).map((opt) => ({
+      optionId: opt.optionId,
+      optionGroupId: opt.optionGroupId,
+      optionGroupName: opt.optionGroupName,
+      name: opt.name,
+      priceModifier: opt.priceModifier,
+      priceType: opt.priceType,
+      quantity: opt.quantity,
+    }));
 
     onAddToCart({
       productId: product.id,
@@ -177,7 +193,13 @@ export function ProductDetailView({ product, relatedProducts = [], onAddToCart }
           <ProductFeatureChips items={featureChips} title={storefrontCopy.product.highlightsTitle} />
 
           <div className="flex items-baseline gap-3 rounded-2xl border border-brand-soft bg-brand-soft/40 px-4 py-3">
-            <PriceDisplay value={totalPrice} className="text-3xl font-bold text-brand" />
+            <PriceDisplay
+              value={totalPrice}
+              className={cn(
+                "text-3xl font-bold text-brand transition-transform",
+                priceBump && "animate-price-pop",
+              )}
+            />
             {totalPrice !== product.base_price ? (
               <span className="text-sm text-[hsl(var(--muted-foreground))] line-through">
                 <PriceDisplay value={product.base_price} />
@@ -189,13 +211,17 @@ export function ProductDetailView({ product, relatedProducts = [], onAddToCart }
             ) : null}
           </div>
 
-          <OptionGroupSelector
+          <ProductBuilder
             groups={product.option_groups}
             selections={selections}
-            onChange={(groupId, optionIds) =>
-              setSelections((prev) => ({ ...prev, [groupId]: optionIds }))
-            }
             basePrice={product.base_price}
+            invalidGroupId={invalidGroupId}
+            onChange={(groupId, items) => {
+              setInvalidGroupId((current) => (current === groupId ? null : current));
+              setSelections((prev) =>
+                pruneHiddenSelections(product.option_groups, { ...prev, [groupId]: items }),
+              );
+            }}
           />
 
           <div className="space-y-3 max-lg:sticky max-lg:bottom-4 max-lg:z-10 max-lg:rounded-2xl max-lg:border max-lg:border-brand-soft max-lg:bg-white/95 max-lg:p-3 max-lg:pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] max-lg:shadow-lg max-lg:backdrop-blur-md">

@@ -1,10 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Eye, FolderOpen, Save, Sparkles, Tag } from "lucide-react";
+import { CheckCircle2, Eye, FolderOpen, Layers, Save, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 
-import { catalogAdminApi } from "@/features/catalog/api/catalogAdminApi";
+import {
+  catalogAdminApi,
+  type ProductOptionGroupLink,
+} from "@/features/catalog/api/catalogAdminApi";
+import { ProductBuilderPreview } from "@/features/catalog/components/ProductBuilderPreview";
+import { ProductConfigurator } from "@/features/catalog/components/ProductConfigurator";
 import { formatCategoryLabel } from "@/features/catalog/utils/categoryLabel";
 import { ProductImageGallery } from "@/features/catalog/components/ProductImageGallery";
 import { catalogAdminKeys } from "@/features/catalog/constants/catalog-admin-keys";
@@ -26,6 +31,42 @@ type PendingImage = {
   file: File;
   previewUrl: string;
 };
+
+function linksFromProduct(product?: {
+  product_option_groups?: ProductOptionGroupLink[];
+  option_group_ids?: string[];
+}): ProductOptionGroupLink[] {
+  if (product?.product_option_groups?.length) {
+    return product.product_option_groups.map((link, index) => ({
+      option_group_id: link.option_group_id,
+      sort_order: link.sort_order ?? index,
+      override_min: link.override_min ?? null,
+      override_max: link.override_max ?? null,
+      override_required: link.override_required ?? null,
+      override_display_type: link.override_display_type ?? null,
+      override_pricing_config: link.override_pricing_config ?? null,
+      override_ui_config: link.override_ui_config ?? null,
+    }));
+  }
+
+  return (product?.option_group_ids ?? []).map((groupId, index) => ({
+    option_group_id: groupId,
+    sort_order: index,
+  }));
+}
+
+function serializeProductLinks(links: ProductOptionGroupLink[]) {
+  return links.map((link, index) => ({
+    option_group_id: link.option_group_id,
+    sort_order: index,
+    override_min: link.override_min ?? null,
+    override_max: link.override_max ?? null,
+    override_required: link.override_required ?? null,
+    override_display_type: link.override_display_type ?? null,
+    override_pricing_config: link.override_pricing_config ?? null,
+    override_ui_config: link.override_ui_config ?? null,
+  }));
+}
 
 export function ProductFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -56,8 +97,9 @@ export function ProductFormPage() {
     category_id: "",
     is_active: true,
     is_available: true,
-    option_group_ids: [] as string[],
+    product_option_groups: [] as ProductOptionGroupLink[],
   });
+  const [previewMode, setPreviewMode] = useState<"storefront" | "builder">("storefront");
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
 
   useEffect(() => {
@@ -69,7 +111,7 @@ export function ProductFormPage() {
         category_id: product.category_id,
         is_active: product.is_active,
         is_available: product.is_available,
-        option_group_ids: product.option_group_ids,
+        product_option_groups: linksFromProduct(product),
       });
       setPendingImages([]);
     } else if (isNew && categories?.length) {
@@ -115,6 +157,11 @@ export function ProductFormPage() {
       category: Boolean(form.category_id),
     }),
     [totalImageCount, form.name, form.base_price, form.category_id],
+  );
+
+  const groupsById = useMemo(
+    () => new Map((optionGroups ?? []).map((group) => [group.id, group])),
+    [optionGroups],
   );
 
   const invalidateProductQueries = (productId: string) => {
@@ -168,7 +215,7 @@ export function ProductFormPage() {
         category_id: form.category_id,
         is_active: form.is_active,
         is_available: form.is_available,
-        option_group_ids: form.option_group_ids,
+        product_option_groups: serializeProductLinks(form.product_option_groups),
       };
 
       const saved = isNew
@@ -251,7 +298,7 @@ export function ProductFormPage() {
         icon={Sparkles}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
         <div className="space-y-6">
       <UiHint icon={Sparkles} tone="warm">
         {adminCopy.products.form.guidance}
@@ -358,34 +405,21 @@ export function ProductFormPage() {
           ) : null}
 
           {optionGroups?.length ? (
-            <div className="space-y-2">
-              <Label>Grupos de opções</Label>
-              <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                {adminCopy.products.form.optionGroupsHelp}
-              </p>
-              <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] p-3">
-                {optionGroups.map((group) => (
-                  <label key={group.id} className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 accent-[hsl(var(--primary))]"
-                      checked={form.option_group_ids.includes(group.id)}
-                      onChange={(event) => {
-                        setForm((current) => ({
-                          ...current,
-                          option_group_ids: event.target.checked
-                            ? [...current.option_group_ids, group.id]
-                            : current.option_group_ids.filter((value) => value !== group.id),
-                        }));
-                      }}
-                    />
-                    <Tag className="h-3.5 w-3.5 text-[hsl(var(--muted-foreground))]" />
-                    {group.name}
-                  </label>
-                ))}
-              </div>
-            </div>
-          ) : null}
+            <ProductConfigurator
+              links={form.product_option_groups}
+              availableGroups={optionGroups}
+              onChange={(product_option_groups) =>
+                setForm((current) => ({ ...current, product_option_groups }))
+              }
+            />
+          ) : (
+            <UiHint icon={Layers} tone="neutral">
+              {adminCopy.products.form.optionGroupsHelp}
+              <Link to="/grupos-opcoes" className="ml-1 font-medium text-brand underline">
+                Criar grupos de opções
+              </Link>
+            </UiHint>
+          )}
 
           <Button
             type="button"
@@ -404,23 +438,60 @@ export function ProductFormPage() {
           <CardHeader className="border-b border-[hsl(var(--border))] bg-brand-soft/20">
             <CardTitle className="flex items-center gap-2 text-base">
               <Eye className="h-4 w-4 text-brand" />
-              {adminCopy.products.form.previewTitle}
+              Prévia
             </CardTitle>
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                className={`rounded-full px-3 py-1 text-xs font-medium ${
+                  previewMode === "storefront"
+                    ? "bg-brand text-white"
+                    : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]"
+                }`}
+                onClick={() => setPreviewMode("storefront")}
+              >
+                Vitrine
+              </button>
+              <button
+                type="button"
+                className={`rounded-full px-3 py-1 text-xs font-medium ${
+                  previewMode === "builder"
+                    ? "bg-brand text-white"
+                    : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]"
+                }`}
+                onClick={() => setPreviewMode("builder")}
+              >
+                Builder
+              </button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-3 pt-4">
-            <p className="text-xs text-[hsl(var(--muted-foreground))]">{adminCopy.products.form.previewHint}</p>
-            <div className="pointer-events-none mx-auto max-w-[260px]">
-              <ProductCard
-                id={product?.id ?? "preview"}
-                slug={previewSlug}
-                name={form.name.trim() || "Nome do produto"}
-                description={form.description.trim() || undefined}
-                price={form.base_price || 0}
-                imageUrl={previewImageUrl}
-                unavailable={!form.is_available}
-                className="scale-in"
+            {previewMode === "storefront" ? (
+              <>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                  {adminCopy.products.form.previewHint}
+                </p>
+                <div className="pointer-events-none mx-auto max-w-[260px]">
+                  <ProductCard
+                    id={product?.id ?? "preview"}
+                    slug={previewSlug}
+                    name={form.name.trim() || "Nome do produto"}
+                    description={form.description.trim() || undefined}
+                    price={form.base_price || 0}
+                    imageUrl={previewImageUrl}
+                    unavailable={!form.is_available}
+                    className="scale-in"
+                  />
+                </div>
+              </>
+            ) : (
+              <ProductBuilderPreview
+                name={form.name}
+                basePrice={form.base_price}
+                links={form.product_option_groups}
+                groupsById={groupsById}
               />
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>

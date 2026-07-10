@@ -27,7 +27,7 @@ export interface CheckoutItemPayload {
   product_id: string;
   quantity: number;
   notes?: string;
-  options: Array<{ option_id: string }>;
+  options: Array<{ option_id: string; quantity?: number }>;
 }
 
 export interface CheckoutPayload {
@@ -65,6 +65,7 @@ export interface OrderItemOption {
   option_group_name: string;
   option_name: string;
   price_modifier: number;
+  quantity?: number;
 }
 
 export interface OrderItem {

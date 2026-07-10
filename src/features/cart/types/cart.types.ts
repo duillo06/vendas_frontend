@@ -5,6 +5,7 @@ export interface CartSelectedOption {
   name: string;
   priceModifier: number;
   priceType: "fixed" | "percentage";
+  quantity: number;
 }
 
 export interface CartItem {

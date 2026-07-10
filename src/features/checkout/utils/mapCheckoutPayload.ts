@@ -33,7 +33,10 @@ export function mapCheckoutPayload(
     items: items.map((item) => ({
       product_id: item.productId,
       quantity: item.quantity,
-      options: item.selectedOptions.map((opt) => ({ option_id: opt.optionId })),
+      options: item.selectedOptions.map((opt) => ({
+        option_id: opt.optionId,
+        quantity: opt.quantity ?? 1,
+      })),
     })),
   };
 }

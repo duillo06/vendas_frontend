@@ -1,3 +1,9 @@
+import type {
+  OptionDisplayType,
+  OptionSelectionMode,
+  OptionSelectionType,
+  PricingConfig,
+} from "@/features/catalog/types/catalog.types";
 import { apiClient } from "@/shared/lib/api-client";
 import type { PaginatedResponse } from "@/shared/types/api.types";
 
@@ -33,6 +39,19 @@ export interface ProductImageAdmin {
   sort_order: number;
 }
 
+export interface ProductOptionGroupLink {
+  id?: string;
+  option_group_id: string;
+  sort_order: number;
+  override_min?: number | null;
+  override_max?: number | null;
+  override_required?: boolean | null;
+  override_display_type?: OptionDisplayType | null;
+  override_pricing_config?: PricingConfig | null;
+  override_ui_config?: Record<string, string> | null;
+  group?: OptionGroupAdmin;
+}
+
 export interface ProductAdminDetail {
   id: string;
   name: string;
@@ -48,28 +67,43 @@ export interface ProductAdminDetail {
   sort_order: number;
   prep_time: number | null;
   option_group_ids: string[];
+  product_option_groups: ProductOptionGroupLink[];
   images: ProductImageAdmin[];
 }
 
 export interface OptionAdmin {
   id: string;
   name: string;
+  description?: string | null;
   price_modifier: number;
+  price_type?: "fixed" | "percentage";
   is_active: boolean;
   is_available: boolean;
   sort_order: number;
+  image_url?: string | null;
+  icon?: string | null;
+    stock_quantity?: number | null;
+  metadata?: { color?: string } | Record<string, unknown> | null;
 }
 
 export interface OptionGroupAdmin {
   id: string;
   name: string;
   description: string | null;
-  selection_type: string;
+  selection_type: OptionSelectionType | string;
+  selection_mode?: OptionSelectionMode | string;
+  display_type?: OptionDisplayType | string;
   min_selections: number;
   max_selections: number;
   is_required: boolean;
   is_active: boolean;
   sort_order: number;
+  icon?: string | null;
+  image_url?: string | null;
+  visibility?: "always" | "hidden";
+  pricing_config?: PricingConfig | null;
+  ui_config?: Record<string, string> | null;
+  default_option_ids?: string[];
   options: OptionAdmin[];
   options_count: number;
 }
@@ -90,6 +124,9 @@ export const catalogAdminApi = {
     apiClient.patch<ProductAdminDetail>(`/admin/products/${id}/`, data).then((response) => response.data),
 
   deleteProduct: (id: string) => apiClient.delete(`/admin/products/${id}/`),
+
+  reorderProductOptionGroups: (productId: string, ids: string[]) =>
+    apiClient.patch(`/admin/products/${productId}/option-groups/reorder/`, { ids }),
 
   uploadProductImage: (id: string, file: File, options?: { isPrimary?: boolean }) => {
     const formData = new FormData();
@@ -137,6 +174,20 @@ export const catalogAdminApi = {
       .then((response) => response.data),
 
   deleteOptionGroup: (id: string) => apiClient.delete(`/admin/option-groups/${id}/`),
+
+  reorderOptionGroups: (ids: string[]) =>
+    apiClient.patch("/admin/option-groups/reorder/", { ids }),
+
+  duplicateOptionGroup: (id: string) =>
+    apiClient.post<OptionGroupAdmin>(`/admin/option-groups/${id}/duplicate/`).then((r) => r.data),
+
+  reorderOptions: (groupId: string, ids: string[]) =>
+    apiClient.patch(`/admin/option-groups/${groupId}/options/reorder/`, { ids }),
+
+  duplicateOption: (groupId: string, optionId: string) =>
+    apiClient
+      .post<OptionAdmin>(`/admin/option-groups/${groupId}/options/${optionId}/duplicate/`)
+      .then((response) => response.data),
 
   createOption: (groupId: string, data: Record<string, unknown>) =>
     apiClient
