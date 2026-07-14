@@ -127,7 +127,6 @@ export function CategoriesPage() {
       <BackLink to="/" label="Dashboard" />
 
       <PageHeader
-        variant="hero"
         title="Categorias"
         subtitle={adminCopy.categories.subtitle}
         icon={Layers}
@@ -137,7 +136,7 @@ export function CategoriesPage() {
         {adminCopy.categories.guidance}
       </UiHint>
 
-      <Card className="border-brand-soft bg-brand-soft/40">
+      <Card className="border-[hsl(var(--border))] bg-white">
         <CardContent className="space-y-4 pt-6">
           <div className="flex items-start gap-3">
             <div className="tile-brand flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
@@ -156,7 +155,7 @@ export function CategoriesPage() {
               <button
                 key={example.name}
                 type="button"
-                className="rounded-full border border-[hsl(var(--border))] bg-white px-3 py-1 text-xs font-medium text-[hsl(var(--foreground))] transition hover:border-[hsl(var(--primary)/0.35)] hover:bg-brand-soft"
+                className="rounded-full border border-[hsl(var(--border))] bg-white px-3 py-1 text-xs font-medium text-[hsl(var(--foreground))] transition hover:border-[hsl(var(--primary)/0.35)] hover:bg-[hsl(var(--muted))]"
                 onClick={() => applyExample(example)}
               >
                 {example.emoji} {example.name}
@@ -212,7 +211,7 @@ export function CategoriesPage() {
                   key={suggestion}
                   type="button"
                   className={cn(
-                    "flex h-10 w-10 items-center justify-center rounded-xl border border-[hsl(var(--border))] bg-white text-xl transition hover:border-[hsl(var(--primary)/0.35)] hover:bg-brand-soft",
+                    "flex h-10 w-10 items-center justify-center rounded-xl border border-[hsl(var(--border))] bg-white text-xl transition hover:border-[hsl(var(--primary)/0.35)] hover:bg-[hsl(var(--muted))]",
                     emoji === suggestion && "border-brand bg-brand-soft ring-2 ring-brand/20",
                   )}
                   onClick={() => setEmoji(suggestion)}
@@ -225,7 +224,7 @@ export function CategoriesPage() {
           </div>
 
           {name.trim() ? (
-            <div className="rounded-xl border border-dashed border-brand-soft bg-white/70 px-4 py-3 text-sm">
+            <div className="rounded-xl border border-dashed border-[hsl(var(--border))] bg-white/70 px-4 py-3 text-sm">
               <span className="text-[hsl(var(--muted-foreground))]">Prévia no app: </span>
               <span className="font-semibold">{formatCategoryLabel({ name: name.trim(), emoji })}</span>
             </div>
@@ -296,7 +295,7 @@ export function CategoriesPage() {
                           key={suggestion}
                           type="button"
                           className={cn(
-                            "flex h-9 w-9 items-center justify-center rounded-lg border border-[hsl(var(--border))] bg-white text-lg transition hover:bg-brand-soft",
+                            "flex h-9 w-9 items-center justify-center rounded-lg border border-[hsl(var(--border))] bg-white text-lg transition hover:bg-[hsl(var(--muted))]",
                             editEmoji === suggestion && "border-brand bg-brand-soft",
                           )}
                           onClick={() => setEditEmoji(suggestion)}

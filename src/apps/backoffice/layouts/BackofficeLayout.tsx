@@ -8,12 +8,22 @@ import {
   ShoppingBag,
   Sparkles,
   Users,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
+import { useEffect } from "react";
 import { NavLink, Outlet } from "react-router";
 
 import { Can, useAuth } from "@/features/auth";
 import { useSettings, useTenantTheme } from "@/features/settings";
 import { useDashboard } from "@/features/dashboard";
+import {
+  OrderNotificationsBell,
+  playOrderAlertSound,
+  unlockOrderAlertAudio,
+  useNewOrderAlerts,
+  useOrderAlertSoundPreference,
+} from "@/features/orders";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/lib/utils";
 
@@ -31,11 +41,33 @@ export function BackofficeLayout() {
   const { user, tenant, logout } = useAuth();
   const { data: settings } = useSettings();
   const { data: dashboard } = useDashboard();
+  const { enabled: soundEnabled, setSoundEnabled } = useOrderAlertSoundPreference();
+  const orderAlerts = useNewOrderAlerts(dashboard?.recent_orders, { soundEnabled });
 
   useTenantTheme(settings?.settings.theme);
 
+  // browser só libera áudio depois de gesto — destrava no primeiro toque
+  useEffect(() => {
+    if (!soundEnabled) return;
+    const unlock = () => {
+      void unlockOrderAlertAudio();
+      window.removeEventListener("pointerdown", unlock);
+    };
+    window.addEventListener("pointerdown", unlock, { once: true });
+    return () => window.removeEventListener("pointerdown", unlock);
+  }, [soundEnabled]);
+
   const logoUrl = settings?.company.logo_url;
   const pendingOrders = dashboard?.today.pending_orders ?? 0;
+
+  async function handleSoundToggle() {
+    const next = !soundEnabled;
+    setSoundEnabled(next);
+    if (next) {
+      await unlockOrderAlertAudio();
+      playOrderAlertSound(); // testa + libera autoplay do browser
+    }
+  }
 
   return (
     <div className="flex min-h-screen">
@@ -71,7 +103,7 @@ export function BackofficeLayout() {
                     "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
                     isActive
                       ? "sidebar-nav-link-active"
-                      : "text-white/80 hover:bg-[hsl(var(--primary)/0.1)] hover:text-white",
+                      : "text-white/70 hover:bg-white/5 hover:text-white",
                   )
                 }
               >
@@ -101,7 +133,7 @@ export function BackofficeLayout() {
         </nav>
 
         <div className="border-t border-white/10 p-3">
-          <div className="rounded-xl bg-[hsl(var(--primary)/0.12)] px-3 py-2 ring-1 ring-[hsl(var(--primary)/0.2)]">
+          <div className="rounded-xl bg-white/5 px-3 py-2 ring-1 ring-white/10">
             <p className="truncate text-sm font-medium">{user ? `${user.first_name} ${user.last_name}` : ""}</p>
             <p className="truncate text-xs text-white/70">{user?.email}</p>
           </div>
@@ -109,7 +141,19 @@ export function BackofficeLayout() {
             type="button"
             variant="ghost"
             size="sm"
-            className="mt-2 w-full justify-start gap-2 text-white/80 hover:bg-[hsl(var(--primary)/0.12)] hover:text-white"
+            className="mt-2 w-full justify-start gap-2 text-white/80 hover:bg-white/5 hover:text-white"
+            onClick={() => void handleSoundToggle()}
+            aria-pressed={soundEnabled}
+            title={soundEnabled ? "Desligar som de novos pedidos" : "Ligar som de novos pedidos"}
+          >
+            {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+            {soundEnabled ? "Som de pedidos" : "Som mutado"}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="mt-1 w-full justify-start gap-2 text-white/80 hover:bg-white/5 hover:text-white"
             onClick={() => void logout()}
           >
             <LogOut className="h-4 w-4" />
@@ -119,17 +163,45 @@ export function BackofficeLayout() {
       </aside>
 
       <div className="app-shell-backoffice flex min-h-screen flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-[hsl(var(--border))] bg-white/70 px-4 py-3 backdrop-blur md:hidden">
-          <div className="flex min-w-0 items-center gap-2">
+        <header className="flex items-center justify-between gap-3 border-b border-[hsl(var(--border))] bg-white/70 px-4 py-3 backdrop-blur md:justify-end md:px-6">
+          <div className="flex min-w-0 items-center gap-2 md:hidden">
             {logoUrl ? (
               <img src={logoUrl} alt="" className="h-8 w-8 shrink-0 rounded-lg object-cover" />
             ) : null}
             <span className="truncate font-bold text-brand">{tenant?.trade_name ?? "Food Service"}</span>
           </div>
-          <Button type="button" variant="outline" size="sm" onClick={() => void logout()}>
-            Sair
-          </Button>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <OrderNotificationsBell
+              notifications={orderAlerts.notifications}
+              unreadCount={orderAlerts.unreadCount}
+              markAsRead={orderAlerts.markAsRead}
+              markAllAsRead={orderAlerts.markAllAsRead}
+              clearAll={orderAlerts.clearAll}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-9 w-9"
+              onClick={() => void handleSoundToggle()}
+              aria-pressed={soundEnabled}
+              aria-label={soundEnabled ? "Desligar som de novos pedidos" : "Ligar som de novos pedidos"}
+            >
+              {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="md:hidden"
+              onClick={() => void logout()}
+            >
+              Sair
+            </Button>
+          </div>
         </header>
+
         <main className="flex-1 p-4 md:p-6">
           <Outlet />
         </main>

@@ -35,12 +35,12 @@ export function StatCard({
     <Card
       className={cn(
         "interactive-card overflow-hidden",
-        highlight && "border-brand-soft shadow-md ring-1 ring-[hsl(var(--primary)/0.12)]",
+        highlight && "border-[hsl(var(--primary)/0.25)] shadow-[var(--shadow-md)]",
         className,
       )}
     >
       {highlight ? (
-        <div className="h-1 w-full bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))]" />
+        <div className="identity-accent-bar rounded-none" />
       ) : null}
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-3">

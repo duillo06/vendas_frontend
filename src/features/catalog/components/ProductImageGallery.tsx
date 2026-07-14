@@ -83,7 +83,7 @@ export function ProductImageGallery({
         {pendingPreviews.map((preview) => (
           <div
             key={preview.key}
-            className="relative h-28 w-28 overflow-hidden rounded-xl border-2 border-dashed border-brand-soft bg-[hsl(var(--muted))]"
+            className="relative h-28 w-28 overflow-hidden rounded-xl border-2 border-dashed border-[hsl(var(--border))] bg-[hsl(var(--muted))]"
           >
             <img src={preview.url} alt="" className="h-full w-full object-cover opacity-90" />
             <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white">
@@ -104,7 +104,7 @@ export function ProductImageGallery({
         {canAddMore ? (
           <label
             className={cn(
-              "flex h-28 w-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40 text-[hsl(var(--muted-foreground))] transition hover:border-brand-soft hover:bg-brand-soft/30",
+              "flex h-28 w-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40 text-[hsl(var(--muted-foreground))] transition hover:border-[hsl(var(--primary)/0.3)] hover:bg-[hsl(var(--muted))]/40",
               isUploading && "pointer-events-none opacity-60",
             )}
           >

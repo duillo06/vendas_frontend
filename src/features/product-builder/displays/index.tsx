@@ -176,7 +176,7 @@ export function IconChipDisplay({ group, items, onChange, disabled }: DisplayPro
             className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
               selected
                 ? "border-brand bg-brand-soft text-brand"
-                : "border-[hsl(var(--border))] bg-white hover:border-brand-soft"
+                : "border-[hsl(var(--border))] bg-white hover:border-[hsl(var(--primary)/0.3)]"
             }`}
           >
             {option.icon ? <span>{option.icon}</span> : null}

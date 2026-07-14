@@ -21,8 +21,8 @@ export function SegmentCard({ emoji, label, tagline, selected, onSelect }: Segme
       className={cn(
         "flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border-2 p-3 text-center transition-colors",
         selected
-          ? "border-brand bg-brand-soft/50 shadow-md"
-          : "border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:border-brand-soft hover:bg-brand-soft/20",
+          ? "border-[hsl(var(--primary)/0.45)] bg-[hsl(var(--primary-soft))] shadow-sm"
+          : "border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:border-[hsl(var(--primary)/0.3)] hover:bg-[hsl(var(--muted))]",
       )}
     >
       <span className="text-4xl sm:text-5xl">{emoji}</span>

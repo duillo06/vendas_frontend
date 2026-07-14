@@ -21,7 +21,7 @@ export function ReviewStep({ wizard, categories }: ReviewStepProps) {
         {preview ? (
           <img src={preview} alt="" className="h-20 w-20 rounded-xl object-cover" />
         ) : (
-          <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-brand-soft/40 text-4xl">
+          <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-[hsl(var(--muted))]/50 text-4xl">
             {blueprint?.emoji ?? "🍽️"}
           </div>
         )}
@@ -39,7 +39,7 @@ export function ReviewStep({ wizard, categories }: ReviewStepProps) {
       <div className="space-y-2">
         <p className="text-sm font-medium">O que você configurou</p>
         {composition ? (
-          <div className="flex items-center gap-3 rounded-xl border border-brand-soft bg-brand-soft/20 p-3">
+          <div className="flex items-center gap-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30 p-3">
             <span className="text-xl">🍕</span>
             <div className="flex-1">
               <p className="text-sm font-medium">Composição de sabores</p>
@@ -81,7 +81,7 @@ export function ReviewStep({ wizard, categories }: ReviewStepProps) {
         )}
       </div>
 
-      <p className="rounded-xl bg-brand-soft/30 p-3 text-center text-sm font-medium text-brand">
+      <p className="rounded-xl bg-[hsl(var(--muted))]/40 p-3 text-center text-sm font-medium text-brand">
         🚀 Tudo pronto! Clique em Criar produto para publicar no cardápio.
       </p>
     </div>

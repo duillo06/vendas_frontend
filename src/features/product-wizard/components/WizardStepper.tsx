@@ -32,7 +32,7 @@ export function WizardStepper({ currentPhase, progress }: WizardStepperProps) {
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-semibold transition-colors",
                   done && "border-brand bg-brand text-white",
-                  active && "border-brand bg-brand-soft/50 text-brand",
+                  active && "border-brand bg-[hsl(var(--primary-soft))] text-brand",
                   !done && !active && "border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]",
                 )}
               >

@@ -51,13 +51,12 @@ export function DashboardPage() {
       />
 
       <PageHeader
-        variant="hero"
         title="Dashboard"
         subtitle={adminCopy.dashboard.subtitle(greeting)}
         icon={LayoutDashboard}
         action={
           <Link to="/pedidos">
-            <Button size="lg" className="gap-2 bg-white text-brand shadow-lg hover:bg-[hsl(var(--primary-soft))]">
+            <Button size="lg" className="gap-2">
               <ShoppingBag className="h-4 w-4" />
               Ver pedidos
             </Button>
@@ -92,7 +91,7 @@ export function DashboardPage() {
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-[hsl(var(--muted))]">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))] transition-all duration-500"
+              className="h-full rounded-full bg-brand transition-all duration-500"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -158,8 +157,8 @@ export function DashboardPage() {
         />
       </div>
 
-      <Card className="overflow-hidden border-brand-soft/60 shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between gap-2 border-b border-[hsl(var(--border))] bg-brand-soft/30">
+      <Card className="overflow-hidden border-[hsl(var(--border))] shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between gap-2 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40">
           <CardTitle className="text-base">Pedidos recentes</CardTitle>
           <Link to="/pedidos">
             <Button type="button" variant="outline" size="sm">

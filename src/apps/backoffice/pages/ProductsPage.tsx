@@ -37,7 +37,6 @@ export function ProductsPage() {
       <BackLink to="/" label="Dashboard" />
 
       <PageHeader
-        variant="hero"
         title="Produtos"
         subtitle={adminCopy.products.subtitle}
         icon={Package}
@@ -82,7 +81,7 @@ export function ProductsPage() {
             <li key={product.id}>
               <article className="product-card-premium group h-full overflow-hidden">
                 <Link to={`/produtos/${product.id}`} className="block">
-                  <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-[hsl(var(--primary-soft))] to-[hsl(var(--accent-soft))]">
+                  <div className="relative aspect-[16/10] overflow-hidden bg-[hsl(var(--muted))]">
                     {product.image_url ? (
                       <img
                         src={product.image_url}

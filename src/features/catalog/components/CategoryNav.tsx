@@ -59,7 +59,7 @@ export function CategoryNav({ categories, activeSlug, className }: CategoryNavPr
             className={cn(
               "border-0 text-[10px]",
               isActive
-                ? "bg-white/20 text-[hsl(var(--primary-foreground))]"
+                ? "bg-[hsl(var(--primary)/0.15)] text-brand"
                 : "bg-[hsl(var(--muted))] text-[hsl(var(--foreground))]",
             )}
           >

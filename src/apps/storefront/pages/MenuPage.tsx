@@ -8,14 +8,17 @@ import {
   useCategories,
   useProducts,
 } from "@/features/catalog";
+import { useCompanyPublic } from "@/features/company";
 import { CatalogSearchSection } from "@/features/storefront/components/CatalogSearchSection";
+import { StoreHero } from "@/features/storefront/components/StoreHero";
 import { useCatalogSearch } from "@/features/storefront/hooks/useCatalogSearch";
 import { EmptyState } from "@/shared/components/EmptyState";
-import { BackLink, PageHeader } from "@/shared/components/visual";
+import { BackLink } from "@/shared/components/visual";
 import { storefrontCopy } from "@/shared/copy/storefront";
 
 export function MenuPage() {
   const { search, setSearch, debouncedSearch } = useCatalogSearch();
+  const { data: company, isLoading: loadingCompany } = useCompanyPublic();
 
   const { data: categories, isLoading: loadingCategories } = useCategories();
   const { data: productsPage, isLoading: loadingProducts, isError } = useProducts({
@@ -31,21 +34,13 @@ export function MenuPage() {
     <div className="space-y-4 sm:space-y-6">
       <BackLink to="/" label="Início" />
 
-      <PageHeader
-        variant="hero"
-        density="compact"
-        mobileHidden
-        accent="chart-1"
-        icon={UtensilsCrossed}
-        title="Cardápio"
-        subtitle={
-          hasSearch && productsPage
-            ? storefrontCopy.menu.searchResults(productsPage.count, debouncedSearch)
-            : productsPage
-              ? storefrontCopy.menu.count(productsPage.count)
-              : storefrontCopy.menu.subtitle
-        }
-      />
+      <StoreHero company={company} isLoading={loadingCompany} compact />
+
+      {hasSearch && productsPage ? (
+        <p className="text-sm text-[hsl(var(--muted-foreground))]">
+          {storefrontCopy.menu.searchResults(productsPage.count, debouncedSearch)}
+        </p>
+      ) : null}
 
       <CatalogSearchSection value={search} onChange={setSearch}>
         {loadingCategories ? <CategoryNavSkeleton /> : categories ? <CategoryNav categories={categories} /> : null}

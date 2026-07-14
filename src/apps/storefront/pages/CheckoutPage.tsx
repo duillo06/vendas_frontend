@@ -33,7 +33,6 @@ export function CheckoutPage() {
       <BackLink to="/carrinho" label="Voltar ao carrinho" />
 
       <PageHeader
-        variant="hero"
         density="compact"
         mobileHidden
         accent="chart-1"

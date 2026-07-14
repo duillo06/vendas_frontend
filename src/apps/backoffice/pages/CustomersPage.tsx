@@ -37,7 +37,6 @@ export function CustomersPage() {
       <BackLink to="/" label="Dashboard" />
 
       <PageHeader
-        variant="hero"
         title="Clientes"
         subtitle={adminCopy.customers.subtitle}
         icon={Users}

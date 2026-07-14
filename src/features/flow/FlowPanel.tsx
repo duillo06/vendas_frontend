@@ -19,7 +19,7 @@ export function FlowPanel({ line, className, children, compact }: FlowPanelProps
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-brand-soft bg-brand-soft/30 p-4",
+        "relative overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40 p-4",
         className,
       )}
     >

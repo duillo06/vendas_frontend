@@ -2,7 +2,7 @@
 
 > **Documento:** Design System  
 > **Produto:** Food Service *(nome comercial provisório)*  
-> **Versão:** 1.0  
+> **Versão:** 1.1  
 > **Status:** Aprovado  
 > **Última atualização:** Julho/2026  
 > **Depende de:** `01-visao-do-produto.md`, `02-arquitetura.md`, `03-modelagem-do-banco.md` (aprovados)  
@@ -96,19 +96,35 @@ graph TB
 | **Confiança** | Visual profissional transmite segurança | Consistência, feedback, estados claros |
 | **Velocidade** | Interface parece instantânea | Skeleton, optimistic UI, transições curtas |
 | **Simplicidade** | Remover até não poder mais | Progressive disclosure |
-| **Calor** | Food service é sobre prazer | Fotos grandes, cores acolhedoras no storefront |
+| **Leveza premium** | Marca do tenant assina, não pinta | Primary em controles; fundos neutros |
 | **Densidade adaptável** | Dados no admin, respiro no cliente | Espaçamento diferente por app |
 | **Acessível por padrão** | WCAG 2.1 AA mínimo | Contraste, foco, ARIA |
 
 ### 2.1 O que NÃO fazer
 
 - Gradientes excessivos ou neon
+- **Blocos grandes de cor da marca** (hero/page fills, shells tintados)
 - Mais de 2 famílias tipográficas
 - Animações longas (> 400ms) em interações
 - Ícones decorativos sem função
 - Cores de status apenas por cor (sempre + ícone/texto)
 - Popups intrusivos bloqueando pedido
 - Fontes menores que 14px em texto de leitura (mobile)
+
+### 2.2 Cor do estabelecimento (white-label)
+
+A cor `primary` do tenant reforça identidade nos **detalhes**:
+
+| Usar primary | Não usar primary |
+|--------------|------------------|
+| Botões, links, ícones ativos | Fundos de página / seções |
+| Chips, badges, switches | Headers / heroes inteiros |
+| Progress, loading, focus ring | Sidebar como fill da marca |
+| Hairlines 1–2px, halo da logo | Cards painel `bg-brand-soft` largos |
+
+**Fundos canônicos:** `#FFFFFF`, `#FAFAFA`, `#F7F7F7`, `#F5F5F5` (`--background`, `--muted`, `--surface` neutros).
+
+**Sensação alvo:** "esse sistema é bonito" — não "esse sistema é muito colorido". Refs: Stripe, Linear, Notion, Spotify, Airbnb, iFood.
 
 ---
 
@@ -1422,14 +1438,14 @@ padding-top: env(safe-area-inset-top);
 | Aspecto | Storefront | Backoffice |
 |---------|------------|------------|
 | **Densidade** | Espaçosa (respiro) | Compacta (mais dados) |
-| **Cor primária** | Tenant (futuro) / Emerald default | Emerald |
-| **Accent** | Orange (warm, apetite) | Nenhum (neutro) |
+| **Cor primária** | Detalhes (botões, chips, estados) — nunca fill de página | Idem — accents + CTAs |
+| **Accent** | Orange em destaques pontuais | Status / alertas quentes |
 | **Border radius** | Maior (`rounded-xl` cards) | Padrão (`rounded-lg`) |
-| **Fotos** | Grandes, hero | Thumbnails pequenas |
+| **Fotos** | Grandes no produto; header de loja compacto | Thumbnails pequenas |
 | **Tipografia mínima** | 16px | 14px |
 | **Dark mode** | V1 (opcional) | MVP |
 | **Animações** | Mais expressivas | Sutis, funcionais |
-| **CTA** | Grande, colorido | Padrão, discreto |
+| **CTA** | Primário sólido (único fill forte) | Primário sólido / outline |
 
 ### 19.2 Diagrama
 

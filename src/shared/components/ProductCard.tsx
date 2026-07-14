@@ -84,7 +84,7 @@ export function ProductCard({
           unavailable && "opacity-70",
         )}
       >
-        <div className="relative min-h-[11rem] flex-[3] overflow-hidden bg-gradient-to-br from-[hsl(var(--primary-soft))] to-[hsl(var(--accent-soft))] sm:min-h-[12.5rem]">
+        <div className="relative min-h-[11rem] flex-[3] overflow-hidden bg-[hsl(var(--muted))] sm:min-h-[12.5rem]">
           {imageUrl ? (
             <img
               src={imageUrl}
@@ -132,7 +132,7 @@ export function ProductCard({
             <button
               type="button"
               aria-label="Adicionar ao carrinho"
-              className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-brand text-[hsl(var(--primary-foreground))] opacity-0 shadow-lg transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 translate-y-2"
+              className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-brand text-[hsl(var(--primary-foreground))] opacity-0 shadow-md transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 translate-y-2"
               onClick={handleQuickAdd}
             >
               <Plus className="h-5 w-5" />

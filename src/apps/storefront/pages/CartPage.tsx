@@ -10,7 +10,6 @@ export function CartPage() {
       <BackLink to="/cardapio" label="Continuar comprando" />
 
       <PageHeader
-        variant="hero"
         density="compact"
         mobileHidden
         accent="chart-2"

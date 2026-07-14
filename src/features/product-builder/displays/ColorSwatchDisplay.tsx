@@ -26,7 +26,7 @@ export function ColorSwatchDisplay({ group, items, onChange, disabled }: Display
               group.selection_type === "single" ? toggleSingle(option.id) : toggleMultiple(option.id)
             }
             className={`group/swatch flex flex-col items-center gap-2 rounded-xl p-2 transition ${
-              selected ? "bg-brand-soft ring-2 ring-brand" : "hover:bg-[hsl(var(--muted))]/40"
+              selected ? "bg-[hsl(var(--primary-soft))] ring-2 ring-[hsl(var(--primary)/0.35)]" : "hover:bg-[hsl(var(--muted))]/40"
             }`}
           >
             <span

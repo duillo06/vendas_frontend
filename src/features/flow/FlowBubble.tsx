@@ -19,7 +19,7 @@ export function FlowBubble({ text, emoji, mood = "happy", className }: FlowBubbl
       className={cn("flex items-center gap-2", className)}
     >
       <FlowMascot mood={mood} size="xs" />
-      <span className="relative rounded-2xl rounded-bl-sm border border-brand-soft bg-white px-3 py-1.5 text-sm text-[hsl(var(--foreground))] shadow-sm">
+      <span className="relative rounded-2xl rounded-bl-sm border border-[hsl(var(--border))] bg-white px-3 py-1.5 text-sm text-[hsl(var(--foreground))] shadow-sm">
         {emoji ? <span className="mr-1">{emoji}</span> : null}
         {text}
       </span>

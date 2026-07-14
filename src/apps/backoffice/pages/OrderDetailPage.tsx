@@ -124,15 +124,14 @@ export function OrderDetailPage() {
       <BackLink to="/pedidos" label="Pedidos" />
 
       <PageHeader
-        variant="hero"
         title={order.order_number}
         subtitle={`${order.customer.name} · ${order.delivery_type === "delivery" ? "Entrega" : "Retirada"}`}
         action={<OrderStatusBadge status={order.status} />}
       />
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="border-brand-soft/60 shadow-sm lg:col-span-2">
-          <CardHeader className="border-b border-[hsl(var(--border))] bg-brand-soft/20">
+        <Card className="border-[hsl(var(--border))] shadow-sm lg:col-span-2">
+          <CardHeader className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30">
             <CardTitle className="text-base">{adminCopy.orders.detail.actionsTitle}</CardTitle>
           </CardHeader>
           <CardContent className="pt-5">
@@ -140,7 +139,7 @@ export function OrderDetailPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-brand-soft/60 shadow-sm">
+        <Card className="border-[hsl(var(--border))] shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">Linha do tempo</CardTitle>
           </CardHeader>
@@ -185,7 +184,7 @@ export function OrderDetailPage() {
                 ) : null}
               </div>
             ))}
-            <div className="space-y-2 rounded-xl bg-brand-soft/40 p-4">
+            <div className="space-y-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40 p-4">
               <div className="flex justify-between">
                 <span>Subtotal</span>
                 <PriceDisplay value={order.subtotal} />
@@ -196,7 +195,7 @@ export function OrderDetailPage() {
                   <PriceDisplay value={order.delivery_fee} />
                 </div>
               ) : null}
-              <div className="flex justify-between border-t border-brand-soft pt-2 text-base font-bold">
+              <div className="flex justify-between border-t border-[hsl(var(--border))] pt-2 text-base font-bold">
                 <span>Total</span>
                 <PriceDisplay value={order.total} className="text-brand" />
               </div>
@@ -239,7 +238,7 @@ export function OrderDetailPage() {
               </UiHint>
             ) : null}
             {order.payment ? (
-              <div className="rounded-xl border border-brand-soft bg-brand-soft/30 p-4">
+              <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30 p-4">
                 <p className="font-medium">
                   {PAYMENT_LABELS[order.payment.method] ?? order.payment.method}
                 </p>

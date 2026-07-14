@@ -277,7 +277,6 @@ export function ProductFormPage() {
       <BackLink to="/produtos" label="Produtos" />
 
       <PageHeader
-        variant="hero"
         title={isNew ? adminCopy.products.form.titleNew : adminCopy.products.form.titleEdit}
         subtitle={isNew ? adminCopy.products.form.subtitleNew : adminCopy.products.form.subtitleEdit}
         icon={Sparkles}
@@ -426,8 +425,8 @@ export function ProductFormPage() {
       </Card>
         </div>
 
-        <Card className="sticky top-6 border-brand-soft/60 shadow-sm lg:top-8">
-          <CardHeader className="border-b border-[hsl(var(--border))] bg-brand-soft/20">
+        <Card className="sticky top-6 border-[hsl(var(--border))] shadow-sm lg:top-8">
+          <CardHeader className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30">
             <CardTitle className="flex items-center gap-2 text-base">
               <Eye className="h-4 w-4 text-brand" />
               Prévia

@@ -20,7 +20,7 @@ export function FlowEmptyState({ line, action, className }: FlowEmptyStateProps)
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "flex flex-col items-center gap-3 rounded-2xl border border-dashed border-brand-soft bg-brand-soft/20 px-6 py-8 text-center",
+        "flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30 px-6 py-8 text-center",
         className,
       )}
     >

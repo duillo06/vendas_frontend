@@ -192,8 +192,8 @@ export function CheckoutForm() {
       <UiHint tone="warm">{storefrontCopy.checkout.steps[step as 1 | 2 | 3 | 4]}</UiHint>
 
       {step === 1 ? (
-        <Card className="border-brand-soft/60 shadow-sm">
-          <CardHeader className="border-b border-[hsl(var(--border))] bg-brand-soft/20">
+        <Card className="border-[hsl(var(--border))] shadow-sm">
+          <CardHeader className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30">
             <CardTitle className="flex items-center gap-2 text-base">
               <User className="h-4 w-4 text-brand" />
               Seus dados
@@ -232,8 +232,8 @@ export function CheckoutForm() {
       ) : null}
 
       {step === 2 ? (
-        <Card className="border-brand-soft/60 shadow-sm">
-          <CardHeader className="border-b border-[hsl(var(--border))] bg-brand-soft/20">
+        <Card className="border-[hsl(var(--border))] shadow-sm">
+          <CardHeader className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30">
             <CardTitle className="flex items-center gap-2 text-base">
               <MapPin className="h-4 w-4 text-brand" />
               Entrega ou retirada
@@ -363,8 +363,8 @@ export function CheckoutForm() {
       ) : null}
 
       {step === 3 ? (
-        <Card className="border-brand-soft/60 shadow-sm">
-          <CardHeader className="border-b border-[hsl(var(--border))] bg-brand-soft/20">
+        <Card className="border-[hsl(var(--border))] shadow-sm">
+          <CardHeader className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30">
             <CardTitle className="flex items-center gap-2 text-base">
               <CreditCard className="h-4 w-4 text-brand" />
               Pagamento
@@ -435,8 +435,8 @@ export function CheckoutForm() {
       ) : null}
 
       {step === 4 ? (
-        <Card className="border-brand-soft/60 shadow-sm">
-          <CardHeader className="border-b border-[hsl(var(--border))] bg-brand-soft/20">
+        <Card className="border-[hsl(var(--border))] shadow-sm">
+          <CardHeader className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30">
             <CardTitle>Revisão do pedido</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -474,7 +474,7 @@ export function CheckoutForm() {
                 <PriceDisplay value={estimatedTotal} className="text-brand" />
               </div>
             </div>
-            <div className="rounded-xl bg-brand-soft/50 p-4 text-sm">
+            <div className="rounded-xl bg-[hsl(var(--muted))]/50 p-4 text-sm">
               <p>
                 <strong>{formValues.customerName}</strong> — {formValues.customerPhone}
               </p>

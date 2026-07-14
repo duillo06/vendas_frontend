@@ -170,7 +170,7 @@ export function ProductDetailView({ product, relatedProducts = [], onAddToCart }
               <button
                 type="button"
                 aria-label={favorite ? "Remover dos favoritos" : "Favoritar"}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-brand-soft bg-white shadow-sm transition hover:scale-105"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[hsl(var(--border))] bg-white shadow-sm transition hover:scale-105"
                 onClick={() => {
                   toggle(product.id);
                   toast.success(
@@ -212,7 +212,7 @@ export function ProductDetailView({ product, relatedProducts = [], onAddToCart }
 
           <ProductFeatureChips items={featureChips} title={storefrontCopy.product.highlightsTitle} />
 
-          <div className="flex items-baseline gap-3 rounded-2xl border border-brand-soft bg-brand-soft/40 px-4 py-3">
+          <div className="flex items-baseline gap-3 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/50 px-4 py-3">
             <PriceDisplay
               value={totalPrice}
               className={cn(
@@ -252,7 +252,7 @@ export function ProductDetailView({ product, relatedProducts = [], onAddToCart }
             }}
           />
 
-          <div className="space-y-3 max-lg:sticky max-lg:bottom-4 max-lg:z-10 max-lg:rounded-2xl max-lg:border max-lg:border-brand-soft max-lg:bg-white/95 max-lg:p-3 max-lg:pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] max-lg:shadow-lg max-lg:backdrop-blur-md">
+          <div className="space-y-3 max-lg:sticky max-lg:bottom-4 max-lg:z-10 max-lg:rounded-2xl max-lg:border max-lg:border-[hsl(var(--border))] max-lg:bg-white/95 max-lg:p-3 max-lg:pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] max-lg:shadow-lg max-lg:backdrop-blur-md">
             <Button
               type="button"
               size="lg"

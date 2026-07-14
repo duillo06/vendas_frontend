@@ -43,9 +43,7 @@ export function AdminOrderCard({
             : "border-[hsl(var(--border))]",
         )}
       >
-        {isPending ? (
-          <div className="h-1 w-full bg-gradient-to-r from-[hsl(var(--accent))] via-[hsl(var(--primary))] to-[hsl(var(--accent))]" />
-        ) : null}
+        {isPending ? <div className="h-1 w-full bg-[hsl(var(--accent))]" /> : null}
 
         <div className={cn("flex flex-col gap-3 p-4", compact ? "sm:flex-row sm:items-center sm:justify-between" : "")}>
           <div className="min-w-0 space-y-2">

@@ -55,7 +55,7 @@ export function CartNavButton() {
         size="sm"
         className={cn(
           "gap-2 transition-transform active:scale-95",
-          totalItems > 0 && "bg-brand shadow-md shadow-[hsl(var(--primary)/0.35)] hover:brightness-95",
+          totalItems > 0 && "bg-brand hover:brightness-95",
         )}
       >
         <ShoppingCart className="h-4 w-4" />

@@ -453,28 +453,42 @@ export function SettingsForm() {
             </Button>
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-brand-soft shadow-sm">
-            <div className="gradient-hero px-4 py-5 text-[hsl(var(--primary-foreground))]">
-              <p className="text-sm font-medium opacity-90">Preview do cardápio</p>
-              <p className="mt-1 text-lg font-bold">{form.company.trade_name || "Sua loja"}</p>
+          <div className="overflow-hidden rounded-xl border border-[hsl(var(--border))] bg-white shadow-[var(--shadow-sm)]">
+            <div className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40 px-4 py-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
+                Preview da identidade
+              </p>
+              <p className="mt-1 text-lg font-semibold">{form.company.trade_name || "Sua loja"}</p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Button type="button" size="sm" className="pointer-events-none">
+                  Pedir agora
+                </Button>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[hsl(var(--primary)/0.25)] bg-[hsl(var(--primary-soft))] px-2.5 py-0.5 text-xs font-medium text-brand">
+                  <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+                  Aberto
+                </span>
+                <span className="text-xs text-brand underline">Ver cardápio</span>
+              </div>
             </div>
-            <div className="grid gap-3 bg-white p-4 sm:grid-cols-3">
+            <div className="grid gap-3 p-4 sm:grid-cols-3">
               <div className="tile-brand flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium">
                 <span className="h-2 w-2 rounded-full bg-brand" />
-                Botão principal
+                Botão / chip
               </div>
               <div className="tile-chart-2 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium">
                 <span className="h-2 w-2 rounded-full bg-[hsl(var(--accent))]" />
                 Destaque
               </div>
-              <div className="tile-chart-3 rounded-lg px-3 py-2 text-sm font-medium">Ícones e cards</div>
+              <div className="flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40 px-3 py-2 text-sm font-medium">
+                Superfície neutra
+              </div>
             </div>
           </div>
 
           <div className="space-y-3 rounded-xl border border-[hsl(var(--border))] p-4">
             <p className="text-sm font-medium">Vitrine do cardápio (opcional)</p>
             <p className="text-xs text-[hsl(var(--muted-foreground))]">
-              Slogan, avaliação e promoções aparecem no hero da home. Use a descrição da empresa como texto de apoio.
+              Slogan, avaliação e promoções aparecem no header da loja. Use a descrição da empresa como texto de apoio.
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-2 sm:col-span-2">

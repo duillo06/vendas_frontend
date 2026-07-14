@@ -28,7 +28,7 @@ export function CheckoutStepper({ currentStep }: CheckoutStepperProps) {
       <div className="relative">
         <div className="absolute left-0 right-0 top-4 h-0.5 bg-[hsl(var(--muted))]" />
         <div
-          className="absolute left-0 top-4 h-0.5 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))] transition-all duration-500"
+          className="absolute left-0 top-4 h-0.5 bg-brand transition-all duration-500"
           style={{ width: `${progressPercent}%` }}
         />
 
@@ -44,8 +44,8 @@ export function CheckoutStepper({ currentStep }: CheckoutStepperProps) {
                 <span
                   className={cn(
                     "relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-all",
-                    (isCurrent || isCompleted) && "bg-brand text-[hsl(var(--primary-foreground))] shadow-md",
-                    isCurrent && "ring-2 ring-brand ring-offset-2 scale-110",
+                    (isCurrent || isCompleted) && "bg-brand text-[hsl(var(--primary-foreground))]",
+                    isCurrent && "ring-2 ring-[hsl(var(--primary)/0.25)] ring-offset-2",
                     !isCurrent && !isCompleted && "bg-white text-[hsl(var(--muted-foreground))] ring-1 ring-[hsl(var(--border))]",
                   )}
                 >

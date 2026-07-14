@@ -34,14 +34,12 @@ export function HomePage() {
   };
 
   return (
-    <div className="space-y-5 sm:space-y-8">
-      <div className="hidden sm:block">
-        <StoreHero company={company} isLoading={loadingCompany} />
-      </div>
+    <div className="space-y-4 sm:space-y-7">
+      <StoreHero company={company} isLoading={loadingCompany} />
 
       <CatalogSearchSection value={search} onChange={setSearch} onSubmit={goToMenuSearch} />
 
-      <section className="space-y-4">
+      <section className="space-y-3 sm:space-y-4">
         <SectionHeading title="Categorias" icon={UtensilsCrossed} accent="chart-2" />
         {loadingCategories ? (
           <CategoryNavSkeleton />
@@ -58,7 +56,7 @@ export function HomePage() {
         )}
       </section>
 
-      <section className="space-y-4">
+      <section className="space-y-3 sm:space-y-4">
         <SectionHeading
           title="Destaques"
           description={storefrontCopy.home.highlights}

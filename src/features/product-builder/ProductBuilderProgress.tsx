@@ -13,7 +13,7 @@ export function ProductBuilderProgress({ progress }: ProductBuilderProgressProps
   const percent = Math.round(ratio * 100);
 
   return (
-    <div className="space-y-2 rounded-xl border border-brand-soft bg-brand-soft/30 p-4">
+    <div className="space-y-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40 p-4">
       <div className="flex items-center justify-between text-sm">
         <span className="font-medium text-[hsl(var(--foreground))]">Monte seu pedido</span>
         <span className="text-[hsl(var(--muted-foreground))]">

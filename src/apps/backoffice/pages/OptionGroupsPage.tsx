@@ -55,7 +55,6 @@ export function OptionGroupsPage() {
       <BackLink to="/" label="Dashboard" />
 
       <PageHeader
-        variant="hero"
         title="Grupos de opções"
         subtitle={adminCopy.optionGroups.subtitle}
         icon={ListTree}
@@ -65,7 +64,7 @@ export function OptionGroupsPage() {
         {adminCopy.optionGroups.guidance}
       </UiHint>
 
-      <Card className="border-brand-soft bg-brand-soft/40">
+      <Card className="border-[hsl(var(--border))] bg-white">
         <CardContent className="space-y-4 pt-6">
           <div className="flex items-start gap-3">
             <div className="tile-brand flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
@@ -84,7 +83,7 @@ export function OptionGroupsPage() {
               <button
                 key={example}
                 type="button"
-                className="rounded-full border border-[hsl(var(--border))] bg-white px-3 py-1 text-xs font-medium text-[hsl(var(--foreground))] transition hover:border-[hsl(var(--primary)/0.35)] hover:bg-brand-soft"
+                className="rounded-full border border-[hsl(var(--border))] bg-white px-3 py-1 text-xs font-medium text-[hsl(var(--foreground))] transition hover:border-[hsl(var(--primary)/0.35)] hover:bg-[hsl(var(--muted))]"
                 onClick={() => applyExample(example)}
               >
                 {example}

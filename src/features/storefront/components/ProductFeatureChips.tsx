@@ -19,7 +19,7 @@ export function ProductFeatureChips({ items, title, className }: ProductFeatureC
         {items.map((item) => (
           <span
             key={item}
-            className="inline-flex items-center gap-2 rounded-xl border border-brand-soft bg-brand-soft/50 px-3 py-2 text-sm font-medium"
+            className="inline-flex items-center gap-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/50 px-3 py-2 text-sm font-medium"
           >
             <span aria-hidden>{getFeatureEmoji(item)}</span>
             {item}

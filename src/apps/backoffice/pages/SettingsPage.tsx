@@ -11,7 +11,6 @@ export function SettingsPage() {
       <BackLink to="/" label="Dashboard" />
 
       <PageHeader
-        variant="hero"
         title="Configurações"
         subtitle={adminCopy.settings.subtitle}
         icon={Settings}

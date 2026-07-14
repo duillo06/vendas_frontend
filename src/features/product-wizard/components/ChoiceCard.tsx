@@ -21,8 +21,8 @@ export function ChoiceCard({ emoji, label, description, selected, onSelect }: Ch
       className={cn(
         "relative flex w-full items-center gap-4 rounded-2xl border-2 p-4 text-left transition-colors sm:p-5",
         selected
-          ? "border-brand bg-brand-soft/40 shadow-sm"
-          : "border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:border-brand-soft hover:bg-brand-soft/20",
+          ? "border-[hsl(var(--primary)/0.45)] bg-[hsl(var(--primary-soft))] shadow-sm"
+          : "border-[hsl(var(--border))] bg-[hsl(var(--background))] hover:border-[hsl(var(--primary)/0.3)] hover:bg-[hsl(var(--muted))]",
       )}
     >
       {emoji ? <span className="text-3xl sm:text-4xl">{emoji}</span> : null}

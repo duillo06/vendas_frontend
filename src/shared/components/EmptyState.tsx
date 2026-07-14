@@ -14,10 +14,10 @@ type EmptyStateProps = {
 };
 
 const accentTile: Record<VisualAccent, string> = {
-  "chart-1": "tile-chart-1 ring-4 ring-[hsl(var(--chart-1)/0.12)]",
-  "chart-2": "tile-chart-2 ring-4 ring-[hsl(var(--chart-2)/0.12)]",
-  "chart-3": "tile-chart-3 ring-4 ring-[hsl(var(--chart-3)/0.12)]",
-  "chart-4": "tile-chart-4 ring-4 ring-[hsl(var(--chart-4)/0.12)]",
+  "chart-1": "tile-chart-1",
+  "chart-2": "tile-chart-2",
+  "chart-3": "tile-chart-3",
+  "chart-4": "tile-chart-4",
 };
 
 export function EmptyState({
@@ -31,13 +31,13 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center rounded-2xl border border-dashed border-brand-soft bg-gradient-to-b from-[hsl(var(--primary-soft))] to-white px-6 py-14 text-center",
+        "flex flex-col items-center justify-center rounded-2xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--muted))]/25 px-6 py-12 text-center sm:py-14",
         className,
       )}
     >
       {Icon ? (
-        <span className={cn("mb-4 flex h-14 w-14 items-center justify-center rounded-2xl", accentTile[accent])}>
-          <Icon className="h-7 w-7" />
+        <span className={cn("mb-4 flex h-12 w-12 items-center justify-center rounded-xl sm:h-14 sm:w-14 sm:rounded-2xl", accentTile[accent])}>
+          <Icon className="h-6 w-6 sm:h-7 sm:w-7" />
         </span>
       ) : null}
       <h3 className="text-lg font-semibold">{title}</h3>

@@ -1,6 +1,11 @@
 export { OrderTrackingView } from "./components/OrderTrackingView";
+export { OrderNotificationsBell } from "./components/OrderNotificationsBell";
 export { useOrder, orderKeys } from "./hooks/useOrder";
 export { useOrders } from "./hooks/useOrders";
 export { useAdminOrder } from "./hooks/useAdminOrder";
 export { useUpdateOrderStatus } from "./hooks/useUpdateOrderStatus";
 export { useUpdateOrderPayment } from "./hooks/useUpdateOrderPayment";
+export { useNewOrderAlerts } from "./hooks/useNewOrderAlerts";
+export type { OrderAlertNotification } from "./hooks/useNewOrderAlerts";
+export { useOrderAlertSoundPreference } from "./hooks/useOrderAlertSoundPreference";
+export { playOrderAlertSound, unlockOrderAlertAudio } from "./lib/playOrderAlertSound";

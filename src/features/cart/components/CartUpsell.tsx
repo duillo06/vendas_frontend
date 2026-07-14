@@ -32,7 +32,7 @@ export function CartUpsell({ products, cartProductIds }: CartUpsellProps) {
   }
 
   return (
-    <div className="space-y-3 rounded-2xl border border-brand-soft bg-gradient-to-br from-[hsl(var(--primary-soft))] to-white p-4">
+    <div className="space-y-3 rounded-2xl border border-[hsl(var(--border))] bg-white p-4 shadow-[var(--shadow-sm)]">
       <div>
         <p className="font-semibold">{storefrontCopy.cart.upsellTitle}</p>
         <p className="text-xs text-[hsl(var(--muted-foreground))]">{storefrontCopy.cart.upsellHint}</p>
@@ -45,12 +45,12 @@ export function CartUpsell({ products, cartProductIds }: CartUpsellProps) {
           return (
             <li
               key={product.id}
-              className="flex items-center gap-3 rounded-xl border border-[hsl(var(--border))] bg-white/80 p-3 transition hover:border-brand-soft"
+              className="flex items-center gap-3 rounded-xl border border-[hsl(var(--border))] bg-white/80 p-3 transition hover:border-[hsl(var(--primary)/0.3)]"
             >
               {product.image_url ? (
                 <img src={product.image_url} alt="" className="h-12 w-12 rounded-lg object-cover" />
               ) : (
-                <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-brand-soft text-lg">
+                <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-[hsl(var(--muted))] text-lg">
                   {rule?.emoji ?? "✨"}
                 </span>
               )}

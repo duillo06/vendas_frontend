@@ -316,8 +316,8 @@ journey
 
 | Elemento | Comportamento |
 |----------|---------------|
-| Status aberto/fechado | Banner verde/cinza abaixo do hero |
-| Categorias | Scroll horizontal com chip ativo |
+| Status aberto/fechado | Chip no header de identidade da loja |
+| Categorias | Scroll horizontal com chip ativo (tint brand, sem fill sólido) |
 | Produto indisponível | Overlay + badge, sem botão adicionar |
 | Carrinho | Badge com contagem, sempre visível |
 | Pedido mínimo | Banner sutil se subtotal < mínimo |
@@ -1067,6 +1067,7 @@ Meta: ≥ 7/10 em todas
 | Opções em dropdown | Esconde personalização | Cards selecionáveis |
 | Fotos pequenas | Não apetece | Hero 4:3 no produto |
 | Muitas fontes/cores | Visual amador | Design System rigoroso |
+| Hero / header com fill da marca | Parece “app colorido”, não premium | Header neutro + primary só em detalhes |
 | Autoplay de vídeo/som | Irritante | Silencioso por padrão |
 
 ---

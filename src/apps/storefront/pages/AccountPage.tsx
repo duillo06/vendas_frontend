@@ -21,7 +21,6 @@ export function AccountPage() {
       <BackLink to="/" label="Início" />
 
       <PageHeader
-        variant="hero"
         density="compact"
         mobileHidden
         accent="chart-4"

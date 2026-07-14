@@ -36,7 +36,6 @@ export function CategoryPage() {
       <BackLink to="/cardapio" label="Cardápio" />
 
       <PageHeader
-        variant="hero"
         density="compact"
         mobileHidden
         icon={Layers}

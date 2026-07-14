@@ -7,20 +7,31 @@ alwaysApply: true
 
 Cada cliente deve poder customizar as cores do sistema pelo **painel (backoffice)**. Isso é requisito do produto, mas **não é Sprint 6**.
 
+## Filosofia (obrigatória)
+
+A cor do estabelecimento **assina**, não **pinta**.
+
+- Primary em botões, links, ícones ativos, chips, badges, switches, progress, focus, hairlines, halo da logo
+- **Nunca** em fundos grandes (hero, page shell, painéis de formulário inteiros)
+- Fundos do sistema: neutros (`#FFFFFF` / `#FAFAFA` / `#F5F5F5`)
+- Identidade visual = logo + meta + detalhes brand — não slab colorido
+
+Refs mentais: Stripe, Linear, Notion, Spotify, Airbnb, iFood.
+
 ## Quando implementar
 
 | Fase | O quê |
 |------|--------|
-| **Agora (Sprints 4–7)** | Só preparar: tokens CSS + API já prevista — **sem** color picker nem injeção dinâmica |
+| **Agora (Sprints 4–7)** | Tokens CSS + API; `applyTenantTheme` nos detalhes; **sem** color picker de UI se ainda não for Sprint 8 |
 | **Sprint 8 — Settings** | UI no backoffice + `PATCH` settings com `theme` + storefront aplica cores |
 | **V3+** | Domínio próprio, fontes, dark mode (`docs/09-roadmap.md` white-label) |
 
-Não adiantar color picker ou `ThemeProvider` sem estar na sprint de Settings, salvo pedido explícito.
+Não adiantar color picker sem estar na sprint de Settings, salvo pedido explícito.
 
 ## Modelo de dados (já existe)
 
 - `company_settings.theme` (JSONB) — ver `docs/03-modelagem-do-banco.md`, `docs/04-design-system.md` §20
-- Expor no `GET /public/company/` (campo `theme`) quando for Sprint 8
+- Expor no `GET /public/company/` (campo `theme`)
 - Backoffice: `PATCH /admin/settings/` com `{ "theme": { ... } }`
 
 Formato sugerido (MVP):
@@ -35,11 +46,11 @@ Formato sugerido (MVP):
 
 Valores em **HSL sem `hsl()`** — iguais aos de `:root` em `globals.css`.
 
-## Como aplicar no storefront (Sprint 8)
+## Como aplicar no storefront
 
 1. `useCompanyPublic()` traz `theme`
 2. `applyTenantTheme(theme)` seta CSS variables em `document.documentElement`
-3. Componentes continuam usando `hsl(var(--primary))` — zero refactor visual
+3. Componentes usam `hsl(var(--primary))` só em controles — headers e shells ficam neutros
 
 ```ts
 // lembrete: injeta as vars da loja no :root
@@ -55,6 +66,7 @@ function applyTenantTheme(theme?: TenantTheme | null) {
 ## Backoffice (Sprint 8)
 
 - Seção **Aparência** em SettingsPage: preview ao vivo + inputs cor (primary) + reset para Emerald padrão
+- Preview deve mostrar primary em **botão/chip**, não em hero full-bleed
 - Permissão: `settings.manage`
 - Validar contraste mínimo (WCAG AA) antes de salvar — aviso se `primary` + `primary_foreground` falharem
 
@@ -62,4 +74,4 @@ function applyTenantTheme(theme?: TenantTheme | null) {
 
 - Cores de status de pedido (`pending`, `preparing`, etc.)
 - Cores semânticas de erro/sucesso globais
-- Backoffice pode manter Emerald fixo no MVP ou herdar primary com moderação
+- Backoffice pode manter Emerald fixo no MVP ou herdar primary com moderação (só accents)

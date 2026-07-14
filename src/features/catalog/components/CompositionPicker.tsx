@@ -70,7 +70,7 @@ export function CompositionPicker({ product, selected, onChange }: CompositionPi
   };
 
   return (
-    <div className="space-y-3 rounded-2xl border border-brand-soft bg-brand-soft/20 p-4">
+    <div className="space-y-3 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30 p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-semibold">{composition.label}</p>
@@ -124,8 +124,8 @@ export function CompositionPicker({ product, selected, onChange }: CompositionPi
                     className={cn(
                       "flex items-center gap-3 rounded-xl border p-3 text-left transition",
                       isSelected
-                        ? "border-brand bg-brand-soft/40 ring-2 ring-brand"
-                        : "border-[hsl(var(--border))] hover:border-brand-soft hover:bg-brand-soft/20",
+                        ? "border-[hsl(var(--primary)/0.45)] bg-[hsl(var(--primary-soft))] ring-1 ring-[hsl(var(--primary)/0.2)]"
+                        : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.3)] hover:bg-[hsl(var(--muted))]",
                     )}
                   >
                     <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-[hsl(var(--muted))]">

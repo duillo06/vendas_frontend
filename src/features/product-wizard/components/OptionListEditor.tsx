@@ -55,7 +55,7 @@ export function OptionListEditor({ options, suggestions, onChange }: OptionListE
               key={suggestion}
               type="button"
               onClick={() => add(suggestion)}
-              className="inline-flex items-center gap-1 rounded-full border border-dashed border-brand-soft bg-brand-soft/20 px-3 py-1 text-sm font-medium text-brand transition hover:bg-brand-soft/40"
+              className="inline-flex items-center gap-1 rounded-full border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30 px-3 py-1 text-sm font-medium text-brand transition hover:bg-[hsl(var(--muted))]/50"
             >
               <Plus className="h-3.5 w-3.5" />
               {suggestion}

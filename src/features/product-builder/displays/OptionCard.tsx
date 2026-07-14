@@ -106,7 +106,7 @@ export function OptionCard({
             <span className="min-w-[1.5rem] text-center text-sm font-semibold tabular-nums">{quantity}</span>
             <button
               type="button"
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-[hsl(var(--border))] bg-white transition hover:bg-brand-soft"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-[hsl(var(--border))] bg-white transition hover:bg-[hsl(var(--muted))]"
               disabled={disabled || unavailable}
               onClick={onIncrement}
             >

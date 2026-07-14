@@ -33,8 +33,8 @@ export function CheckoutOrderSummary({
   const deliveryHint = getFreeDeliveryHint(subtotal, freeDeliveryAbove, baseDeliveryFee);
 
   return (
-    <Card className={cn("border-brand-soft/60 shadow-sm", className)}>
-      <CardHeader className="border-b border-[hsl(var(--border))] bg-brand-soft/20 pb-4">
+    <Card className={cn("border-[hsl(var(--border))] shadow-sm", className)}>
+      <CardHeader className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30 pb-4">
         <CardTitle className="flex items-center gap-2 text-base">
           <ShoppingBag className="h-4 w-4 text-brand" />
           {storefrontCopy.checkout.summaryTitle}

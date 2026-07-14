@@ -171,7 +171,7 @@ export function ProductCompositionEditor({ value, onChange, categories, currentP
                         key={p.id}
                         className={cn(
                           "flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm",
-                          checked && "bg-brand-soft/40",
+                          checked && "bg-[hsl(var(--muted))]/50",
                         )}
                       >
                         <input

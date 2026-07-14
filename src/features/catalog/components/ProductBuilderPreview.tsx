@@ -66,7 +66,7 @@ export function ProductBuilderPreview({
         }
       />
 
-      <div className="sticky bottom-0 rounded-lg border border-brand-soft/60 bg-brand-soft/30 px-4 py-3">
+      <div className="sticky bottom-0 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40 px-4 py-3">
         <div className="flex items-center justify-between text-sm">
           <span className="text-[hsl(var(--muted-foreground))]">Total estimado</span>
           <span className="text-lg font-bold text-brand">{formatCurrency(total)}</span>

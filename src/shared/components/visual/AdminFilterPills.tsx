@@ -33,7 +33,7 @@ export function AdminFilterPills({ options, value, onChange, className }: AdminF
               <span
                 className={cn(
                   "rounded-full px-2 py-0.5 text-[10px] font-bold",
-                  active ? "bg-white/20 text-white" : "bg-brand-soft text-brand",
+                  active ? "bg-[hsl(var(--primary)/0.15)] text-brand" : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]",
                 )}
               >
                 {option.count}

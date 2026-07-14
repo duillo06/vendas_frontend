@@ -54,7 +54,6 @@ export function OrdersPage() {
       <BackLink to="/" label="Dashboard" />
 
       <PageHeader
-        variant="hero"
         title="Pedidos"
         subtitle={adminCopy.orders.subtitle}
         icon={ShoppingBag}
@@ -71,11 +70,11 @@ export function OrdersPage() {
               placeholder="Buscar número, nome ou telefone"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              className="border-brand-soft bg-white"
+              className="border-[hsl(var(--border))] bg-white"
             />
             <p className="text-xs text-[hsl(var(--muted-foreground))]">{adminCopy.orders.searchHint}</p>
           </div>
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[hsl(var(--border))] bg-white px-4 py-3 text-sm transition hover:border-brand-soft">
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[hsl(var(--border))] bg-white px-4 py-3 text-sm transition hover:border-[hsl(var(--primary)/0.3)]">
             <input
               type="checkbox"
               className="mt-1 h-4 w-4 accent-[hsl(var(--primary))]"
