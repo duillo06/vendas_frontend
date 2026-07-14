@@ -1,4 +1,29 @@
 export const adminCopy = {
+  wizard: {
+    pageTitle: "Novo produto",
+    pageSubtitle: "Vou te guiar passo a passo — sem formulário gigante.",
+    advancedLink: "Configurações avançadas",
+    advancedHint: "Prefere o formulário técnico completo? Abra o modo avançado.",
+    basics: {
+      title: "Vamos configurar este produto",
+      subtitle: "Primeiro, conte um pouco sobre ele.",
+    },
+    segment: {
+      title: "Como este produto é vendido?",
+      subtitle: "Escolha o tipo mais parecido — é só pra eu sugerir o melhor caminho.",
+    },
+    price: {
+      title: "Qual o preço base?",
+      subtitle: "🚀 Falta pouco! Só o valor inicial do produto.",
+    },
+    review: {
+      title: "Excelente! Seu produto está quase pronto",
+      subtitle: "Revise o resumo abaixo e publique quando quiser.",
+    },
+    optionsSubtitle: "Adicione os itens que o cliente vai ver. Dá pra usar as sugestões.",
+    success: "🎉 Produto criado com sucesso!",
+    error: "Não foi possível criar o produto. Tente novamente.",
+  },
   products: {
     subtitle: "Organize o cardápio que seus clientes veem no app.",
     empty: {

@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { ClipboardList, LayoutDashboard, RefreshCw, ShoppingBag, TrendingUp, XCircle } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import { useDashboard } from "@/features/dashboard";
+import { FlowEmptyState } from "@/features/flow/FlowEmptyState";
+import { FlowOnboarding } from "@/features/flow/FlowOnboarding";
+import { useFlowOnboarding } from "@/features/flow/useFlowOnboarding";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { UiHint } from "@/shared/components/UiHint";
 import { AdminOrderCard, PageHeader, StatCard } from "@/shared/components/visual";
@@ -21,6 +24,8 @@ function formatTime(iso: string) {
 
 export function DashboardPage() {
   const { data, isLoading, isError } = useDashboard();
+  const navigate = useNavigate();
+  const onboarding = useFlowOnboarding();
   const [greeting, setGreeting] = useState("Olá");
 
   useEffect(() => {
@@ -36,6 +41,15 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      <FlowOnboarding
+        open={onboarding.open}
+        onClose={onboarding.dismiss}
+        onStart={() => {
+          onboarding.dismiss();
+          navigate("/produtos/novo");
+        }}
+      />
+
       <PageHeader
         variant="hero"
         title="Dashboard"
@@ -176,12 +190,20 @@ export function DashboardPage() {
               ))}
             </ul>
           ) : (
-            <div className="rounded-2xl border border-dashed border-brand-soft bg-brand-soft/40 px-4 py-12 text-center">
-              <p className="text-lg font-semibold">{adminCopy.dashboard.emptyOrders.title}</p>
-              <p className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
-                {adminCopy.dashboard.emptyOrders.description}
-              </p>
-            </div>
+            <FlowEmptyState
+              line={{
+                emoji: "🌱",
+                title: adminCopy.dashboard.emptyOrders.title,
+                text: adminCopy.dashboard.emptyOrders.description,
+                mood: "idle",
+              }}
+              action={
+                <Button type="button" onClick={() => navigate("/produtos/novo")} className="gap-2">
+                  <ShoppingBag className="h-4 w-4" />
+                  Criar meu primeiro produto
+                </Button>
+              }
+            />
           )}
         </CardContent>
       </Card>

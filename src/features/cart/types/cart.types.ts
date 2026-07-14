@@ -8,6 +8,14 @@ export interface CartSelectedOption {
   quantity: number;
 }
 
+// parte escolhida numa composição (ex: 2º sabor da pizza)
+export interface CartComponent {
+  productId: string;
+  productName: string;
+  imageUrl: string | null;
+  basePrice: number;
+}
+
 export interface CartItem {
   id: string;
   productId: string;
@@ -18,6 +26,7 @@ export interface CartItem {
   unitPrice: number;
   basePrice: number;
   selectedOptions: CartSelectedOption[];
+  components?: CartComponent[];
 }
 
 export type AddToCartPayload = Omit<CartItem, "id" | "quantity"> & {

@@ -20,7 +20,9 @@ import {
   getProductFeatureChips,
 } from "@/features/storefront/utils/productBadges";
 import { ProductImageCarousel } from "./ProductImageCarousel";
+import { CompositionPicker, composedBasePrice } from "./CompositionPicker";
 import type { ProductDetail, ProductListItem } from "../types/catalog.types";
+import type { CartComponent } from "@/features/cart/types/cart.types";
 
 import { ProductCard } from "@/shared/components/ProductCard";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
@@ -47,6 +49,7 @@ export type ProductAddToCartPayload = {
     priceType: "fixed" | "percentage";
     quantity: number;
   }>;
+  components?: CartComponent[];
 };
 
 type ProductDetailViewProps = {
@@ -62,17 +65,24 @@ export function ProductDetailView({ product, relatedProducts = [], onAddToCart }
   const [invalidGroupId, setInvalidGroupId] = useState<string | null>(null);
   const [justAdded, setJustAdded] = useState(false);
   const [priceBump, setPriceBump] = useState(false);
+  const [compositionParts, setCompositionParts] = useState<CartComponent[]>([]);
   const isFirstPriceRender = useRef(true);
   const { isFavorite, toggle } = useFavorites();
 
   useEffect(() => {
     setSelections(buildInitialSelections(product.option_groups));
+    setCompositionParts([]);
   }, [product.id]);
 
-  const totalPrice = useMemo(
-    () => calculateProductPrice(product, selections),
-    [product, selections],
-  );
+  const totalPrice = useMemo(() => {
+    const withOptions = calculateProductPrice(product, selections);
+    if (!product.composition?.enabled || compositionParts.length === 0) {
+      return withOptions;
+    }
+    // troca o preço base pelo da composição, mantendo o que as opções somam
+    const optionsDelta = withOptions - product.base_price;
+    return Math.round((composedBasePrice(product, compositionParts) + optionsDelta) * 100) / 100;
+  }, [product, selections, compositionParts]);
 
   useEffect(() => {
     if (isFirstPriceRender.current) {
@@ -103,6 +113,15 @@ export function ProductDetailView({ product, relatedProducts = [], onAddToCart }
       return;
     }
 
+    // composição: exige o mínimo de sabores antes de adicionar
+    if (product.composition?.enabled) {
+      const minAdditional = Math.max(0, product.composition.min_parts - 1);
+      if (compositionParts.length < minAdditional) {
+        toast.error(`Escolha ${minAdditional} sabor(es) para combinar.`);
+        return;
+      }
+    }
+
     setInvalidGroupId(null);
 
     if (!onAddToCart) return;
@@ -125,6 +144,7 @@ export function ProductDetailView({ product, relatedProducts = [], onAddToCart }
       basePrice: product.base_price,
       unitPrice: totalPrice,
       selectedOptions: optionsPayload,
+      components: compositionParts.length > 0 ? compositionParts : undefined,
     });
 
     setJustAdded(true);
@@ -210,6 +230,14 @@ export function ProductDetailView({ product, relatedProducts = [], onAddToCart }
               </span>
             ) : null}
           </div>
+
+          {product.composition?.enabled ? (
+            <CompositionPicker
+              product={product}
+              selected={compositionParts}
+              onChange={setCompositionParts}
+            />
+          ) : null}
 
           <ProductBuilder
             groups={product.option_groups}

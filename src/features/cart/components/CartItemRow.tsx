@@ -1,11 +1,20 @@
 import { Link } from "react-router";
 import { Trash2 } from "lucide-react";
 
-import type { CartItem } from "../types/cart.types";
+import type { CartComponent, CartItem } from "../types/cart.types";
 import { QuantitySelector } from "./QuantitySelector";
 
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { Button } from "@/shared/components/ui/button";
+
+// mostra as partes tipo "50% Calabresa · 50% Portuguesa"
+function formatCompositionParts(mainName: string, components: CartComponent[]): string {
+  const totalParts = components.length + 1;
+  const pct = Math.round(100 / totalParts);
+  return [mainName, ...components.map((c) => c.productName)]
+    .map((name) => `${pct}% ${name}`)
+    .join(" · ");
+}
 
 type CartItemRowProps = {
   item: CartItem;
@@ -36,6 +45,11 @@ export function CartItemRow({ item, onQuantityChange, onRemove }: CartItemRowPro
             <Link to={`/produto/${item.productSlug}`} className="font-medium hover:underline">
               {item.productName}
             </Link>
+            {item.components && item.components.length > 0 ? (
+              <p className="mt-0.5 text-xs font-medium text-brand">
+                {formatCompositionParts(item.productName, item.components)}
+              </p>
+            ) : null}
             {item.selectedOptions.length > 0 ? (
               <ul className="mt-1 space-y-0.5 text-xs text-[hsl(var(--muted-foreground))]">
                 {item.selectedOptions.map((option) => (

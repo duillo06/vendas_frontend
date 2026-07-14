@@ -26,7 +26,7 @@ export const useCartStore = create<CartState>()(
 
       addItem: (payload) =>
         set((state) => {
-          const id = buildCartItemId(payload.productId, payload.selectedOptions);
+          const id = buildCartItemId(payload.productId, payload.selectedOptions, payload.components);
           const quantity = clampQuantity(payload.quantity ?? 1);
           const existing = state.items.find((item) => item.id === id);
 

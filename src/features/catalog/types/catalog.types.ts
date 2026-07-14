@@ -101,6 +101,17 @@ export interface OptionGroup {
   default_option_ids?: string[];
 }
 
+export type CompositionPricingRule = "highest" | "average" | "main";
+
+// composição: o produto é formado por outros produtos (ex: pizza meio a meio)
+export interface ProductComposition {
+  enabled: boolean;
+  label: string;
+  min_parts: number;
+  max_parts: number;
+  pricing_rule: CompositionPricingRule;
+}
+
 export interface ProductDetail {
   id: string;
   name: string;
@@ -113,6 +124,7 @@ export interface ProductDetail {
   tags: string[];
   images: ProductImage[];
   option_groups: OptionGroup[];
+  composition?: ProductComposition | null;
 }
 
 export interface ProductFilters {

@@ -28,6 +28,7 @@ export interface CheckoutItemPayload {
   quantity: number;
   notes?: string;
   options: Array<{ option_id: string; quantity?: number }>;
+  components?: string[];
 }
 
 export interface CheckoutPayload {

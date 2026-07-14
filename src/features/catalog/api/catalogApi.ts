@@ -13,4 +13,10 @@ export const catalogApi = {
 
   getProduct: (slug: string) =>
     apiClient.get<ProductDetail>(`/public/catalog/products/${slug}/`).then((r) => r.data),
+
+  // produtos que podem compor este (ex: outros sabores da pizza)
+  getCompositionOptions: (slug: string) =>
+    apiClient
+      .get<ProductListItem[]>(`/public/catalog/products/${slug}/composition/`)
+      .then((r) => r.data),
 };

@@ -37,6 +37,9 @@ export function mapCheckoutPayload(
         option_id: opt.optionId,
         quantity: opt.quantity ?? 1,
       })),
+      components: item.components?.length
+        ? item.components.map((c) => c.productId)
+        : undefined,
     })),
   };
 }

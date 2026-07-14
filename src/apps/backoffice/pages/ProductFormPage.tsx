@@ -10,7 +10,13 @@ import {
 } from "@/features/catalog/api/catalogAdminApi";
 import { ProductBuilderPreview } from "@/features/catalog/components/ProductBuilderPreview";
 import { ProductConfigurator } from "@/features/catalog/components/ProductConfigurator";
+import {
+  ProductCompositionEditor,
+  DEFAULT_COMPOSITION,
+  type CompositionForm,
+} from "@/features/catalog/components/ProductCompositionEditor";
 import { formatCategoryLabel } from "@/features/catalog/utils/categoryLabel";
+import { linksFromProduct, serializeProductLinks } from "@/features/catalog/utils/productLinks";
 import { ProductImageGallery } from "@/features/catalog/components/ProductImageGallery";
 import { catalogAdminKeys } from "@/features/catalog/constants/catalog-admin-keys";
 import { CurrencyInput } from "@/shared/components/CurrencyInput";
@@ -31,42 +37,6 @@ type PendingImage = {
   file: File;
   previewUrl: string;
 };
-
-function linksFromProduct(product?: {
-  product_option_groups?: ProductOptionGroupLink[];
-  option_group_ids?: string[];
-}): ProductOptionGroupLink[] {
-  if (product?.product_option_groups?.length) {
-    return product.product_option_groups.map((link, index) => ({
-      option_group_id: link.option_group_id,
-      sort_order: link.sort_order ?? index,
-      override_min: link.override_min ?? null,
-      override_max: link.override_max ?? null,
-      override_required: link.override_required ?? null,
-      override_display_type: link.override_display_type ?? null,
-      override_pricing_config: link.override_pricing_config ?? null,
-      override_ui_config: link.override_ui_config ?? null,
-    }));
-  }
-
-  return (product?.option_group_ids ?? []).map((groupId, index) => ({
-    option_group_id: groupId,
-    sort_order: index,
-  }));
-}
-
-function serializeProductLinks(links: ProductOptionGroupLink[]) {
-  return links.map((link, index) => ({
-    option_group_id: link.option_group_id,
-    sort_order: index,
-    override_min: link.override_min ?? null,
-    override_max: link.override_max ?? null,
-    override_required: link.override_required ?? null,
-    override_display_type: link.override_display_type ?? null,
-    override_pricing_config: link.override_pricing_config ?? null,
-    override_ui_config: link.override_ui_config ?? null,
-  }));
-}
 
 export function ProductFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -98,6 +68,7 @@ export function ProductFormPage() {
     is_active: true,
     is_available: true,
     product_option_groups: [] as ProductOptionGroupLink[],
+    composition: DEFAULT_COMPOSITION as CompositionForm,
   });
   const [previewMode, setPreviewMode] = useState<"storefront" | "builder">("storefront");
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
@@ -112,6 +83,9 @@ export function ProductFormPage() {
         is_active: product.is_active,
         is_available: product.is_available,
         product_option_groups: linksFromProduct(product),
+        composition: product.composition
+          ? { ...DEFAULT_COMPOSITION, ...product.composition }
+          : DEFAULT_COMPOSITION,
       });
       setPendingImages([]);
     } else if (isNew && categories?.length) {
@@ -216,6 +190,17 @@ export function ProductFormPage() {
         is_active: form.is_active,
         is_available: form.is_available,
         product_option_groups: serializeProductLinks(form.product_option_groups),
+        composition: {
+          enabled: form.composition.enabled,
+          source_type: form.composition.source_type,
+          source_category_id: form.composition.source_category_id,
+          source_tag: form.composition.source_tag,
+          custom_product_ids: form.composition.custom_product_ids,
+          label: form.composition.label,
+          min_parts: form.composition.min_parts,
+          max_parts: form.composition.max_parts,
+          pricing_rule: form.composition.pricing_rule,
+        },
       };
 
       const saved = isNew
@@ -420,6 +405,13 @@ export function ProductFormPage() {
               </Link>
             </UiHint>
           )}
+
+          <ProductCompositionEditor
+            value={form.composition}
+            onChange={(composition) => setForm((current) => ({ ...current, composition }))}
+            categories={categories}
+            currentProductId={product?.id}
+          />
 
           <Button
             type="button"

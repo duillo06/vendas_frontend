@@ -52,6 +52,18 @@ export interface ProductOptionGroupLink {
   group?: OptionGroupAdmin;
 }
 
+export interface ProductCompositionAdmin {
+  enabled: boolean;
+  source_type: "category" | "tag" | "custom";
+  source_category_id: string | null;
+  source_tag: string;
+  custom_product_ids: string[];
+  label: string;
+  min_parts: number;
+  max_parts: number;
+  pricing_rule: "highest" | "average" | "main";
+}
+
 export interface ProductAdminDetail {
   id: string;
   name: string;
@@ -68,6 +80,7 @@ export interface ProductAdminDetail {
   prep_time: number | null;
   option_group_ids: string[];
   product_option_groups: ProductOptionGroupLink[];
+  composition?: ProductCompositionAdmin | null;
   images: ProductImageAdmin[];
 }
 
