@@ -29,8 +29,12 @@ export function useUpdateOrderStatus(orderId: string) {
       }
       toast.error(error.message || "Não foi possível atualizar o status");
     },
-    onSuccess: () => {
-      toast.success(adminCopy.orders.toasts.statusUpdated);
+    onSuccess: (_data, variables) => {
+      toast.success(
+        variables.status === "completed"
+          ? adminCopy.orders.toasts.orderCompleted
+          : adminCopy.orders.toasts.statusUpdated,
+      );
       void queryClient.invalidateQueries({ queryKey: orderAdminKeys.all });
     },
   });

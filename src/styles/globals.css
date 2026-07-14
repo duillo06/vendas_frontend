@@ -293,6 +293,13 @@ select:disabled {
   box-shadow: inset 3px 0 0 0 hsl(var(--primary));
 }
 
+/* pulse só se o usuário topa motion */
+@media (prefers-reduced-motion: reduce) {
+  .order-step-pulse {
+    animation: none !important;
+  }
+}
+
 .sidebar-nav-badge {
   background: hsl(var(--accent) / 0.9);
   color: hsl(var(--accent-foreground));
