@@ -9,9 +9,10 @@ type SheetProps = {
   onOpenChange: (open: boolean) => void;
   children: ReactNode;
   side?: "right" | "left" | "bottom";
+  className?: string;
 };
 
-export function Sheet({ open, onOpenChange, children, side = "right" }: SheetProps) {
+export function Sheet({ open, onOpenChange, children, side = "right", className }: SheetProps) {
   if (!open) return null;
 
   return (
@@ -24,10 +25,11 @@ export function Sheet({ open, onOpenChange, children, side = "right" }: SheetPro
       />
       <div
         className={cn(
-          "absolute flex flex-col border-[hsl(var(--border))] bg-[hsl(var(--background))] shadow-lg",
+          "absolute flex flex-col border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-[var(--shadow-lg)] animate-fade-up",
           side === "right" && "top-0 right-0 h-full w-full max-w-sm border-l",
           side === "left" && "top-0 left-0 h-full w-full max-w-sm border-r",
-          side === "bottom" && "right-0 bottom-0 left-0 max-h-[85vh] rounded-t-xl border-t",
+          side === "bottom" && "right-0 bottom-0 left-0 max-h-[85vh] rounded-t-2xl border-t",
+          className,
         )}
       >
         {children}

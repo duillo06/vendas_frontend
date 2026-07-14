@@ -43,7 +43,7 @@ export function ProductList({ products }: ProductListProps) {
 
   return (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      {products.map((product) => (
+      {products.map((product, index) => (
         <ProductCard
           key={product.id}
           id={product.id}
@@ -54,8 +54,10 @@ export function ProductList({ products }: ProductListProps) {
           comparePrice={product.compare_price}
           imageUrl={product.image_url}
           tags={product.tags}
+          prepTime={product.prep_time}
           unavailable={!product.is_available}
           onQuickAdd={quickAddMap.get(product.id)}
+          staggerIndex={index}
         />
       ))}
     </div>

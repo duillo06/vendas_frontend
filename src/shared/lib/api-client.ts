@@ -2,7 +2,7 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 import { env, IS_BACKOFFICE } from "@/shared/config/env";
 import { authStorage } from "@/shared/lib/auth-storage";
-import { resolveStorefrontApiBaseUrl } from "@/shared/lib/tenant-api";
+import { getTenantSubdomain, resolveStorefrontApiBaseUrl } from "@/shared/lib/tenant-api";
 import type { ApiErrorBody } from "@/shared/types/api.types";
 
 type RetryConfig = InternalAxiosRequestConfig & { _retry?: boolean };
@@ -73,6 +73,11 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const tenantId = authStorage.getTenantId();
   if (tenantId && IS_BACKOFFICE) {
     config.headers["X-Tenant-ID"] = tenantId;
+  }
+
+  // Storefront: proxy reescreve Host → Django pega tenant pelo header
+  if (!IS_BACKOFFICE) {
+    config.headers["X-Tenant-Subdomain"] = getTenantSubdomain();
   }
 
   return config;

@@ -17,6 +17,8 @@ function adminIndexPlugin(): Plugin {
           url.startsWith("/@") ||
           url.startsWith("/src/") ||
           url.startsWith("/node_modules/") ||
+          url.startsWith("/api/") ||
+          url.startsWith("/media/") ||
           /\.\w+$/.test(url);
 
         if (req.method !== "GET" || isAsset) {
@@ -51,6 +53,17 @@ export default defineConfig({
     port: 5175,
     strictPort: true,
     host: true,
+    // browser → mesma origem; Vite encaminha pro Django local
+    proxy: {
+      "/api": {
+        target: "http://127.0.0.1:8001",
+        changeOrigin: true,
+      },
+      "/media": {
+        target: "http://127.0.0.1:8001",
+        changeOrigin: true,
+      },
+    },
   },
   build: {
     outDir: "dist-admin",

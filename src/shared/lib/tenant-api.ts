@@ -27,10 +27,22 @@ export function getTenantSubdomain(): string {
   return env.VITE_DEFAULT_TENANT_SUBDOMAIN;
 }
 
-/** base URL da API no storefront — tenant via Host (subdomínio) */
+/** Base relativa (/api/v1) = mesma origem do Vite; evita localhost:8001 no browser (LAN). */
+function isRelativeApiBase(url: string): boolean {
+  return url.startsWith("/");
+}
+
+/** base URL da API no storefront — tenant via Host ou X-Tenant-Subdomain */
 export function resolveStorefrontApiBaseUrl(): string {
+  const configured = env.VITE_API_BASE_URL;
+
+  // Proxy do Vite: browser fala com :5174, não com :8001
+  if (isRelativeApiBase(configured)) {
+    return configured;
+  }
+
   if (typeof window === "undefined") {
-    return env.VITE_API_BASE_URL;
+    return configured;
   }
 
   const { hostname, protocol } = window.location;
@@ -52,5 +64,5 @@ export function resolveStorefrontApiBaseUrl(): string {
     );
   }
 
-  return env.VITE_API_BASE_URL;
+  return configured;
 }

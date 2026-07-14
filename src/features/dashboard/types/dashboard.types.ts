@@ -9,6 +9,12 @@ export interface DashboardToday {
   average_ticket: number;
 }
 
+export interface DashboardYesterday {
+  date: string;
+  total_orders: number;
+  revenue: number;
+}
+
 export interface DashboardRecentOrder {
   id: string;
   order_number: string;
@@ -20,5 +26,6 @@ export interface DashboardRecentOrder {
 
 export interface DashboardData {
   today: DashboardToday;
+  yesterday?: DashboardYesterday;
   recent_orders: DashboardRecentOrder[];
 }

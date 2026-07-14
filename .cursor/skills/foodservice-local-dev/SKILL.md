@@ -53,7 +53,11 @@ cd vendas_frontend && npm run dev:admin
 
 **`vendas_frontend/.env`**
 ```bash
-VITE_API_BASE_URL=http://localhost:8001/api/v1
+# Relativo = browser usa Vite (:5174/:5175) e o proxy fala com Django :8001
+# Importante em LAN: se apontar pra localhost:8001, o PC cliente dá ERR_CONNECTION_REFUSED
+VITE_API_BASE_URL=/api/v1
+VITE_API_PORT=8001
+VITE_DEFAULT_TENANT_SUBDOMAIN=demo
 ```
 
 **`vendas_backend/.env`** — copiar de `.env.example`
@@ -76,5 +80,6 @@ Padrão: `{tenant}.localhost:5174` (ex: `pizzaria-joao.localhost:5174`)
 | Porta 8000 em uso | Usar **8001** — não matar o projeto principal |
 | Porta 5173 em uso | Storefront já está em **5174** via `vite.config.ts` |
 | CORS bloqueado | Conferir `config/settings/development.py` (5174, 5175) |
+| `ERR_CONNECTION_REFUSED` em `:8001` | Front deve usar `VITE_API_BASE_URL=/api/v1` (proxy Vite). Hard refresh. |
 | Postgres 5432 em uso | Food Service usa **5433** — conferir `POSTGRES_PORT` no `.env` |
 | Redis 6379 em uso | Food Service usa **6380** — conferir `REDIS_URL` no `.env` |

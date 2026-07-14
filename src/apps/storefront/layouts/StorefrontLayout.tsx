@@ -22,7 +22,7 @@ export function StorefrontLayout() {
 
   return (
     <div className="app-shell-storefront min-h-screen">
-      <header className="sticky top-0 z-40 border-b border-[hsl(var(--border))] bg-white/90 shadow-[var(--shadow-sm)] backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-[hsl(var(--border))] bg-[hsl(var(--card))]/92 shadow-[var(--shadow-xs)] backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-2.5">
           <Link to="/" className="group flex min-w-0 items-center gap-2.5">
             {company?.logo_url ? (

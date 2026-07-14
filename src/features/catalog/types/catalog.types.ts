@@ -27,6 +27,7 @@ export interface ProductListItem {
   is_available: boolean;
   tags: string[];
   has_options: boolean;
+  prep_time?: number | null;
 }
 
 export interface ProductImage {

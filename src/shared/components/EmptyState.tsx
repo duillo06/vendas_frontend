@@ -31,7 +31,7 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center rounded-2xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--muted))]/25 px-6 py-12 text-center sm:py-14",
+        "flex flex-col items-center justify-center rounded-2xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--card))] px-6 py-12 text-center shadow-[var(--shadow-xs)] sm:py-14",
         className,
       )}
     >
@@ -40,10 +40,8 @@ export function EmptyState({
           <Icon className="h-6 w-6 sm:h-7 sm:w-7" />
         </span>
       ) : null}
-      <h3 className="text-lg font-semibold">{title}</h3>
-      {description ? (
-        <p className="mt-2 max-w-sm text-sm text-[hsl(var(--muted-foreground))]">{description}</p>
-      ) : null}
+      <h3 className="type-subtitle">{title}</h3>
+      {description ? <p className="mt-2 max-w-sm type-caption">{description}</p> : null}
       {action ? <div className="mt-6">{action}</div> : null}
     </div>
   );

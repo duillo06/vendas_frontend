@@ -64,23 +64,11 @@ export function PageHeader({
           </span>
         ) : null}
         <div className="min-w-0 space-y-0.5">
-          <h1
-            className={cn(
-              "truncate font-semibold tracking-tight text-[hsl(var(--foreground))]",
-              compact ? "text-lg" : "text-xl sm:text-2xl",
-            )}
-          >
+          <h1 className={cn("truncate tracking-tight text-[hsl(var(--foreground))]", compact ? "type-subtitle" : "type-title")}>
             {title}
           </h1>
           {subtitle ? (
-            <p
-              className={cn(
-                "max-w-2xl text-[hsl(var(--muted-foreground))]",
-                compact ? "text-xs sm:text-sm" : "text-sm",
-              )}
-            >
-              {subtitle}
-            </p>
+            <p className={cn("max-w-2xl type-caption", !compact && "sm:text-sm")}>{subtitle}</p>
           ) : null}
         </div>
       </div>

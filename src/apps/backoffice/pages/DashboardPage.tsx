@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { ClipboardList, LayoutDashboard, RefreshCw, ShoppingBag, TrendingUp, XCircle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ClipboardList, LayoutDashboard, RefreshCw, ShoppingBag, Sparkles, TrendingUp, XCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 
 import { useDashboard } from "@/features/dashboard";
@@ -13,6 +13,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { adminCopy } from "@/shared/copy/admin";
+import { formatCurrency } from "@/shared/lib/format";
 import type { OrderStatus } from "@/shared/components/OrderStatusBadge";
 
 function formatTime(iso: string) {
@@ -38,6 +39,46 @@ export function DashboardPage() {
   const pendingOrders = data?.today.pending_orders ?? 0;
   const totalOrders = data?.today.total_orders ?? 0;
   const progressPercent = totalOrders > 0 ? Math.round(((totalOrders - pendingOrders) / totalOrders) * 100) : 0;
+
+  const insightLines = useMemo(() => {
+    if (!data) return [];
+    const lines: string[] = [];
+    const { today, yesterday } = data;
+
+    if (today.total_orders === 0) {
+      lines.push(adminCopy.dashboard.insights.noOrdersYet);
+    } else {
+      lines.push(adminCopy.dashboard.insights.ordersToday(today.total_orders));
+    }
+
+    if (today.pending_orders > 0) {
+      lines.push(adminCopy.dashboard.insights.pending(today.pending_orders));
+    }
+
+    if (today.completed_orders > 0 && today.average_ticket > 0) {
+      lines.push(adminCopy.dashboard.insights.ticket(formatCurrency(today.average_ticket)));
+    }
+
+    if (yesterday) {
+      const revenueDiff = today.revenue - yesterday.revenue;
+      if (Math.abs(revenueDiff) < 0.01) {
+        if (today.total_orders > 0 || yesterday.total_orders > 0) {
+          lines.push(adminCopy.dashboard.insights.revenueSame);
+        }
+      } else if (revenueDiff > 0) {
+        lines.push(adminCopy.dashboard.insights.revenueUp(formatCurrency(revenueDiff)));
+      } else {
+        lines.push(adminCopy.dashboard.insights.revenueDown(formatCurrency(Math.abs(revenueDiff))));
+      }
+
+      const orderDiff = today.total_orders - yesterday.total_orders;
+      if (orderDiff !== 0) {
+        lines.push(adminCopy.dashboard.insights.vsYesterdayOrders(orderDiff));
+      }
+    }
+
+    return lines.slice(0, 4);
+  }, [data]);
 
   return (
     <div className="space-y-8">
@@ -66,6 +107,24 @@ export function DashboardPage() {
 
       {isError ? (
         <p className="text-sm text-red-600">Não foi possível carregar o dashboard.</p>
+      ) : null}
+
+      {!isLoading && insightLines.length > 0 ? (
+        <Card className="overflow-hidden border-[hsl(var(--border))]">
+          <CardHeader className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]/35 pb-4">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Sparkles className="h-4 w-4 text-brand" />
+              {adminCopy.dashboard.insights.title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 p-5">
+            {insightLines.map((line) => (
+              <p key={line} className="type-body text-[hsl(var(--foreground))]">
+                {line}
+              </p>
+            ))}
+          </CardContent>
+        </Card>
       ) : null}
 
       <UiHint icon={RefreshCw} tone="info">

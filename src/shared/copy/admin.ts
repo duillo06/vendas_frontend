@@ -154,6 +154,26 @@ export const adminCopy = {
         ? "Você tem 1 pedido aguardando confirmação."
         : `Você tem ${count} pedidos aguardando confirmação.`,
     progressLabel: "Progresso do dia",
+    insights: {
+      title: "Resumo inteligente",
+      noOrdersYet: "Ainda não chegou pedido hoje — tudo pronto para quando a fila começar.",
+      ordersToday: (count: number) =>
+        count === 1 ? "Hoje já entrou 1 pedido." : `Hoje já entraram ${count} pedidos.`,
+      pending: (count: number) =>
+        count === 1
+          ? "1 pedido em atraso de confirmação precisa de atenção."
+          : `${count} pedidos pendentes precisam de atenção.`,
+      ticket: (value: string) => `Ticket médio de ${value} nos pedidos concluídos.`,
+      revenueUp: (diff: string) => `Você faturou ${diff} a mais que ontem.`,
+      revenueDown: (diff: string) => `Faturamento ${diff} abaixo de ontem — vale revisar o ritmo.`,
+      revenueSame: "Faturamento no mesmo patamar de ontem.",
+      vsYesterdayOrders: (diff: number) =>
+        diff > 0
+          ? `${diff} pedido${diff === 1 ? "" : "s"} a mais que ontem.`
+          : diff < 0
+            ? `${Math.abs(diff)} pedido${Math.abs(diff) === 1 ? "" : "s"} a menos que ontem.`
+            : "Mesmo volume de pedidos que ontem.",
+    },
     emptyOrders: {
       title: "Dia tranquilo por aqui",
       description: "Quando chegar o primeiro pedido, ele aparece nesta lista automaticamente.",

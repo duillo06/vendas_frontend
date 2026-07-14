@@ -122,9 +122,9 @@ A cor `primary` do tenant reforça identidade nos **detalhes**:
 | Progress, loading, focus ring | Sidebar como fill da marca |
 | Hairlines 1–2px, halo da logo | Cards painel `bg-brand-soft` largos |
 
-**Fundos canônicos:** `#FFFFFF`, `#FAFAFA`, `#F7F7F7`, `#F5F5F5` (`--background`, `--muted`, `--surface` neutros).
+**Fundos canônicos:** shell `#F7F8FA` (`--background` / `--surface`); cards sempre `#FFFFFF` (`--card`). Hierarquia por contraste de camada, não por cor de marca.
 
-**Sensação alvo:** "esse sistema é bonito" — não "esse sistema é muito colorido". Refs: Stripe, Linear, Notion, Spotify, Airbnb, iFood.
+**Sensação alvo:** "esse sistema é bonito" — não "esse sistema é muito colorido". Refs: Stripe, Linear, Notion, Spotify, Airbnb (princípios, não layout).
 
 ---
 

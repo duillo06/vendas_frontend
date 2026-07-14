@@ -45,8 +45,8 @@ export function StatCard({
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-2">
-            <p className="text-sm font-medium text-[hsl(var(--muted-foreground))]">{label}</p>
-            <div className="text-3xl font-bold tracking-tight">{value}</div>
+            <p className="type-caption font-medium">{label}</p>
+            <div className="type-value">{value}</div>
           </div>
           <span className={cn("flex h-11 w-11 items-center justify-center rounded-xl", tileClass[accent])}>
             <Icon className="h-5 w-5" />

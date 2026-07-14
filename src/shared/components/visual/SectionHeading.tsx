@@ -37,10 +37,8 @@ export function SectionHeading({
           </span>
         ) : null}
         <div>
-          <h2 className="text-lg font-semibold">{title}</h2>
-          {description ? (
-            <p className="text-sm text-[hsl(var(--muted-foreground))]">{description}</p>
-          ) : null}
+          <h2 className="type-subtitle">{title}</h2>
+          {description ? <p className="type-caption mt-0.5">{description}</p> : null}
         </div>
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}

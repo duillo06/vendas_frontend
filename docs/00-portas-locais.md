@@ -58,9 +58,13 @@ REDIS_URL=redis://localhost:6380/0
 ### Frontend (`vendas_frontend/.env`)
 
 ```bash
-VITE_API_BASE_URL=http://localhost:8001/api/v1
+# Relativo: browser → Vite; Vite proxy → Django :8001 (funciona em LAN)
+VITE_API_BASE_URL=/api/v1
+VITE_API_PORT=8001
+VITE_DEFAULT_TENANT_SUBDOMAIN=demo
 ```
 
+Não use `http://localhost:8001/...` se o browser estiver em outro PC — dá `ERR_CONNECTION_REFUSED`.
 ---
 
 ## Comandos rápidos
