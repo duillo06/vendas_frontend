@@ -110,24 +110,26 @@ const pizza: Blueprint = {
         },
         {
           key: "dois",
-          label: "Cliente combina 2 sabores",
+          label: "Cliente pode combinar até 2 sabores",
           emoji: "2️⃣",
-          description: "Pizza meio a meio. Este produto é 1 sabor e o cliente escolhe outro já cadastrado.",
+          description:
+            "Opcional: este produto já é 1 sabor; o cliente pode acrescentar outro se quiser (meio a meio).",
           composition: {
-            label: "Escolher 2º sabor",
-            min_parts: 2,
+            label: "Escolher 2º sabor (opcional)",
+            min_parts: 1,
             max_parts: 2,
             pricing_rule: "highest",
           },
         },
         {
           key: "tres",
-          label: "Cliente combina 3 sabores",
+          label: "Cliente pode combinar até 3 sabores",
           emoji: "3️⃣",
-          description: "Este produto é 1 sabor e o cliente escolhe mais 2 já cadastrados.",
+          description:
+            "Opcional: este produto é 1 sabor e o cliente pode acrescentar até mais 2 cadastrados.",
           composition: {
-            label: "Escolher outros sabores",
-            min_parts: 3,
+            label: "Escolher outros sabores (opcional)",
+            min_parts: 1,
             max_parts: 3,
             pricing_rule: "highest",
           },

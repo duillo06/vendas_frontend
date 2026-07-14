@@ -10,6 +10,7 @@ import {
   useTenantTheme,
   useUpdateSettings,
   useUploadLogo,
+  useUploadCover,
   type SettingsData,
 } from "@/features/settings";
 import type { BusinessHoursAdmin, TenantTheme } from "@/features/settings/types/settings.types";
@@ -20,6 +21,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { adminCopy } from "@/shared/copy/admin";
+import { resolveMediaUrl } from "@/shared/lib/media";
 import { cn } from "@/shared/lib/utils";
 
 function ToggleRow({
@@ -66,6 +68,7 @@ export function SettingsForm() {
   const { data, isLoading } = useSettings();
   const { mutate: saveSettings, isPending } = useUpdateSettings();
   const { mutate: uploadLogo, isPending: uploadingLogo } = useUploadLogo();
+  const { mutate: uploadCover, isPending: uploadingCover } = useUploadCover();
 
   const [form, setForm] = useState<SettingsData | null>(null);
   const [contrastWarning, setContrastWarning] = useState(false);
@@ -213,7 +216,7 @@ export function SettingsForm() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             {form.company.logo_url ? (
               <img
-                src={form.company.logo_url}
+                src={resolveMediaUrl(form.company.logo_url)}
                 alt="Logo"
                 className="h-16 w-16 rounded-lg border border-[hsl(var(--border))] object-cover"
               />
@@ -241,6 +244,46 @@ export function SettingsForm() {
                   }
                 }}
               />
+              <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">
+                Aparece no header e no cardápio.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            {form.company.cover_url ? (
+              <img
+                src={resolveMediaUrl(form.company.cover_url)}
+                alt="Capa"
+                className="h-24 w-full max-w-xs rounded-lg border border-[hsl(var(--border))] object-cover sm:h-20 sm:w-40"
+              />
+            ) : (
+              <div className="flex h-24 w-full max-w-xs items-center justify-center rounded-lg border border-dashed border-[hsl(var(--border))] text-xs text-[hsl(var(--muted-foreground))] sm:h-20 sm:w-40">
+                Sem capa
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <Label htmlFor="cover-upload">Foto de capa</Label>
+              <Input
+                id="cover-upload"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="mt-1 max-w-xs"
+                disabled={uploadingCover}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) {
+                    uploadCover(file, {
+                      onSuccess: (result) => {
+                        updateCompany("cover_url", result.cover_url);
+                      },
+                    });
+                  }
+                }}
+              />
+              <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">
+                Banner do topo da loja no cardápio. Preferível paisagem (ex.: 1200×400).
+              </p>
             </div>
           </div>
 

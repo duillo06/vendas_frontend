@@ -7,12 +7,15 @@ export type ProductBadge = {
 
 const BADGE_RULES: Array<{ match: RegExp; label: string; tone: ProductBadgeTone }> = [
   { match: /mais vendido|destaque|popular/i, label: "Mais vendido", tone: "hot" },
-  { match: /favorito/i, label: "Favorito dos clientes", tone: "accent" },
-  { match: /^novo$/i, label: "Novo", tone: "fresh" },
+  { match: /favorito/i, label: "Favorito", tone: "accent" },
+  { match: /^novo$|novidade/i, label: "Novidade", tone: "fresh" },
   { match: /promo/i, label: "Promoção", tone: "sale" },
   { match: /frete.?gr[aá]tis|entrega.?gr[aá]tis/i, label: "Frete grátis", tone: "brand" },
-  { match: /vegano/i, label: "Vegano", tone: "fresh" },
+  { match: /vegano|vegetariano/i, label: "Vegano", tone: "fresh" },
+  { match: /picante|apimentado/i, label: "Picante", tone: "hot" },
+  { match: /premium|gourmet/i, label: "Premium", tone: "brand" },
   { match: /artesanal/i, label: "Artesanal", tone: "brand" },
+  { match: /chef|escolha do chef/i, label: "Escolha do chef", tone: "accent" },
 ];
 
 const FAST_PREP_MINUTES = 25;
@@ -43,9 +46,9 @@ export function getProductBadges(
     used.add("Promoção");
   }
 
-  if (options?.isFavorite && !used.has("Favorito dos clientes")) {
+  if (options?.isFavorite && !used.has("Favorito")) {
     badges.push({ label: "Seu favorito", tone: "accent" });
-    used.add("Favorito dos clientes");
+    used.add("Favorito");
   }
 
   if (

@@ -202,6 +202,7 @@ export const adminCopy = {
     toasts: {
       saved: "Configurações salvas",
       logoUploaded: "Logo atualizada",
+      coverUploaded: "Capa atualizada",
     },
   },
   customers: {

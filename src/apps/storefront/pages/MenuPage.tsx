@@ -3,8 +3,8 @@ import { UtensilsCrossed } from "lucide-react";
 import {
   CategoryNav,
   CategoryNavSkeleton,
-  ProductList,
-  ProductListSkeleton,
+  CategoryProductFeed,
+  ProductListRowSkeleton,
   useCategories,
   useProducts,
 } from "@/features/catalog";
@@ -23,7 +23,7 @@ export function MenuPage() {
   const { data: categories, isLoading: loadingCategories } = useCategories();
   const { data: productsPage, isLoading: loadingProducts, isError } = useProducts({
     search: debouncedSearch || undefined,
-    page_size: 24,
+    page_size: 48,
   });
 
   const products = productsPage?.results ?? [];
@@ -47,7 +47,7 @@ export function MenuPage() {
       </CatalogSearchSection>
 
       {loadingProducts ? (
-        <ProductListSkeleton />
+        <ProductListRowSkeleton />
       ) : isError ? (
         <EmptyState title="Erro ao carregar cardápio" accent="chart-1" />
       ) : showEmpty ? (
@@ -60,7 +60,7 @@ export function MenuPage() {
           accent="chart-2"
         />
       ) : (
-        <ProductList products={products} />
+        <CategoryProductFeed products={products} searchActive={hasSearch} />
       )}
     </div>
   );

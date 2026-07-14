@@ -13,6 +13,11 @@ export const storefrontCopy = {
     ordersDelivered: (count: number) =>
       count >= 1000 ? `Mais de ${Math.floor(count / 100) / 10}k pedidos entregues` : `${count}+ pedidos entregues`,
     rating: (value: number) => `${value.toFixed(1)} de avaliação`,
+    reviewsApprox: (count: number) =>
+      count >= 1000
+        ? `+${(Math.floor(count / 100) / 10).toFixed(1).replace(".0", "")}k avaliações`
+        : `+${count} avaliações`,
+    greetingHint: "Personalize o pedido do seu jeito.",
   },
   product: {
     favorite: "Um dos favoritos da casa — vale cada mordida.",
@@ -40,11 +45,11 @@ export const storefrontCopy = {
     categoryFallback: "Escolha um item e monte do seu jeito.",
     empty: {
       title: "Cardápio em preparação",
-      description: "Em breve teremos delícias por aqui. Volte daqui a pouco!",
+      description: "Ainda não temos produtos aqui — mas estamos preparando novidades!",
     },
     searchEmpty: {
-      title: "Nada por aqui com esse nome",
-      description: "Tente outra busca ou explore as categorias — tem coisa boa esperando.",
+      title: "Nenhum produto encontrado",
+      description: "Tente buscar outro nome ou explore as categorias.",
     },
   },
   cart: {

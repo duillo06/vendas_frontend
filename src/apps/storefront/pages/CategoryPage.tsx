@@ -4,8 +4,8 @@ import { Link, useParams } from "react-router";
 import {
   CategoryNav,
   CategoryNavSkeleton,
-  ProductList,
-  ProductListSkeleton,
+  CategoryProductFeed,
+  ProductListRowSkeleton,
   useCategories,
   useProducts,
 } from "@/features/catalog";
@@ -23,7 +23,7 @@ export function CategoryPage() {
   const { data: productsPage, isLoading: loadingProducts, isError } = useProducts({
     category: slug,
     search: debouncedSearch || undefined,
-    page_size: 24,
+    page_size: 48,
   });
 
   const category = categories?.find((c) => c.slug === slug);
@@ -60,7 +60,7 @@ export function CategoryPage() {
       </CatalogSearchSection>
 
       {loadingProducts ? (
-        <ProductListSkeleton />
+        <ProductListRowSkeleton />
       ) : isError ? (
         <EmptyState title="Erro ao carregar produtos" accent="chart-2" />
       ) : showEmpty ? (
@@ -83,7 +83,7 @@ export function CategoryPage() {
           accent="chart-3"
         />
       ) : (
-        <ProductList products={products} />
+        <CategoryProductFeed products={products} searchActive={hasSearch} />
       )}
     </div>
   );

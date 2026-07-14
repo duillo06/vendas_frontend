@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Link } from "react-router";
 
 import type { Category } from "../types/catalog.types";
@@ -12,61 +13,69 @@ type CategoryNavProps = {
   className?: string;
 };
 
-const chipHover = [
-  "hover:border-[hsl(var(--chart-1)/0.35)] hover:bg-[hsl(var(--chart-1)/0.08)]",
-  "hover:border-[hsl(var(--chart-2)/0.35)] hover:bg-[hsl(var(--chart-2)/0.08)]",
-  "hover:border-[hsl(var(--chart-3)/0.35)] hover:bg-[hsl(var(--chart-3)/0.08)]",
-  "hover:border-[hsl(var(--chart-4)/0.35)] hover:bg-[hsl(var(--chart-4)/0.08)]",
-];
-
 export function CategoryNav({ categories, activeSlug, className }: CategoryNavProps) {
+  const scrollerRef = useRef<HTMLElement>(null);
+  const activeRef = useRef<HTMLAnchorElement>(null);
+
+  useEffect(() => {
+    const el = activeRef.current;
+    const scroller = scrollerRef.current;
+    if (!el || !scroller) return;
+    const left = el.offsetLeft - scroller.clientWidth / 2 + el.clientWidth / 2;
+    scroller.scrollTo({ left: Math.max(0, left), behavior: "smooth" });
+  }, [activeSlug]);
+
   return (
-    <nav className={cn("flex gap-2 overflow-x-auto pb-1", className)}>
+    <nav
+      ref={scrollerRef}
+      className={cn(
+        "flex gap-2 overflow-x-auto pb-1 scroll-smooth [-webkit-overflow-scrolling:touch]",
+        className,
+      )}
+    >
       <Link
         to="/cardapio"
-        className={cn("nav-pill shrink-0", !activeSlug && "nav-pill-active")}
+        ref={!activeSlug ? activeRef : undefined}
+        className={cn(
+          "nav-pill shrink-0",
+          !activeSlug && "nav-pill-active scale-[1.03] shadow-[var(--shadow-sm)]",
+        )}
       >
         Todos
       </Link>
-      {categories.map((category, index) => {
+      {categories.map((category) => {
         const isActive = activeSlug === category.slug;
+        const emoji = category.emoji?.trim();
 
         return (
-        <Link
-          key={category.id}
-          to={`/categoria/${category.slug}`}
-          className={cn(
-            "nav-pill flex shrink-0 items-center gap-2",
-            !isActive && chipHover[index % chipHover.length],
-            isActive && "nav-pill-active",
-          )}
-        >
-          {(() => {
-            const emoji = category.emoji?.trim();
-            return emoji ? (
-              <>
-                <span className="text-base leading-none" aria-hidden>
-                  {emoji}
-                </span>
-                <span>{category.name}</span>
-              </>
-            ) : (
-              category.name
-            );
-          })()}
-          <Badge
-            variant="secondary"
+          <Link
+            key={category.id}
+            to={`/categoria/${category.slug}`}
+            ref={isActive ? activeRef : undefined}
             className={cn(
-              "border-0 text-[10px]",
-              isActive
-                ? "bg-[hsl(var(--primary)/0.15)] text-brand"
-                : "bg-[hsl(var(--muted))] text-[hsl(var(--foreground))]",
+              "nav-pill flex shrink-0 items-center gap-2",
+              isActive && "nav-pill-active scale-[1.04] shadow-[var(--shadow-sm)]",
             )}
           >
-            {category.product_count}
-          </Badge>
-        </Link>
-      );
+            {emoji ? (
+              <span className="text-base leading-none" aria-hidden>
+                {emoji}
+              </span>
+            ) : null}
+            <span>{category.name}</span>
+            <Badge
+              variant="secondary"
+              className={cn(
+                "border-0 text-[10px]",
+                isActive
+                  ? "bg-[hsl(var(--primary)/0.15)] text-brand"
+                  : "bg-[hsl(var(--muted))] text-[hsl(var(--foreground))]",
+              )}
+            >
+              {category.product_count}
+            </Badge>
+          </Link>
+        );
       })}
     </nav>
   );

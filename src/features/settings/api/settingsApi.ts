@@ -17,4 +17,14 @@ export const settingsApi = {
       })
       .then((response) => response.data);
   },
+
+  uploadCover: (file: File) => {
+    const formData = new FormData();
+    formData.append("cover", file);
+    return apiClient
+      .post<{ cover_url: string }>("/admin/settings/cover/", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((response) => response.data);
+  },
 };

@@ -28,6 +28,7 @@ import {
 } from "@/features/orders";
 import { Button } from "@/shared/components/ui/button";
 import { Sheet } from "@/shared/components/ui/sheet";
+import { resolveMediaUrl } from "@/shared/lib/media";
 import { cn } from "@/shared/lib/utils";
 
 const SIDEBAR_COLLAPSED_KEY = "bo_sidebar_collapsed";
@@ -73,7 +74,7 @@ function SidebarBody({
         <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
           {logoUrl ? (
             <img
-              src={logoUrl}
+              src={resolveMediaUrl(logoUrl)}
               alt=""
               className="h-10 w-10 shrink-0 rounded-xl object-cover ring-1 ring-white/20"
             />
@@ -311,7 +312,11 @@ export function BackofficeLayout() {
             </Button>
             <div className="flex min-w-0 items-center gap-2 md:hidden">
               {logoUrl ? (
-                <img src={logoUrl} alt="" className="h-8 w-8 shrink-0 rounded-lg object-cover" />
+                <img
+                  src={resolveMediaUrl(logoUrl)}
+                  alt=""
+                  className="h-8 w-8 shrink-0 rounded-lg object-cover"
+                />
               ) : null}
               <span className="truncate font-bold text-brand">
                 {tenant?.trade_name ?? "Food Service"}

@@ -461,7 +461,8 @@ select:disabled {
     border-color var(--duration-normal) var(--ease-out),
     background-color var(--duration-normal) var(--ease-out),
     color var(--duration-normal) var(--ease-out),
-    box-shadow var(--duration-normal) var(--ease-out);
+    box-shadow var(--duration-normal) var(--ease-out),
+    transform var(--duration-normal) var(--ease-out);
 }
 
 .nav-pill:hover {
@@ -499,10 +500,63 @@ select:disabled {
 }
 
 .product-card-premium:hover {
-  transform: translateY(-2px);
-  border-color: hsl(var(--border));
+  transform: translateY(-3px) scale(1.005);
+  border-color: hsl(var(--primary) / 0.18);
   box-shadow: var(--shadow-md);
 }
+
+/* vitrine: menos “caixa”, mais foto */
+.product-card-vitrine {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  background: hsl(var(--card));
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform var(--duration-normal) var(--ease-out),
+    box-shadow var(--duration-normal) var(--ease-out);
+}
+
+.product-card-vitrine:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.product-card-vitrine:active {
+  transform: scale(0.985);
+}
+
+.product-list-row {
+  transition: background-color 150ms ease-out;
+}
+
+.product-list-row:active {
+  background-color: hsl(var(--muted) / 0.4);
+}
+
+.product-rail-card {
+  transition: transform var(--duration-normal) var(--ease-out);
+}
+
+.product-rail-card:active {
+  transform: scale(0.97);
+}
+
+.product-spotlight {
+  transition:
+    transform var(--duration-normal) var(--ease-out),
+    box-shadow var(--duration-normal) var(--ease-out);
+}
+
+.product-spotlight:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.product-spotlight:active {
+  transform: scale(0.99);
+}
+
 
 .glass-panel {
   border: 1px solid hsl(var(--border));
@@ -589,6 +643,9 @@ select:disabled {
   .interactive-card:hover,
   .product-card-premium,
   .product-card-premium:hover,
+  .product-card-vitrine,
+  .product-card-vitrine:hover,
+  .product-card-vitrine:active,
   .nav-pill {
     transition: none;
     transform: none;

@@ -18,7 +18,8 @@ export const DEFAULT_COMPOSITION: CompositionForm = {
   source_tag: "",
   custom_product_ids: [],
   label: "Escolher outro sabor",
-  min_parts: 2,
+  // 1 = só o produto; 2 = pode (opcional) combinar mais 1 sabor
+  min_parts: 1,
   max_parts: 2,
   pricing_rule: "highest",
 };
@@ -81,7 +82,7 @@ export function ProductCompositionEditor({ value, onChange, categories, currentP
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Total de partes (mín.)</Label>
+              <Label>Mínimo de sabores (obrigatório)</Label>
               <Input
                 type="number"
                 min={1}
@@ -90,7 +91,7 @@ export function ProductCompositionEditor({ value, onChange, categories, currentP
               />
             </div>
             <div className="space-y-2">
-              <Label>Total de partes (máx.)</Label>
+              <Label>Máximo de sabores (permitido)</Label>
               <Input
                 type="number"
                 min={1}
@@ -100,7 +101,9 @@ export function ProductCompositionEditor({ value, onChange, categories, currentP
             </div>
           </div>
           <p className="text-xs text-[hsl(var(--muted-foreground))]">
-            2 e 2 = meio a meio (cliente escolhe 1 sabor extra). O produto principal já conta como 1 parte.
+            O produto principal já conta como 1 sabor. Ex.: mín. 1 e máx. 2 = cliente{" "}
+            <strong>pode</strong> escolher um 2º sabor, mas não é obrigatório. Use mín. 2
+            só se quiser forçar meio a meio.
           </p>
 
           <div className="space-y-2">

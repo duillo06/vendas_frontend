@@ -40,6 +40,7 @@ export interface CompanyAdmin {
   phone: string | null;
   description: string | null;
   logo_url: string | null;
+  cover_url: string | null;
 }
 
 export interface BusinessHoursAdmin {

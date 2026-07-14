@@ -7,6 +7,7 @@ import { useCustomerAuth } from "@/features/customer-auth";
 import { useTenantTheme } from "@/features/settings";
 import { Button } from "@/shared/components/ui/button";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { resolveMediaUrl } from "@/shared/lib/media";
 import { cn } from "@/shared/lib/utils";
 
 const navLinks = [
@@ -27,7 +28,11 @@ export function StorefrontLayout() {
           <Link to="/" className="group flex min-w-0 items-center gap-2.5">
             {company?.logo_url ? (
               <div className="logo-frame h-9 w-9">
-                <img src={company.logo_url} alt="" className="h-full w-full object-cover" />
+                <img
+                  src={resolveMediaUrl(company.logo_url)}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
               </div>
             ) : (
               <div className="logo-frame h-9 w-9 text-sm font-bold text-brand">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { ShoppingCart } from "lucide-react";
 
@@ -6,21 +6,43 @@ import { useCart } from "../hooks/useCart";
 import { CartPanel } from "./CartPanel";
 
 import { useMediaQuery } from "@/shared/hooks/useMediaQuery";
-import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Sheet, SheetContent } from "@/shared/components/ui/sheet";
+import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { cn } from "@/shared/lib/utils";
 
 export function CartNavButton() {
-  const { totalItems } = useCart();
+  const { totalItems, subtotal } = useCart();
   const isMobile = useMediaQuery("(max-width: 767px)");
   const [open, setOpen] = useState(false);
+  const [bump, setBump] = useState(false);
+
+  useEffect(() => {
+    if (totalItems <= 0) return;
+    setBump(true);
+    const id = window.setTimeout(() => setBump(false), 420);
+    return () => window.clearTimeout(id);
+  }, [totalItems]);
+
+  const summary =
+    totalItems > 0 ? (
+      <span className="hidden tabular-nums sm:inline">
+        <PriceDisplay value={subtotal} />
+      </span>
+    ) : (
+      <span className="hidden sm:inline">Carrinho</span>
+    );
 
   const badge =
     totalItems > 0 ? (
-      <Badge className="absolute -top-2 -right-2 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px]">
+      <span
+        className={cn(
+          "absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[hsl(var(--accent))] px-1 text-[10px] font-bold text-white shadow-[var(--shadow-xs)]",
+          bump && "animate-heart-pop",
+        )}
+      >
         {totalItems > 99 ? "99+" : totalItems}
-      </Badge>
+      </span>
     ) : null;
 
   if (isMobile) {
@@ -28,14 +50,24 @@ export function CartNavButton() {
       <>
         <Button
           type="button"
-          variant="outline"
+          variant={totalItems > 0 ? "default" : "outline"}
           size="sm"
-          className="relative gap-2"
-          aria-label={`Carrinho${totalItems > 0 ? `, ${totalItems} itens` : ""}`}
+          className={cn(
+            "relative min-h-10 gap-2 transition-transform duration-200",
+            totalItems > 0 && "bg-brand hover:brightness-95",
+            bump && "scale-105",
+          )}
+          aria-label={`Carrinho${totalItems > 0 ? `, ${totalItems} itens, ${subtotal}` : ""}`}
           onClick={() => setOpen(true)}
         >
           <ShoppingCart className="h-4 w-4" />
-          <span className="sr-only">Carrinho</span>
+          {totalItems > 0 ? (
+            <span className="text-xs font-semibold tabular-nums">
+              <PriceDisplay value={subtotal} />
+            </span>
+          ) : (
+            <span className="sr-only">Carrinho</span>
+          )}
           {badge}
         </Button>
 
@@ -54,12 +86,13 @@ export function CartNavButton() {
         variant={totalItems > 0 ? "default" : "outline"}
         size="sm"
         className={cn(
-          "gap-2 transition-transform active:scale-95",
+          "min-h-10 gap-2 transition-transform duration-200 active:scale-95",
           totalItems > 0 && "bg-brand hover:brightness-95",
+          bump && "scale-105",
         )}
       >
         <ShoppingCart className="h-4 w-4" />
-        <span className="hidden sm:inline">Carrinho</span>
+        {summary}
       </Button>
       {badge}
     </Link>

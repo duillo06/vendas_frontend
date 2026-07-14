@@ -1,8 +1,10 @@
-import { Clock, Flame, Heart, Plus, ShoppingBag } from "lucide-react";
+import { Clock, Heart, Minus, Plus, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 
+import { useAddToCart, useCart } from "@/features/cart";
+import { buildCartItemId } from "@/features/cart/utils/cartItemId";
 import { useFavorites } from "@/features/favorites";
 import {
   getProductBadges,
@@ -10,6 +12,7 @@ import {
 } from "@/features/storefront/utils/productBadges";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { storefrontCopy } from "@/shared/copy/storefront";
+import { resolveMediaUrl } from "@/shared/lib/media";
 import { cn } from "@/shared/lib/utils";
 
 type ProductCardProps = {
@@ -23,19 +26,26 @@ type ProductCardProps = {
   tags?: string[];
   prepTime?: number | null;
   unavailable?: boolean;
+  hasOptions?: boolean;
+  /** legado: se false, card gerencia qty sozinho pra item simples */
   onQuickAdd?: () => void;
   staggerIndex?: number;
   className?: string;
 };
 
 const badgeToneClass: Record<ProductBadgeTone, string> = {
-  brand: "bg-brand text-[hsl(var(--primary-foreground))]",
-  accent: "badge-hot",
-  hot: "badge-hot",
-  fresh: "badge-fresh",
-  sale: "badge-sale",
-  neutral: "bg-[hsl(var(--muted))] text-[hsl(var(--foreground))]",
+  brand: "bg-brand/95 text-[hsl(var(--primary-foreground))] backdrop-blur-sm",
+  accent: "badge-hot backdrop-blur-sm",
+  hot: "badge-hot backdrop-blur-sm",
+  fresh: "badge-fresh backdrop-blur-sm",
+  sale: "badge-sale backdrop-blur-sm",
+  neutral: "bg-black/55 text-white backdrop-blur-sm",
 };
+
+function savingsPercent(price: number, compare: number): number {
+  if (compare <= 0 || compare <= price) return 0;
+  return Math.round(((compare - price) / compare) * 100);
+}
 
 export function ProductCard({
   id,
@@ -48,24 +58,33 @@ export function ProductCard({
   tags = [],
   prepTime,
   unavailable = false,
+  hasOptions = false,
   onQuickAdd,
   staggerIndex,
   className,
 }: ProductCardProps) {
   const { isFavorite, toggle } = useFavorites();
+  const addToCart = useAddToCart();
+  const { items, updateQuantity, removeItem } = useCart();
   const [heartBump, setHeartBump] = useState(false);
   const favorite = isFavorite(id);
 
-  const hasPromotion =
-    comparePrice !== null &&
-    comparePrice !== undefined &&
-    Number(comparePrice) > Number(price);
+  const simpleCartId = buildCartItemId(id, []);
+  const cartLine = items.find((item) => item.id === simpleCartId);
+  const qty = cartLine?.quantity ?? 0;
+  const canQuickQty = !unavailable && !hasOptions;
+
+  const numericPrice = Number(price);
+  const numericCompare =
+    comparePrice !== null && comparePrice !== undefined ? Number(comparePrice) : null;
+  const hasPromotion = numericCompare != null && numericCompare > numericPrice;
+  const savePct = hasPromotion ? savingsPercent(numericPrice, numericCompare!) : 0;
+
   const badges = getProductBadges(tags, {
     hasPromotion,
     isFavorite: favorite,
     prepTime,
   });
-  const isPopular = tags.some((tag) => /destaque|popular|mais vendido/i.test(tag));
 
   const handleFavorite = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -73,21 +92,60 @@ export function ProductCard({
     toggle(id);
     setHeartBump(true);
     window.setTimeout(() => setHeartBump(false), 350);
-    toast.success(favorite ? storefrontCopy.product.favoriteRemoved : storefrontCopy.product.favoriteSaved);
+    toast.success(
+      favorite ? storefrontCopy.product.favoriteRemoved : storefrontCopy.product.favoriteSaved,
+    );
   };
 
-  const handleQuickAdd = (event: React.MouseEvent) => {
+  const addSimple = () => {
+    if (onQuickAdd) {
+      onQuickAdd();
+      return;
+    }
+    addToCart({
+      productId: id,
+      productSlug: slug,
+      productName: name,
+      imageUrl: imageUrl ?? null,
+      basePrice: numericPrice,
+      unitPrice: numericPrice,
+      selectedOptions: [],
+    });
+  };
+
+  const handleAdd = (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    onQuickAdd?.();
+    addSimple();
     toast.success(storefrontCopy.product.added);
+  };
+
+  const handleInc = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!cartLine) {
+      addSimple();
+      return;
+    }
+    updateQuantity(cartLine.id, cartLine.quantity + 1);
+  };
+
+  const handleDec = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!cartLine) return;
+    if (cartLine.quantity <= 1) {
+      removeItem(cartLine.id);
+      return;
+    }
+    updateQuantity(cartLine.id, cartLine.quantity - 1);
   };
 
   return (
     <Link to={`/produto/${slug}`} className={cn("block", unavailable && "pointer-events-none", className)}>
       <article
         className={cn(
-          "product-card-premium group h-full stagger-fade-up",
+          "product-card-vitrine group h-full stagger-fade-up",
           unavailable && "opacity-70",
         )}
         style={
@@ -96,23 +154,23 @@ export function ProductCard({
             : undefined
         }
       >
-        <div className="relative min-h-[11rem] flex-[3] overflow-hidden bg-[hsl(var(--muted))] sm:min-h-[12.5rem]">
+        <div className="relative aspect-[4/3] overflow-hidden bg-[hsl(var(--muted))] sm:aspect-[5/4]">
           {imageUrl ? (
             <img
-              src={imageUrl}
+              src={resolveMediaUrl(imageUrl)}
               alt={name}
-              className="h-full w-full object-cover transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.04]"
+              className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.04] group-active:scale-[1.02]"
               loading="lazy"
             />
           ) : (
-            <div className="flex h-full min-h-[11rem] items-center justify-center text-sm text-[hsl(var(--muted-foreground))]">
+            <div className="flex h-full items-center justify-center bg-gradient-to-br from-[hsl(var(--primary)/0.1)] to-[hsl(var(--muted))] text-sm text-[hsl(var(--muted-foreground))]">
               Sem imagem
             </div>
           )}
 
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
-          <div className="absolute left-2 top-2 flex max-w-[70%] flex-wrap gap-1.5">
+          <div className="absolute left-2.5 top-2.5 flex max-w-[75%] flex-wrap gap-1.5">
             {badges.map((badge) => (
               <span
                 key={badge.label}
@@ -130,70 +188,103 @@ export function ProductCard({
             type="button"
             aria-label={favorite ? "Remover dos favoritos" : "Favoritar"}
             className={cn(
-              "absolute right-2 top-2 flex h-10 w-10 items-center justify-center rounded-full bg-[hsl(var(--card))]/95 shadow-[var(--shadow-sm)] transition duration-200 hover:scale-105",
+              "absolute right-2.5 top-2.5 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-[var(--shadow-sm)] transition duration-200 hover:scale-105 active:scale-95",
               heartBump && "animate-heart-pop",
             )}
             onClick={handleFavorite}
           >
             <Heart
-              className={cn("h-4 w-4 transition-colors", favorite ? "fill-red-500 text-red-500" : "text-slate-600")}
+              className={cn(
+                "h-4 w-4 transition-colors",
+                favorite ? "fill-red-500 text-red-500" : "text-slate-600",
+              )}
             />
           </button>
 
-          {!unavailable && onQuickAdd ? (
-            <button
-              type="button"
-              aria-label="Adicionar ao carrinho"
-              className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-full bg-brand text-[hsl(var(--primary-foreground))] opacity-100 shadow-[var(--shadow-md)] transition duration-200 active:scale-95 sm:opacity-0 sm:group-hover:opacity-100"
-              onClick={handleQuickAdd}
-            >
-              <Plus className="h-5 w-5" />
-            </button>
+          {canQuickQty ? (
+            <div className="absolute right-2.5 bottom-2.5">
+              {qty > 0 ? (
+                <div
+                  className="flex h-11 items-center gap-1 rounded-full bg-brand px-1.5 text-[hsl(var(--primary-foreground))] shadow-[var(--shadow-md)] animate-fade-up"
+                  onClick={(e) => e.preventDefault()}
+                >
+                  <button
+                    type="button"
+                    aria-label="Diminuir"
+                    className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-white/15 active:scale-95"
+                    onClick={handleDec}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </button>
+                  <span className="min-w-5 text-center text-sm font-bold tabular-nums">{qty}</span>
+                  <button
+                    type="button"
+                    aria-label="Aumentar"
+                    className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-white/15 active:scale-95"
+                    onClick={handleInc}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  aria-label="Adicionar ao carrinho"
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-brand text-[hsl(var(--primary-foreground))] shadow-[var(--shadow-md)] transition duration-200 hover:scale-105 active:scale-95"
+                  onClick={handleAdd}
+                >
+                  <Plus className="h-5 w-5" />
+                </button>
+              )}
+            </div>
           ) : null}
         </div>
 
-        <div className="flex flex-[1] flex-col gap-2 p-3.5 sm:p-4">
-          <div className="flex flex-wrap items-center gap-2 type-caption">
-            {isPopular ? (
-              <span className="inline-flex items-center gap-1 font-medium text-brand-accent">
-                <Flame className="h-3.5 w-3.5" />
-                Popular
-              </span>
-            ) : null}
-            {prepTime ? (
-              <span className="inline-flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5" />
-                {storefrontCopy.product.prepTime(prepTime)}
-              </span>
-            ) : null}
-          </div>
-
-          <h3 className="line-clamp-2 text-base font-semibold leading-snug tracking-tight transition-colors duration-200 group-hover:text-brand">
+        <div className="flex flex-1 flex-col gap-1.5 px-3.5 pt-3 pb-3.5 sm:px-4">
+          <h3 className="line-clamp-2 text-[0.95rem] font-semibold leading-snug tracking-tight transition-colors group-hover:text-brand sm:text-base">
             {name}
           </h3>
 
           {description ? (
-            <p className="line-clamp-2 type-caption">{description}</p>
+            <p className="line-clamp-2 text-xs leading-relaxed text-[hsl(var(--muted-foreground))]">
+              {description}
+            </p>
+          ) : null}
+
+          {prepTime ? (
+            <span className="inline-flex items-center gap-1 text-[11px] text-[hsl(var(--muted-foreground))]">
+              <Clock className="h-3.5 w-3.5" />
+              {storefrontCopy.product.prepTime(prepTime)}
+            </span>
           ) : null}
 
           <div className="mt-auto flex items-end justify-between gap-2 pt-1">
-            <div className="flex items-baseline gap-2">
-              <PriceDisplay value={price} className="text-xl font-bold tabular-nums text-brand" />
-              {hasPromotion ? (
+            <div>
+              <div className="flex flex-wrap items-baseline gap-2">
                 <PriceDisplay
-                  value={comparePrice!}
-                  className="text-xs text-[hsl(var(--muted-foreground))] line-through"
+                  value={price}
+                  className="text-[1.35rem] font-bold tabular-nums tracking-tight text-brand sm:text-2xl"
                 />
+                {hasPromotion ? (
+                  <PriceDisplay
+                    value={comparePrice!}
+                    className="text-xs text-[hsl(var(--muted-foreground))] line-through"
+                  />
+                ) : null}
+              </div>
+              {savePct >= 5 ? (
+                <p className="text-[11px] font-semibold text-emerald-700">Economize {savePct}%</p>
               ) : null}
             </div>
-            {!unavailable ? (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-brand opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+
+            {unavailable ? (
+              <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">Indisponível</span>
+            ) : hasOptions ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-[hsl(var(--primary-soft))] px-2.5 py-1 text-[11px] font-semibold text-brand">
                 <ShoppingBag className="h-3.5 w-3.5" />
-                Ver
+                Escolher
               </span>
-            ) : (
-              <span className="type-caption font-medium">Indisponível</span>
-            )}
+            ) : null}
           </div>
         </div>
       </article>
