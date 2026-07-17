@@ -31,10 +31,10 @@ export const adminCopy = {
       description:
         "Cadastre o primeiro produto com foto, preço e categoria. Em minutos ele aparece no storefront.",
     },
-    tip: "Dica: produtos com foto e descrição clara convertem mais no delivery.",
+    tip: "Toque num produto para gerenciar — cada ajuste é um fluxo curto, sem formulário gigante.",
     form: {
       titleNew: "Novo produto",
-      titleEdit: "Editar produto",
+      titleEdit: "Editor completo",
       subtitleNew: "Vamos cadastrar um item completo para vender melhor.",
       subtitleEdit: "Ajuste as informações e mantenha o cardápio atualizado.",
       guidance: "Preencha os campos abaixo e, no final, revise se nome, preço e categoria estão corretos.",
@@ -50,7 +50,7 @@ export const adminCopy = {
         description: "Sem categoria, o produto não pode ser salvo. Crie uma em poucos segundos.",
       },
       optionGroupsHelp:
-        "Vincule grupos como Tamanho e Adicionais para o cliente montar o item sem erro.",
+        "Adicione personalizações como Tamanho e Adicionais — o cliente monta o item sem erro.",
       successNew: "Produto cadastrado com sucesso",
       successEdit: "Produto atualizado com sucesso",
       imagesHelp:
@@ -64,28 +64,28 @@ export const adminCopy = {
     },
   },
   optionGroups: {
-    subtitle: "Monte variações que o cliente escolhe no pedido — tamanho, borda, adicionais.",
+    subtitle: "Biblioteca reutilizável — tamanho, borda, adicionais. O dia a dia é no produto.",
     guidance:
-      "Crie um grupo, adicione as opções e vincule aos produtos. O cliente vê tudo organizado no cardápio.",
-    createTitle: "Criar novo grupo",
-    createHint: "Exemplos: Tamanho, Borda recheada, Adicionais. Depois expanda o grupo para cadastrar as opções.",
+      "Prefira criar personalizações direto no produto. Esta tela guarda o que você já montou pra reutilizar.",
+    createTitle: "Nova personalização",
+    createHint: "Exemplos: Tamanho, Borda, Adicionais. Depois vincule nos produtos.",
     examples: ["Tamanho", "Borda", "Adicionais", "Ponto da carne"],
     empty: {
-      title: "Nenhum grupo ainda",
+      title: "Nenhuma personalização salva",
       description:
-        "Comece com algo simples como Tamanho (P, M, G). Depois vincule o grupo no cadastro de produtos.",
+        "Comece pelo produto (mais fácil) ou crie aqui pra reutilizar em vários itens.",
     },
-    linkProducts: "Próximo passo: vincule estes grupos aos produtos em Produtos → editar item.",
+    linkProducts: "Dica: no cadastro do produto use “Adicionar personalização”.",
     editor: {
-      expandHint: "Expanda para editar nome, opções e acréscimos.",
+      expandHint: "Edite nome, escolhas e preços.",
       requiredHelp:
-        "Obrigatório: o cliente precisa escolher (ex: tamanho da pizza). Opcional: pode pular (ex: borda extra).",
-      optionsEmpty: "Adicione pelo menos uma opção — Pequena, Média, Grande...",
+        "Obrigatório: o cliente precisa escolher (ex: tamanho). Opcional: pode pular (ex: borda).",
+      optionsEmpty: "Adicione pelo menos uma escolha — Pequena, Média, Grande...",
       priceHelp: "R$ 0,00 = sem acréscimo no preço base do produto.",
-      saveReminder: "Alterações só entram no cardápio após clicar em Salvar alterações.",
-      optionAdded: "Opção adicionada ao grupo",
-      saved: "Grupo atualizado com sucesso",
-      created: "Grupo criado — agora cadastre as opções",
+      saveReminder: "Alterações só entram no cardápio após salvar.",
+      optionAdded: "Escolha adicionada",
+      saved: "Personalização atualizada",
+      created: "Personalização criada",
     },
   },
   orders: {

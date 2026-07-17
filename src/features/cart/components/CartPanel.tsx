@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Gift, PartyPopper, ShoppingCart, Sparkles } from "lucide-react";
+import { Gift, ShoppingCart } from "lucide-react";
 
 import { CartUpsell } from "./CartUpsell";
 import { useCompanyPublic } from "@/features/company";
@@ -14,11 +14,10 @@ import { Button } from "@/shared/components/ui/button";
 import { getFreeDeliveryHint, storefrontCopy } from "@/shared/copy/storefront";
 
 type CartPanelProps = {
-  compact?: boolean;
   onClose?: () => void;
 };
 
-export function CartPanel({ compact = false, onClose }: CartPanelProps) {
+export function CartPanel({ onClose }: CartPanelProps) {
   const { items, subtotal, isEmpty, removeItem, updateQuantity } = useCart();
   const { data: company } = useCompanyPublic();
   const { data: catalogPage } = useProducts({ page_size: 48 });
@@ -45,15 +44,7 @@ export function CartPanel({ compact = false, onClose }: CartPanelProps) {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
-      <UiHint icon={PartyPopper} tone="success" title="Excelente escolha!">
-        {storefrontCopy.cart.withItems}
-      </UiHint>
-
-      <UiHint icon={Sparkles} tone="warm">
-        {storefrontCopy.cart.almostThere}
-      </UiHint>
-
+    <div className="flex flex-col gap-4">
       {deliveryHint ? (
         <UiHint icon={Gift} tone={deliveryHint.type === "unlocked" ? "success" : "warm"}>
           {deliveryHint.type === "unlocked" ? `🎁 ${deliveryHint.message}` : deliveryHint.message}
@@ -79,7 +70,7 @@ export function CartPanel({ compact = false, onClose }: CartPanelProps) {
         />
       ) : null}
 
-      <div className="mt-auto space-y-3 border-t border-[hsl(var(--border))] pt-4">
+      <div className="mt-2 space-y-3 border-t border-[hsl(var(--border))] pt-4">
         <div className="flex items-center justify-between text-sm">
           <span className="text-[hsl(var(--muted-foreground))]">Subtotal (estimativa)</span>
           <PriceDisplay value={subtotal} className="text-lg font-bold text-brand" />
@@ -89,21 +80,12 @@ export function CartPanel({ compact = false, onClose }: CartPanelProps) {
           O valor final é confirmado no checkout. Taxas de entrega podem ser aplicadas.
         </p>
 
-        <div className="flex flex-col gap-2">
-          <Link to="/checkout" onClick={onClose}>
-            <Button className="w-full gap-2" size="lg">
-              Continuar para checkout
-              <span aria-hidden>🚀</span>
-            </Button>
-          </Link>
-          {compact ? (
-            <Link to="/carrinho" onClick={onClose}>
-              <Button variant="outline" className="w-full">
-                Ver carrinho completo
-              </Button>
-            </Link>
-          ) : null}
-        </div>
+        <Link to="/checkout" onClick={onClose} className="block">
+          <Button className="w-full gap-2" size="lg">
+            Continuar para checkout
+            <span aria-hidden>🚀</span>
+          </Button>
+        </Link>
       </div>
     </div>
   );

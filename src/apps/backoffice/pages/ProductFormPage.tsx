@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Eye, FolderOpen, Layers, Save, Sparkles } from "lucide-react";
+import { CheckCircle2, Eye, FolderOpen, Save, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
@@ -9,7 +9,7 @@ import {
   type ProductOptionGroupLink,
 } from "@/features/catalog/api/catalogAdminApi";
 import { ProductBuilderPreview } from "@/features/catalog/components/ProductBuilderPreview";
-import { ProductConfigurator } from "@/features/catalog/components/ProductConfigurator";
+import { ProductCustomizationsPanel } from "@/features/catalog/components/ProductCustomizationsPanel";
 import {
   ProductCompositionEditor,
   DEFAULT_COMPOSITION,
@@ -274,11 +274,15 @@ export function ProductFormPage() {
 
   return (
     <div className="space-y-6">
-      <BackLink to="/produtos" label="Produtos" />
+      <BackLink to={isNew ? "/produtos" : `/produtos/${id}`} label={isNew ? "Produtos" : "Gerenciar produto"} />
 
       <PageHeader
-        title={isNew ? adminCopy.products.form.titleNew : adminCopy.products.form.titleEdit}
-        subtitle={isNew ? adminCopy.products.form.subtitleNew : adminCopy.products.form.subtitleEdit}
+        title={isNew ? adminCopy.products.form.titleNew : "Editor completo"}
+        subtitle={
+          isNew
+            ? adminCopy.products.form.subtitleNew
+            : "Todos os campos numa tela — use quando precisar de visão avançada."
+        }
         icon={Sparkles}
       />
 
@@ -388,22 +392,13 @@ export function ProductFormPage() {
             </UiHint>
           ) : null}
 
-          {optionGroups?.length ? (
-            <ProductConfigurator
-              links={form.product_option_groups}
-              availableGroups={optionGroups}
-              onChange={(product_option_groups) =>
-                setForm((current) => ({ ...current, product_option_groups }))
-              }
-            />
-          ) : (
-            <UiHint icon={Layers} tone="neutral">
-              {adminCopy.products.form.optionGroupsHelp}
-              <Link to="/grupos-opcoes" className="ml-1 font-medium text-brand underline">
-                Criar grupos de opções
-              </Link>
-            </UiHint>
-          )}
+          <ProductCustomizationsPanel
+            links={form.product_option_groups}
+            availableGroups={optionGroups ?? []}
+            onChange={(product_option_groups) =>
+              setForm((current) => ({ ...current, product_option_groups }))
+            }
+          />
 
           <ProductCompositionEditor
             value={form.composition}

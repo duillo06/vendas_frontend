@@ -25,10 +25,11 @@ export function Sheet({ open, onOpenChange, children, side = "right", className 
       />
       <div
         className={cn(
-          "absolute flex flex-col border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-[var(--shadow-lg)] animate-fade-up",
+          "absolute flex min-h-0 flex-col overflow-hidden border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-[var(--shadow-lg)] animate-fade-up",
           side === "right" && "top-0 right-0 h-full w-full max-w-sm border-l",
           side === "left" && "top-0 left-0 h-full w-full max-w-sm border-r",
-          side === "bottom" && "right-0 bottom-0 left-0 max-h-[85vh] rounded-t-2xl border-t",
+          side === "bottom" &&
+            "right-0 bottom-0 left-0 max-h-[85vh] rounded-t-2xl border-t pb-[env(safe-area-inset-bottom,0px)]",
           className,
         )}
       >
@@ -47,7 +48,7 @@ type SheetContentProps = {
 export function SheetContent({ children, title, onClose }: SheetContentProps) {
   return (
     <>
-      <div className="flex items-center justify-between border-b border-[hsl(var(--border))] px-4 py-3">
+      <div className="flex shrink-0 items-center justify-between border-b border-[hsl(var(--border))] px-4 py-3">
         {title ? <h2 className="font-semibold">{title}</h2> : <span />}
         {onClose ? (
           <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onClose} aria-label="Fechar">
@@ -55,7 +56,8 @@ export function SheetContent({ children, title, onClose }: SheetContentProps) {
           </Button>
         ) : null}
       </div>
-      <div className="flex-1 overflow-y-auto p-4">{children}</div>
+      {/* min-h-0 pra o flex respeitar max-h do sheet e o filho poder scrollar */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">{children}</div>
     </>
   );
 }

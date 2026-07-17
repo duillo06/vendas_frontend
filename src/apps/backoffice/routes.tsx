@@ -10,6 +10,7 @@ import { OptionGroupsPage } from "@/apps/backoffice/pages/OptionGroupsPage";
 import { OrderDetailPage } from "@/apps/backoffice/pages/OrderDetailPage";
 import { OrdersPage } from "@/apps/backoffice/pages/OrdersPage";
 import { ProductFormPage } from "@/apps/backoffice/pages/ProductFormPage";
+import { ProductManagePage } from "@/apps/backoffice/pages/ProductManagePage";
 import { ProductWizardPage } from "@/apps/backoffice/pages/ProductWizardPage";
 import { ProductsPage } from "@/apps/backoffice/pages/ProductsPage";
 import { SettingsPage } from "@/apps/backoffice/pages/SettingsPage";
@@ -36,7 +37,8 @@ export const backofficeRouter = createBrowserRouter([
       { path: "produtos", element: <ProductsPage /> },
       { path: "produtos/novo", element: <ProductWizardPage /> },
       { path: "produtos/novo/avancado", element: <ProductFormPage /> },
-      { path: "produtos/:id", element: <ProductFormPage /> },
+      { path: "produtos/:id", element: <ProductManagePage /> },
+      { path: "produtos/:id/avancado", element: <ProductFormPage /> },
       { path: "categorias", element: <CategoriesPage /> },
       { path: "opcoes", element: <OptionGroupsPage /> },
       { path: "configuracoes", element: <SettingsPage /> },

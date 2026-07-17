@@ -61,7 +61,7 @@ export interface ProductCompositionAdmin {
   label: string;
   min_parts: number;
   max_parts: number;
-  pricing_rule: "highest" | "average" | "main";
+  pricing_rule: "highest" | "average" | "sum" | "main";
 }
 
 export interface ProductAdminDetail {
@@ -82,6 +82,8 @@ export interface ProductAdminDetail {
   product_option_groups: ProductOptionGroupLink[];
   composition?: ProductCompositionAdmin | null;
   images: ProductImageAdmin[];
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface OptionAdmin {

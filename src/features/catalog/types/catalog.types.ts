@@ -102,7 +102,7 @@ export interface OptionGroup {
   default_option_ids?: string[];
 }
 
-export type CompositionPricingRule = "highest" | "average" | "main";
+export type CompositionPricingRule = "highest" | "average" | "sum" | "main";
 
 // composição: o produto é formado por outros produtos (ex: pizza meio a meio)
 export interface ProductComposition {

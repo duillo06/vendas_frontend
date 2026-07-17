@@ -26,7 +26,7 @@ export type WizardComposition = {
   label: string;
   min_parts: number;
   max_parts: number;
-  pricing_rule: "highest" | "average" | "main";
+  pricing_rule: "highest" | "average" | "sum" | "main";
 };
 
 // Uma escolha dentro de uma pergunta.

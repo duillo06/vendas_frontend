@@ -185,5 +185,8 @@ export function composedBasePrice(product: ProductDetail, parts: CartComponent[]
     const avg = prices.reduce((sum, p) => sum + p, 0) / prices.length;
     return Math.round(avg * 100) / 100;
   }
+  if (rule === "sum") {
+    return Math.round(prices.reduce((total, p) => total + p, 0) * 100) / 100;
+  }
   return Math.max(...prices);
 }

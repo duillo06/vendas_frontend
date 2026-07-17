@@ -1,14 +1,5 @@
-import {
-  Heart,
-  Lock,
-  Search,
-  Share2,
-  ShoppingCart,
-  Star,
-  Store,
-} from "lucide-react";
-import { useMemo, useState, type ReactNode } from "react";
-import { Link } from "react-router";
+import { Lock, Search, Share2, Star, Store } from "lucide-react";
+import { useMemo, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import {
@@ -21,7 +12,6 @@ import {
   deliveryWindowLabel,
   getNextOpenLabel,
 } from "@/features/storefront/utils/shopHours";
-import { useCart } from "@/features/cart";
 import { formatCurrency } from "@/shared/lib/format";
 import { resolveMediaUrl } from "@/shared/lib/media";
 import { Skeleton } from "@/shared/components/ui/skeleton";
@@ -37,22 +27,28 @@ type StoreHeroProps = {
 function GlassIconButton({
   label,
   onClick,
-  to,
+  href,
   children,
 }: {
   label: string;
   onClick?: () => void;
-  to?: string;
+  href?: string;
   children: ReactNode;
 }) {
   const className =
     "inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-black/25 text-white shadow-[var(--shadow-sm)] backdrop-blur-md transition active:scale-95 hover:bg-black/35";
 
-  if (to) {
+  if (href) {
     return (
-      <Link to={to} aria-label={label} className={className}>
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={label}
+        className={className}
+      >
         {children}
-      </Link>
+      </a>
     );
   }
 
@@ -63,24 +59,30 @@ function GlassIconButton({
   );
 }
 
-function storeFavKey(slug: string) {
-  return `foodflow_store_fav_${slug}`;
+function InstagramIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
 }
 
 export function StoreHero({ company, isLoading, compact = false, onSearchClick }: StoreHeroProps) {
   const marketing = getStorefrontMarketing(company);
   const deliveryMinutes = getEstimatedDeliveryMinutes(company);
-  const { totalItems } = useCart();
   const isOpen = Boolean(company?.is_open);
-  const slug = company?.slug ?? "loja";
-
-  const [fav, setFav] = useState(() => {
-    try {
-      return localStorage.getItem(storeFavKey(slug)) === "1";
-    } catch {
-      return false;
-    }
-  });
+  const instagramUrl = marketing.instagram_url?.trim() || null;
 
   const metaLine = useMemo(() => {
     const time = deliveryWindowLabel(deliveryMinutes);
@@ -123,17 +125,6 @@ export function StoreHero({ company, isLoading, compact = false, onSearchClick }
     }
   }
 
-  function toggleStoreFav() {
-    const next = !fav;
-    setFav(next);
-    try {
-      localStorage.setItem(storeFavKey(slug), next ? "1" : "0");
-    } catch {
-      /* ignore */
-    }
-    toast.success(next ? "Loja salva nos favoritos" : "Removido dos favoritos");
-  }
-
   if (isLoading) {
     return (
       <div className={cn(!compact && "-mx-4")}>
@@ -172,26 +163,18 @@ export function StoreHero({ company, isLoading, compact = false, onSearchClick }
         <HeroBackdrop coverUrl={company?.cover_url} closed={!isOpen} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/25 to-black/55" />
 
-        {/* ações glass */}
+        {/* ações glass — carrinho fica só no header */}
         <div className="absolute top-3 right-3 z-20 flex gap-2">
-          <GlassIconButton label={fav ? "Remover favorito" : "Favoritar"} onClick={toggleStoreFav}>
-            <Heart className={cn("h-4 w-4", fav && "fill-white")} />
-          </GlassIconButton>
+          {instagramUrl ? (
+            <GlassIconButton label="Instagram" href={instagramUrl}>
+              <InstagramIcon className="h-4 w-4" />
+            </GlassIconButton>
+          ) : null}
           <GlassIconButton label="Compartilhar" onClick={() => void handleShare()}>
             <Share2 className="h-4 w-4" />
           </GlassIconButton>
           <GlassIconButton label="Buscar" onClick={onSearchClick}>
             <Search className="h-4 w-4" />
-          </GlassIconButton>
-          <GlassIconButton label="Carrinho" to="/carrinho">
-            <span className="relative">
-              <ShoppingCart className="h-4 w-4" />
-              {totalItems > 0 ? (
-                <span className="absolute -top-2 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-[hsl(var(--primary))] px-0.5 text-[9px] font-bold">
-                  {totalItems > 9 ? "9+" : totalItems}
-                </span>
-              ) : null}
-            </span>
           </GlassIconButton>
         </div>
 

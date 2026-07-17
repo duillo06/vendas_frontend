@@ -593,6 +593,21 @@ export function SettingsForm() {
                   onChange={(event) => patchStorefront({ promo_url: event.target.value })}
                 />
               </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="instagram_url">Instagram da loja</Label>
+                <Input
+                  id="instagram_url"
+                  type="url"
+                  placeholder="https://instagram.com/sua_loja"
+                  value={form.settings.theme?.storefront?.instagram_url ?? ""}
+                  onChange={(event) =>
+                    patchStorefront({ instagram_url: event.target.value || undefined })
+                  }
+                />
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                  Aparece no banner da home. Deixe vazio para ocultar o botão.
+                </p>
+              </div>
             </div>
           </div>
 

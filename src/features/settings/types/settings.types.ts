@@ -7,6 +7,7 @@ export interface StorefrontThemeConfig {
   promo_label?: string;
   promo_url?: string;
   show_delivery_time?: boolean;
+  instagram_url?: string;
 }
 
 export interface TenantTheme {

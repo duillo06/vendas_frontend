@@ -39,7 +39,7 @@ const navItems = [
   { to: "/clientes", label: "Clientes", icon: Users, permission: "customers.view" },
   { to: "/produtos", label: "Produtos", icon: Package, permission: "catalog.view" },
   { to: "/categorias", label: "Categorias", icon: Layers, permission: "catalog.view" },
-  { to: "/opcoes", label: "Opções", icon: ListTree, permission: "catalog.view" },
+  { to: "/opcoes", label: "Personalizações", icon: ListTree, permission: "catalog.view" },
   { to: "/configuracoes", label: "Configurações", icon: Settings, permission: "settings.manage" },
 ] as const;
 
