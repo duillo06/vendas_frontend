@@ -58,7 +58,8 @@ Não abrir discussão de remodelagem de arquitetura por ideia futura (Architectu
 
 | Data | Ideia | Nota |
 |------|-------|------|
-| Jul/2026 | IA sugerindo categorias / receita | Pós-MVP; hooks previstos em `17` |
+| Jul/2026 | Assistente de 1ª configuração do estabelecimento | **Feito (Fase 4)** — presets; IA real fica no stub `/admin/ai/suggestions/` |
+| Jul/2026 | IA sugerindo categorias / receita | Pós-MVP; hook stub em `/admin/ai/suggestions/` |
 | Jul/2026 | IA copiando produtos semelhantes | Pós-MVP |
 | Jul/2026 | Cadastro por voz | Futuro |
 | Jul/2026 | Importação de cardápio PDF | Futuro |
@@ -75,7 +76,6 @@ Não abrir discussão de remodelagem de arquitetura por ideia futura (Architectu
 | Jul/2026 | BI / analytics avançado | Futuro |
 | Jul/2026 | Integrações (iFood, ERP, fiscal) | V2–V4 |
 | Jul/2026 | Sistema de recomendações no pedido | Futuro |
-| Jul/2026 | Assistente de 1ª configuração do estabelecimento | Fase 4 do modelo — após MVP core |
 | Jul/2026 | Nome definitivo do catálogo reutilizável | Decisão de produto (UI); hoje provisório “Base do cardápio” |
 
 *(Novas linhas sempre no topo da tabela ou ao final — manter data.)*

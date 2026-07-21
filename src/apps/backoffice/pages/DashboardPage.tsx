@@ -3,9 +3,11 @@ import { ClipboardList, LayoutDashboard, RefreshCw, ShoppingBag, Sparkles, Trend
 import { Link, useNavigate } from "react-router";
 
 import { useDashboard } from "@/features/dashboard";
+import { FirstSetupAssistant } from "@/features/flow/FirstSetupAssistant";
 import { FlowEmptyState } from "@/features/flow/FlowEmptyState";
 import { FlowOnboarding } from "@/features/flow/FlowOnboarding";
 import { useFlowOnboarding } from "@/features/flow/useFlowOnboarding";
+import { useSettings } from "@/features/settings";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { UiHint } from "@/shared/components/UiHint";
 import { AdminOrderCard, PageHeader, StatCard } from "@/shared/components/visual";
@@ -25,9 +27,16 @@ function formatTime(iso: string) {
 
 export function DashboardPage() {
   const { data, isLoading, isError } = useDashboard();
+  const { data: settingsData } = useSettings();
   const navigate = useNavigate();
   const onboarding = useFlowOnboarding();
   const [greeting, setGreeting] = useState("Olá");
+  const [firstSetupOpen, setFirstSetupOpen] = useState(true);
+
+  const setupPending = settingsData?.settings.setup?.status === "pending";
+  const showFirstSetup = Boolean(setupPending && firstSetupOpen);
+  // tour local só se a 1ª config já passou (ou foi dispensada)
+  const showFlowTour = !setupPending && onboarding.open;
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -82,8 +91,18 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      <FirstSetupAssistant
+        open={showFirstSetup}
+        onClose={() => setFirstSetupOpen(false)}
+        onFinished={(result) => {
+          setFirstSetupOpen(false);
+          onboarding.dismiss();
+          if (result) navigate("/produtos/novo");
+        }}
+      />
+
       <FlowOnboarding
-        open={onboarding.open}
+        open={showFlowTour}
         onClose={onboarding.dismiss}
         onStart={() => {
           onboarding.dismiss();

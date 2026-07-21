@@ -2,7 +2,7 @@
 
 > **Documento:** Arquitetura de Autoria — Receita da Categoria, Catálogo Reutilizável e Produto  
 > **Produto:** Food Service *(nome comercial provisório)*  
-> **Versão:** 1.1  
+> **Versão:** 1.5  
 > **Status:** Aprovado  
 > **Última atualização:** Julho/2026  
 > **Depende de:** `00-product-philosophy.md`, `02-arquitetura.md`, `03-modelagem-do-banco.md`, `16-product-builder-engine.md`  
@@ -295,10 +295,11 @@ Prever na API/modelo (sem implementar agora):
 |------|------------|
 | Similaridade de produto | “Copiar preços/estrutura desta pizza?” |
 | Sugestão de receita por nome/tipo | “Milk Shake → tamanhos + coberturas?” |
-| `CompanySettings.setup` | Assistente de primeira configuração do estabelecimento |
+| `CompanySettings.setup` | **Fase 4** — assistente de 1ª configuração (presets determinísticos) |
+| `GET/POST /admin/ai/suggestions/` | Stub Fase 4 — IA real depois |
 | Eventos de autoria | Treino / sugestões |
 
-Ver também `15-futuras-funcionalidades.md`.
+Ver também `15-futuras-funcionalidades.md` e `19-future-ideas.md`.
 
 ---
 
@@ -346,6 +347,7 @@ Quando iniciar a Fase 0 (após aprovação):
 
 | Versão | Data | Descrição |
 |--------|------|-----------|
+| 1.5 | Jul/2026 | Fase 4 — 1ª configuração (presets) + stub `/admin/ai/suggestions/` |
 | 1.1 | Jul/2026 | **Aprovado** — Architecture Freeze; Fase 0 liberada |
 | 1.2 | Jul/2026 | Fase 1 em código — catálogo sem preço na autoria; `option_prices` no produto |
 | 1.3 | Jul/2026 | Fase 2 em código — assistente + árvore + `GET/PUT .../recipe/` |

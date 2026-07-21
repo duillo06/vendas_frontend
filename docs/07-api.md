@@ -1448,7 +1448,12 @@ Remove opção (soft ou hard se sem pedidos).
     "accepts_pickup": true,
     "is_open": true,
     "auto_close_outside_hours": true,
-    "payment_methods": ["cash", "pix", "card_on_delivery"]
+    "payment_methods": ["cash", "pix", "card_on_delivery"],
+    "setup": {
+      "status": "pending",
+      "segment": null,
+      "steps": []
+    }
   },
   "business_hours": [
     {
@@ -1501,6 +1506,33 @@ Upload de logo (`multipart/form-data`).
   "logo_url": "https://cdn.foodservice.app/.../logo.webp"
 }
 ```
+
+---
+
+### 17.4 Assistente de 1ª configuração (Fase 4)
+
+Estado também em `settings.setup` no `GET/PATCH /admin/settings/`.
+
+| Método | Path | Permissão | Uso |
+|--------|------|-----------|-----|
+| GET | `/api/v1/admin/setup/` | `settings.manage` ou `catalog.manage` | Status + segmentos |
+| POST | `/api/v1/admin/setup/apply/` | `catalog.manage` | `{ "segment": "pizza" }` → cria categorias + receita |
+| POST | `/api/v1/admin/setup/dismiss/` | settings ou catalog | Marca setup como dispensado |
+| GET/POST | `/api/v1/admin/ai/suggestions/` | autenticado | Stub — `available: false` |
+
+Segmentos: `pizza`, `burger`, `acai`, `pastel`, `other`.
+
+`setup` (exemplo):
+
+```json
+{
+  "status": "pending",
+  "segment": null,
+  "steps": []
+}
+```
+
+Statuses: `pending` | `completed` | `dismissed`.
 
 ---
 

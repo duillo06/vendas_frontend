@@ -19,6 +19,14 @@ export interface TenantTheme {
   storefront?: StorefrontThemeConfig;
 }
 
+export interface CompanySetupState {
+  status: "pending" | "completed" | "dismissed" | string;
+  segment: string | null;
+  steps: string[];
+  completed_at?: string | null;
+  dismissed_at?: string | null;
+}
+
 export interface CompanySettingsAdmin {
   min_order_value: number;
   delivery_fee: number;
@@ -31,6 +39,7 @@ export interface CompanySettingsAdmin {
   auto_close_outside_hours: boolean;
   payment_methods: string[];
   theme: TenantTheme | null;
+  setup?: CompanySetupState | null;
 }
 
 export interface CompanyAdmin {

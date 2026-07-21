@@ -365,6 +365,7 @@ Configurações operacionais do estabelecimento. Relação 1:1 com `companies`.
 | `payment_methods` | `JSONB` | NO | `'["cash","pix","card_on_delivery"]'` | Formas aceitas |
 | `delivery_areas` | `JSONB` | YES | — | Áreas/bairros atendidos (futuro) |
 | `theme` | `JSONB` | YES | — | Cores, fontes (white-label futuro) |
+| `setup` | `JSONB` | YES | `'{}'` | Estado do assistente de 1ª configuração (`status`, `segment`, `steps`) |
 | `notification_settings` | `JSONB` | YES | — | Preferências de notificação |
 | `created_at` | `TIMESTAMPTZ` | NO | — | — |
 | `updated_at` | `TIMESTAMPTZ` | NO | — | — |

@@ -19,7 +19,7 @@ import {
   createProductFromRecipe,
   recipeToPriceRows,
   type RecipePriceRow,
-} from "./createFromRecipe";
+} from "../createFromRecipe";
 import type { WizardBasics, WizardImage } from "./types";
 
 type Step = "preparing" | "prices" | "review";
