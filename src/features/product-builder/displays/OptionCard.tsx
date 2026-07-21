@@ -17,6 +17,8 @@ type OptionCardProps = {
   showStepper?: boolean;
   onIncrement?: () => void;
   onDecrement?: () => void;
+  /** tamanho = valor absoluto (sem “+”) */
+  absolutePrice?: boolean;
 };
 
 export function OptionCard({
@@ -32,9 +34,11 @@ export function OptionCard({
   showStepper,
   onIncrement,
   onDecrement,
+  absolutePrice = false,
 }: OptionCardProps) {
-  const priceLabel = formatOptionPriceModifier(option, basePrice, showStepper ? quantity || 1 : 1);
-  const unavailable = !option.is_available;
+  const priceLabel = formatOptionPriceModifier(option, basePrice, showStepper ? quantity || 1 : 1, {
+    absolute: absolutePrice,
+  });  const unavailable = !option.is_available;
 
   return (
     <div

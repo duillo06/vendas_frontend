@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider } from "react-router";
+import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
 
 import { BackofficeLayout } from "@/apps/backoffice/layouts/BackofficeLayout";
 import { CategoriesPage } from "@/apps/backoffice/pages/CategoriesPage";
@@ -6,7 +6,6 @@ import { CustomerDetailPage } from "@/apps/backoffice/pages/CustomerDetailPage";
 import { CustomersPage } from "@/apps/backoffice/pages/CustomersPage";
 import { DashboardPage } from "@/apps/backoffice/pages/DashboardPage";
 import { LoginPage } from "@/apps/backoffice/pages/LoginPage";
-import { OptionGroupsPage } from "@/apps/backoffice/pages/OptionGroupsPage";
 import { OrderDetailPage } from "@/apps/backoffice/pages/OrderDetailPage";
 import { OrdersPage } from "@/apps/backoffice/pages/OrdersPage";
 import { ProductFormPage } from "@/apps/backoffice/pages/ProductFormPage";
@@ -40,7 +39,8 @@ export const backofficeRouter = createBrowserRouter([
       { path: "produtos/:id", element: <ProductManagePage /> },
       { path: "produtos/:id/avancado", element: <ProductFormPage /> },
       { path: "categorias", element: <CategoriesPage /> },
-      { path: "opcoes", element: <OptionGroupsPage /> },
+      // Base do cardápio saiu do menu — cria na conversa da categoria
+      { path: "opcoes", element: <Navigate to="/categorias" replace /> },
       { path: "configuracoes", element: <SettingsPage /> },
     ],
   },

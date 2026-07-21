@@ -61,8 +61,8 @@ export function formatOptionPriceModifier(option: Option, basePrice: number): st
 
   if (option.price_type === "percentage") {
     const value = basePrice * (option.price_modifier / 100);
-    return `+ R$ ${value.toFixed(2).replace(".", ",")}`;
+    return `+ ${value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`;
   }
 
-  return `+ R$ ${option.price_modifier.toFixed(2).replace(".", ",")}`;
+  return `+ ${option.price_modifier.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`;
 }

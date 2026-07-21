@@ -407,13 +407,17 @@ export function mergeEssentialIntoGroup(
 }
 
 export function createDefaultsPayload(draft: CustomizationDraft): Record<string, unknown> {
+  const kind = draft.kindId;
+  const absolute = kind ? isProductPricedKind(kind) : false;
   return {
     ...essentialPayloadFromDraft(draft),
     is_active: true,
     visibility: "always",
-    pricing_config: { strategy: "additive" },
+    // tamanho/volume = preço da pizza; resto = acréscimo
+    pricing_config: { strategy: absolute ? "replace_base" : "additive" },
     ui_config: {},
     icon: "",
+    ...(kind ? { kind } : {}),
   };
 }
 

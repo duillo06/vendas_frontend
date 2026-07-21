@@ -1,11 +1,13 @@
 import type { DisplayProps } from "../types";
 import { getItemQuantity } from "../types";
+import { isAbsolutePriceGroup } from "../pricingEngine";
 import { OptionCard } from "./OptionCard";
 import { usePickHandlers } from "./usePickHandlers";
 
 export function ListDisplay({ group, items, basePrice, onChange, disabled }: DisplayProps) {
   const { toggleSingle, toggleMultiple, isSelected, atMax } = usePickHandlers(group, items, onChange);
   const inputType = group.selection_type === "single" ? "radio" : "checkbox";
+  const absolutePrice = isAbsolutePriceGroup(group);
 
   return (
     <div className="space-y-3">
@@ -19,6 +21,7 @@ export function ListDisplay({ group, items, basePrice, onChange, disabled }: Dis
           inputType={inputType}
           name={`option-group-${group.id}`}
           layout="row"
+          absolutePrice={absolutePrice}
           onToggle={() =>
             group.selection_type === "single" ? toggleSingle(option.id) : toggleMultiple(option.id)
           }
@@ -30,6 +33,7 @@ export function ListDisplay({ group, items, basePrice, onChange, disabled }: Dis
 
 export function RadioDisplay({ group, items, basePrice, onChange, disabled }: DisplayProps) {
   const { toggleSingle, isSelected } = usePickHandlers(group, items, onChange);
+  const absolutePrice = isAbsolutePriceGroup(group);
 
   return (
     <div className="grid gap-2 sm:grid-cols-2">
@@ -43,6 +47,7 @@ export function RadioDisplay({ group, items, basePrice, onChange, disabled }: Di
           inputType="radio"
           name={`option-group-${group.id}`}
           layout="card"
+          absolutePrice={absolutePrice}
           onToggle={() => toggleSingle(option.id)}
         />
       ))}
@@ -52,6 +57,7 @@ export function RadioDisplay({ group, items, basePrice, onChange, disabled }: Di
 
 export function CheckboxDisplay({ group, items, basePrice, onChange, disabled }: DisplayProps) {
   const { toggleMultiple, isSelected, atMax } = usePickHandlers(group, items, onChange);
+  const absolutePrice = isAbsolutePriceGroup(group);
 
   return (
     <div className="grid gap-2 sm:grid-cols-2">
@@ -65,6 +71,7 @@ export function CheckboxDisplay({ group, items, basePrice, onChange, disabled }:
           inputType="checkbox"
           name={`option-group-${group.id}`}
           layout="card"
+          absolutePrice={absolutePrice}
           onToggle={() => toggleMultiple(option.id)}
         />
       ))}
@@ -82,6 +89,7 @@ export function CardGridDisplay(props: DisplayProps) {
 export function ImageCardDisplay(props: DisplayProps) {
   const { group, items, basePrice, onChange, disabled } = props;
   const { toggleSingle, toggleMultiple, isSelected, atMax } = usePickHandlers(group, items, onChange);
+  const absolutePrice = isAbsolutePriceGroup(group);
 
   return (
     <div className="grid gap-3 sm:grid-cols-2">
@@ -95,6 +103,7 @@ export function ImageCardDisplay(props: DisplayProps) {
           inputType={group.selection_type === "single" ? "radio" : "checkbox"}
           name={`option-group-${group.id}`}
           layout="image"
+          absolutePrice={absolutePrice}
           onToggle={() =>
             group.selection_type === "single" ? toggleSingle(option.id) : toggleMultiple(option.id)
           }
@@ -106,6 +115,7 @@ export function ImageCardDisplay(props: DisplayProps) {
 
 export function DropdownDisplay({ group, items, onChange, disabled }: DisplayProps) {
   const selectedId = items[0]?.option_id ?? "";
+  const absolutePrice = isAbsolutePriceGroup(group);
 
   return (
     <select
@@ -121,7 +131,11 @@ export function DropdownDisplay({ group, items, onChange, disabled }: DisplayPro
       {group.options.map((option) => (
         <option key={option.id} value={option.id} disabled={!option.is_available}>
           {option.name}
-          {option.price_modifier > 0 ? ` (+ R$ ${option.price_modifier.toFixed(2)})` : ""}
+          {option.price_modifier > 0
+            ? absolutePrice
+              ? ` (${option.price_modifier.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })})`
+              : ` (+ ${option.price_modifier.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })})`
+            : ""}
         </option>
       ))}
     </select>
@@ -130,6 +144,7 @@ export function DropdownDisplay({ group, items, onChange, disabled }: DisplayPro
 
 export function StepperDisplay({ group, items, basePrice, onChange, disabled }: DisplayProps) {
   const { setQuantity, atMax } = usePickHandlers(group, items, onChange);
+  const absolutePrice = isAbsolutePriceGroup(group);
 
   return (
     <div className="space-y-3">
@@ -146,6 +161,7 @@ export function StepperDisplay({ group, items, basePrice, onChange, disabled }: 
             inputType="none"
             layout="row"
             showStepper
+            absolutePrice={absolutePrice}
             onIncrement={() => setQuantity(option.id, quantity + 1)}
             onDecrement={() => setQuantity(option.id, quantity - 1)}
           />

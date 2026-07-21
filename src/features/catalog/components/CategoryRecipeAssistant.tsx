@@ -152,6 +152,13 @@ export function CategoryRecipeAssistant({
   const [pending, setPending] = useState(false);
   const [localGroups, setLocalGroups] = useState<OptionGroupAdmin[]>([]);
   const [applyMode, setApplyMode] = useState<"new_only" | "all" | "later">("new_only");
+  // rascunho do passo de preço Tipo 2 — evita lista vazia por timing do setAnswers
+  const [priceDraft, setPriceDraft] = useState<{
+    kindId: PersonalizationKindId;
+    optionIds: string[];
+    optionNames: string[];
+    optionPrices: number[];
+  } | null>(null);
 
   const mergedGroups = useMemo(() => {
     const map = new Map<string, OptionGroupAdmin>();
@@ -264,24 +271,46 @@ export function CategoryRecipeAssistant({
         optionIds.push(opt.id);
         optionNames.push(opt.name);
       }
+      if (optionIds.length === 0) {
+        setError("Não encontramos os itens na base. Tente de novo.");
+        return;
+      }
+
+      const prev = answers.find((a) => a.kindId === kind.id);
+      const prevByName = new Map(
+        (prev?.optionNames ?? []).map((name, i) => [
+          name.trim().toLowerCase(),
+          prev?.optionPrices[i] ?? 0,
+        ]),
+      );
+      const optionPrices = optionNames.map(
+        (name) => prevByName.get(name.trim().toLowerCase()) ?? 0,
+      );
+
+      const nextAnswer: KindAnswer = {
+        kindId: kind.id,
+        enabled: true,
+        groupId: group.id,
+        groupName: group.name,
+        optionIds,
+        optionNames,
+        optionPrices,
+      };
       setAnswers((current) => {
         const without = current.filter((a) => a.kindId !== kind.id);
-        return [
-          ...without,
-          {
-            kindId: kind.id,
-            enabled: true,
-            groupId: group.id,
-            groupName: group.name,
-            optionIds,
-            optionNames,
-            optionPrices: optionIds.map(() => 0),
-          },
-        ];
+        return [...without, nextAnswer];
       });
+
       if (isCategoryPricedKind(kind.id)) {
+        setPriceDraft({
+          kindId: kind.id,
+          optionIds,
+          optionNames,
+          optionPrices,
+        });
         setStep("prices");
       } else {
+        setPriceDraft(null);
         goNextKind();
       }
     } catch (err) {
@@ -315,8 +344,32 @@ export function CategoryRecipeAssistant({
   };
 
   const confirmCategoryPrices = () => {
+    if (priceDraft) {
+      setAnswers((current) =>
+        current.map((a) =>
+          a.kindId === priceDraft.kindId
+            ? {
+                ...a,
+                optionIds: priceDraft.optionIds,
+                optionNames: priceDraft.optionNames,
+                optionPrices: priceDraft.optionPrices,
+              }
+            : a,
+        ),
+      );
+      setPriceDraft(null);
+    }
     goNextKind();
   };
+
+  const priceStepNoun =
+    currentKind?.id === "crust"
+      ? "borda"
+      : currentKind?.id === "extras"
+        ? "adicional"
+        : currentKind?.id === "sauces"
+          ? "molho"
+          : "opção";
 
   const buildPayload = (mode: "new_only" | "all" | "later" = "new_only"): CategoryRecipeWrite => {
     const enabled = answers.filter((a) => a.enabled);
@@ -618,47 +671,47 @@ export function CategoryRecipeAssistant({
           </motion.div>
         ) : null}
 
-        {step === "prices" && currentKind ? (
+        {step === "prices" && currentKind && priceDraft ? (
           <motion.div key="prices" className="space-y-4" {...stepMotion}>
             <div>
               <h3 className="text-base font-semibold">
-                Quanto custa cada {currentKind.label.replace(/^Possui\s+/i, "").toLowerCase()} normalmente?
+                Quanto custa cada {priceStepNoun} normalmente?
               </h3>
               <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
-                Esse valor vale pra todos os produtos desta categoria — só personaliza no produto se for
-                exceção.
+                Esse valor fica na categoria e vale pra todos os produtos — só personaliza no produto se
+                for exceção.
               </p>
             </div>
             <ul className="space-y-2">
-              {(answers.find((a) => a.kindId === currentKind.id)?.optionNames ?? []).map((name, i) => {
-                const answer = answers.find((a) => a.kindId === currentKind.id);
-                const price = answer?.optionPrices[i] ?? 0;
-                return (
-                  <li
-                    key={`${name}-${i}`}
-                    className="flex flex-col gap-2 rounded-xl border border-[hsl(var(--border))] bg-white px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <span className="text-sm font-medium">{name}</span>
-                    <CurrencyInput
-                      value={price}
-                      onChange={(value) => {
-                        setAnswers((current) =>
-                          current.map((a) => {
-                            if (a.kindId !== currentKind.id) return a;
-                            const optionPrices = [...a.optionPrices];
-                            while (optionPrices.length < a.optionIds.length) optionPrices.push(0);
-                            optionPrices[i] = value;
-                            return { ...a, optionPrices };
-                          }),
-                        );
-                      }}
-                    />
-                  </li>
-                );
-              })}
+              {priceDraft.optionNames.map((name, i) => (
+                <li
+                  key={`${priceDraft.optionIds[i]}-${name}`}
+                  className="flex flex-col gap-2 rounded-xl border border-[hsl(var(--border))] bg-white px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <span className="text-sm font-medium">{name}</span>
+                  <CurrencyInput
+                    value={priceDraft.optionPrices[i] ?? 0}
+                    onChange={(value) => {
+                      setPriceDraft((draftPrices) => {
+                        if (!draftPrices) return draftPrices;
+                        const optionPrices = [...draftPrices.optionPrices];
+                        optionPrices[i] = value;
+                        return { ...draftPrices, optionPrices };
+                      });
+                    }}
+                  />
+                </li>
+              ))}
             </ul>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button type="button" variant="outline" onClick={() => setStep("library")}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setPriceDraft(null);
+                  setStep("library");
+                }}
+              >
                 Voltar
               </Button>
               <Button

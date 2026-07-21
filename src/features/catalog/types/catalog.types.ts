@@ -54,6 +54,7 @@ export type OptionDisplayType =
 
 export type PricingConfig =
   | { strategy: "additive" }
+  | { strategy: "replace_base" }
   | { strategy: "charge_extras_only"; included_count: number }
   | { strategy: "first_n_free"; free_count: number }
   | { strategy: "quantity_multiplier" }
@@ -100,6 +101,8 @@ export interface OptionGroup {
   pricing_config?: PricingConfig;
   ui_config?: OptionUiConfig;
   default_option_ids?: string[];
+  /** size/volume = preço absoluto; crust/extras = acréscimo */
+  kind?: string;
 }
 
 export type CompositionPricingRule = "highest" | "average" | "sum" | "main";

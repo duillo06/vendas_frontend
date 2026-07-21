@@ -283,7 +283,7 @@ export function ProductDetailView({
 
           <ProductFeatureChips items={featureChips} title={storefrontCopy.product.highlightsTitle} />
 
-          {/* preço de referência — o total vivo fica na barra fixa */}
+          {/* preço vivo — riscado só se for promoção (compare), não base vs tamanho */}
           <div className="flex items-baseline gap-3">
             <PriceDisplay
               value={unitPrice}
@@ -292,11 +292,7 @@ export function ProductDetailView({
                 priceBump && "animate-price-pop",
               )}
             />
-            {unitPrice !== product.base_price ? (
-              <span className="text-sm text-[hsl(var(--muted-foreground))] line-through">
-                <PriceDisplay value={product.base_price} />
-              </span>
-            ) : product.compare_price ? (
+            {product.compare_price !== null && product.compare_price > unitPrice ? (
               <span className="text-sm text-[hsl(var(--muted-foreground))] line-through">
                 <PriceDisplay value={product.compare_price} />
               </span>

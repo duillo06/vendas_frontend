@@ -76,6 +76,7 @@ Não abrir discussão de remodelagem de arquitetura por ideia futura (Architectu
 | Jul/2026 | BI / analytics avançado | Futuro |
 | Jul/2026 | Integrações (iFood, ERP, fiscal) | V2–V4 |
 | Jul/2026 | Sistema de recomendações no pedido | Futuro |
+| Jul/2026 | Tela “Base do cardápio” no menu | Retirada do nav — cadastro via receita da categoria; API interna permanece |
 | Jul/2026 | Nome definitivo do catálogo reutilizável | Decisão de produto (UI); hoje provisório “Base do cardápio” |
 
 *(Novas linhas sempre no topo da tabela ou ao final — manter data.)*

@@ -177,7 +177,8 @@ async function upsertChoicesByName(
 
 /**
  * Edição explícita na Biblioteca: pode remover opções não listadas.
- * Usar só na tela /opcoes — não no cadastro do produto.
+ * Helper da base reutilizável — usado na conversa da categoria (e legado OptionGroupsPage).
+ * Não expor CRUD disso no menu do comerciante.
  */
 export async function replaceCanonicalChoices(
   group: OptionGroupAdmin,

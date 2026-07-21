@@ -1,7 +1,6 @@
 import {
   LayoutDashboard,
   Layers,
-  ListTree,
   LogOut,
   Menu,
   Package,
@@ -28,7 +27,6 @@ import {
 } from "@/features/orders";
 import { Button } from "@/shared/components/ui/button";
 import { Sheet } from "@/shared/components/ui/sheet";
-import { catalogLabels } from "@/shared/copy/catalogLabels";
 import { resolveMediaUrl } from "@/shared/lib/media";
 import { cn } from "@/shared/lib/utils";
 
@@ -40,7 +38,6 @@ const navItems = [
   { to: "/clientes", label: "Clientes", icon: Users, permission: "customers.view" },
   { to: "/produtos", label: "Produtos", icon: Package, permission: "catalog.view" },
   { to: "/categorias", label: "Categorias", icon: Layers, permission: "catalog.view" },
-  { to: "/opcoes", label: catalogLabels.reusableCatalog, icon: ListTree, permission: "catalog.view" },
   { to: "/configuracoes", label: "Configurações", icon: Settings, permission: "settings.manage" },
 ] as const;
 

@@ -83,7 +83,10 @@ Pilar arquitetural (espelhado em `17`):
 
 Exemplo clássico: **tamanhos**. Cada pizza/lanche tem valores diferentes.
 
-Perguntado **no cadastro do produto**. Nada muda nesse ponto em relação ao fluxo atual de tamanhos.
+Perguntado **no cadastro do produto**.
+
+**O preço do tamanho é o valor do produto naquele tamanho** — não um “mais X reais” em cima de outro preço.  
+No cardápio aparece `Grande R$ 80`, não `+ R$ 80`.
 
 ### 4.2 Tipo 2 — Pertence à categoria
 

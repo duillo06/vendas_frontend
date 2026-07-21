@@ -95,6 +95,10 @@ Exemplo — tamanhos:
 | Média | R$ 48 | R$ 50 |
 | Grande | R$ 60 | R$ 63 |
 
+**Importante:** o preço do tamanho é o **valor da pizza naquele tamanho** (preço absoluto), **não** um acréscimo (`+`) sobre `base_price`.  
+No cardápio: `Grande R$ 80` → total começa em R$ 80; bordas/adicionais somam depois.  
+Internamente: `pricing_config.strategy = replace_base` (kinds `size` / `volume`).
+
 **Kinds típicos (produto):** `size`, e equivalentes (ex.: `volume` em bebidas quando o preço muda por produto).
 
 ### 4.2 Tipo 2 — Preço pertencente à **categoria**

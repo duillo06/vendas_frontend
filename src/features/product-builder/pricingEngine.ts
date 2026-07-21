@@ -29,7 +29,7 @@ function applyGroupPricing(
   const config = configIn ?? { strategy: "additive" as const };
   const strategy = config.strategy;
 
-  if (strategy === "additive" || strategy === "quantity_multiplier") {
+  if (strategy === "additive" || strategy === "quantity_multiplier" || strategy === "replace_base") {
     return entries.reduce(
       (sum, entry) => sum + unitModifier(basePrice, entry.option) * entry.quantity,
       0,
@@ -54,15 +54,28 @@ function applyGroupPricing(
   }
 
   return units.reduce((sum, option, index) => {
-    if (index >= freeUnits) {
+    if (index >= (freeUnits ?? 0)) {
       return sum + unitModifier(basePrice, option);
     }
     return sum;
   }, 0);
 }
 
+/** tamanho/volume: preço absoluto; bordas/adicionais: soma */
+export function isAbsolutePriceGroup(group: {
+  kind?: string | null;
+  pricing_config?: PricingConfig;
+}): boolean {
+  const strategy = group.pricing_config?.strategy;
+  if (strategy === "replace_base") return true;
+  const kind = group.kind ?? "";
+  return kind === "size" || kind === "volume";
+}
+
 export function calculateProductPrice(product: ProductDetail, selections: ProductBuilderState): number {
-  let total = product.base_price;
+  const catalogBase = product.base_price;
+  let effectiveBase = catalogBase;
+  let addons = 0;
   const visibleGroups = getVisibleGroups(product.option_groups, selections);
 
   for (const group of visibleGroups) {
@@ -75,10 +88,17 @@ export function calculateProductPrice(product: ProductDetail, selections: Produc
       })
       .filter((entry): entry is { option: Option; quantity: number } => entry !== null);
 
-    total += applyGroupPricing(product.base_price, entries, group.pricing_config);
+    if (entries.length === 0) continue;
+
+    const amount = applyGroupPricing(catalogBase, entries, group.pricing_config);
+    if (isAbsolutePriceGroup(group)) {
+      effectiveBase = amount;
+    } else {
+      addons += amount;
+    }
   }
 
-  return Math.round(Math.max(total, 0) * 100) / 100;
+  return Math.round(Math.max(effectiveBase + addons, 0) * 100) / 100;
 }
 
 export function calculateBuilderTotal(
@@ -86,11 +106,21 @@ export function calculateBuilderTotal(
   optionGroups: ProductDetail["option_groups"],
   selections: ProductBuilderState,
 ): number {
-  return calculateProductPrice({ base_price: basePrice, option_groups: optionGroups } as ProductDetail, selections);
+  return calculateProductPrice(
+    { base_price: basePrice, option_groups: optionGroups } as ProductDetail,
+    selections,
+  );
 }
 
-export function formatOptionPriceModifier(option: Option, basePrice: number, quantity = 1): string {
+export function formatOptionPriceModifier(
+  option: Option,
+  basePrice: number,
+  quantity = 1,
+  options?: { absolute?: boolean },
+): string {
   const value = unitModifier(basePrice, option) * quantity;
   if (value === 0) return "";
-  return `+ R$ ${value.toFixed(2).replace(".", ",")}`;
+  const formatted = value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  // tamanho = valor da pizza; adicional = acréscimo
+  return options?.absolute ? formatted : `+ ${formatted}`;
 }
