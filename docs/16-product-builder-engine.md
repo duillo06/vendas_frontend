@@ -5,7 +5,8 @@
 > **Versão:** 1.0  
 > **Status:** Aprovado  
 > **Última atualização:** Julho/2026  
-> **Depende de:** `02-arquitetura.md`, `03-modelagem-do-banco.md`, `07-api.md`, `08-regras-de-negocio.md`, `11-guia-ui-ux.md` (aprovados)
+> **Depende de:** `02-arquitetura.md`, `03-modelagem-do-banco.md`, `07-api.md`, `08-regras-de-negocio.md`, `11-guia-ui-ux.md` (aprovados)  
+> **Filosofia:** `00-product-philosophy.md` · **Autoria:** `17-modelo-categoria-produto.md` (Receita → materializa este motor)
 
 ---
 
@@ -52,6 +53,8 @@ Definir o **Product Builder Engine** — motor universal que permite a qualquer 
 
 | Princípio | Aplicação |
 |-----------|-----------|
+| **Filosofia primeiro** | UI nunca expõe Option Group / Feature / Override — ver `00-product-philosophy.md` |
+| **Autoria ≠ runtime** | Receita da categoria materializa `ProductOptionGroup`; este doc é o **runtime** |
 | **Produtos, nunca pizzas** | Zero código/tabela/componente por segmento |
 | **Componentes reutilizáveis** | Display registry, PricingEngine, ProductBuilder |
 | **Configuração > código** | Comportamento via `option_groups`, `options`, overrides |

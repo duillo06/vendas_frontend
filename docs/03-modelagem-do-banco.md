@@ -1740,4 +1740,23 @@ erDiagram
 
 ---
 
+## Apêndice C — Receita da categoria (Fase 0+)
+
+> Autoria: `17-modelo-categoria-produto.md`. Filosofia: `00-product-philosophy.md`.  
+> Runtime continua em `option_groups` / `product_option_groups`.
+
+| Tabela | Papel |
+|--------|--------|
+| `category_capabilities` | “Possui tamanhos/bordas/…?” |
+| `category_libraries` | Quais conjuntos da base a receita usa |
+| `category_library_items` | Quais itens entram na receita |
+| `product_option_prices` | Preço da opção **neste** produto |
+| `product_option_exclusions` | Produto não usa item da receita |
+
+Campos extras: `categories.template_key`, `option_groups.kind`.
+
+Preço efetivo: `product_option_prices` → fallback `options.price_modifier` (legado).
+
+---
+
 > **Documento aprovado.** Próximo: `04-design-system.md`.

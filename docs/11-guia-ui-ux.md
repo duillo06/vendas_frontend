@@ -95,6 +95,7 @@ graph TB
 | **Simplicidade** | Mínimo de decisões por tela | Progressive disclosure |
 | **Apetite** | Food service é emoção | Fotos grandes, cores quentes no storefront |
 | **Eficiência** | Operador processa sem fricção | Atalhos, ações em 1 clique |
+| **Hierarquia** | Um protagonista por tela | Remover ruído; secundário só apoia a compra |
 
 ### 2.2 Leis de UX Aplicadas
 
@@ -819,9 +820,10 @@ Layout em seções colapsáveis:
 │ ▼ Imagens                                            │
 │   [📷 Upload]  [img1] [img2] [+]                    │
 │                                                      │
-│ ▼ Grupos de opções                                   │
-│   [✓] Tamanho    [✓] Massa    [✓] Borda             │
-│   [+ Vincular grupo]                                 │
+│ ▼ Personalizações (assistente)                       │
+│   ✅ Possui tamanhos — Pequena · Média · Grande      │
+│   ✅ Possui bordas — Catupiry · Cheddar     [Editar] │
+│   [+ Adicionar personalização] → perguntas, não form │
 │                                                      │
 │ ▼ Disponibilidade                                    │
 │   [✓] Ativo no cardápio                              │
@@ -836,10 +838,23 @@ Layout em seções colapsáveis:
 | Regra | Detalhe |
 |-------|---------|
 | Preview | Link "Ver no cardápio" abre storefront |
+| Linguagem | Nunca “grupo de opções”, “modificador”, “min/max” — só perguntas do negócio |
+| Biblioteca | Tudo criado no assistente reaparece marcado na próxima vez |
+| Uma decisão | Hub de cartões → sim/não → marcar opções → pronto |
+| Meio a meio | Mesmo assistente; abre fluxo de sabores (composition) |
+| Receitas (roadmap) | Salvar conjunto “Pizza Tradicional” e reaplicar |
 | Salvar parcial | Campos obrigatórios mínimos para publicar |
-| Grupos reutilizáveis | Vincular existente > criar novo |
-| Feedback | Toast "Produto salvo" + opção desfazer (V1) |
-| Mobile | Formulário funcional mas desktop preferido |
+| Feedback | Toast "Produto salvo" |
+| Mobile | Formulário funcional; assistente mobile-first |
+
+### 12.4 Assistente de personalização
+
+> **Evolução:** a direção aprovada de produto é a **Receita da Categoria** + assistentes conversacionais — ver `00-product-philosophy.md` e `17-modelo-categoria-produto.md`. O fluxo abaixo descreve o estado transitório no produto; novas telas devem seguir a filosofia (perguntas, não jargão).
+
+1. **Hub** — cartões ilustrados (tamanhos, bordas, adicionais, montável, meio a meio…)
+2. **Portão** — “Este produto será vendido em mais de um tamanho?” Sim / Não
+3. **Catálogo** — checkboxes do que a empresa já tem + “Criar novo” (nome + preço → migrar preço para o produto)
+4. **Resumo no produto** — ✅ + lista curta + Editar (reabre o assistente)
 
 ---
 

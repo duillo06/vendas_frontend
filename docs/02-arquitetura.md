@@ -2,10 +2,11 @@
 
 > **Documento:** Arquitetura Técnica  
 > **Produto:** Food Service *(nome comercial provisório)*  
-> **Versão:** 1.0  
+> **Versão:** 1.1  
 > **Status:** Aprovado  
 > **Última atualização:** Julho/2026  
-> **Depende de:** `01-visao-do-produto.md` (aprovado)
+> **Depende de:** `01-visao-do-produto.md` (aprovado)  
+> **Filosofia:** `00-product-philosophy.md` — norteia decisões de produto e UX
 
 ---
 
@@ -35,6 +36,8 @@
 ---
 
 ## 1. Visão Geral
+
+> **Norte de produto:** toda decisão de cadastro/cardápio deve respeitar `00-product-philosophy.md` (Regra de Ouro). A camada de autoria (Receita da Categoria) está em `17-modelo-categoria-produto.md`.
 
 O **Food Service** é uma plataforma SaaS composta por:
 
@@ -1571,11 +1574,13 @@ def test_tenant_a_cannot_see_tenant_b_orders():
 
 | # | Documento | Relação com este |
 |---|-----------|------------------|
+| 00 | `00-product-philosophy.md` | Filosofia — prevalece em conflitos de UX/produto |
 | 03 | `03-modelagem-do-banco.md` | Detalha entidades referenciadas aqui |
 | 05 | `05-frontend.md` | Expande estrutura e padrões React |
 | 06 | `06-backend.md` | Expande estrutura e padrões Django |
 | 07 | `07-api.md` | Contratos REST detalhados |
 | 10 | `10-padroes-de-codigo.md` | Convenções de nomenclatura e Git |
+| 17 | `17-modelo-categoria-produto.md` | Receita da categoria (camada de autoria) |
 
 ---
 
@@ -1583,6 +1588,7 @@ def test_tenant_a_cannot_see_tenant_b_orders():
 
 | Versão | Data | Autor | Alterações |
 |--------|------|-------|------------|
+| 1.1 | Jul/2026 | — | Referência à filosofia (`00`) e modelo categoria-produto (`17`) |
 | 1.0 | Jul/2026 | — | Versão inicial — aprovado |
 
 ---

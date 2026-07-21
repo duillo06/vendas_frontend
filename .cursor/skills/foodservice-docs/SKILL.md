@@ -10,7 +10,9 @@ description: >-
 
 ## Localização
 
-Todos os docs em `vendas_frontend/docs/` — numeração `00-` a `15-`.
+Todos os docs em `vendas_frontend/docs/` — numeração `00-` a `17+`.
+
+**Documento fundador de produto:** `00-product-philosophy.md` — prevalece em conflitos de UX/produto.
 
 ## Formato padrão (cabeçalho)
 

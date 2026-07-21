@@ -7,6 +7,8 @@ alwaysApply: true
 
 SaaS multi-tenant genérico (não pizza-specific). Fonte de verdade: `docs/` e skills em `.cursor/skills/`.
 
+**Filosofia (obrigatória):** `docs/00-product-philosophy.md` — Regra de Ouro. O usuário responde perguntas; a arquitetura fica invisível. Autoria: `docs/17-modelo-categoria-produto.md`.
+
 ## Código (manutenção pelo dono do projeto)
 
 - **Limpo e legível** antes de “esperto”: nomes explícitos, funções pequenas, fluxo fácil de seguir

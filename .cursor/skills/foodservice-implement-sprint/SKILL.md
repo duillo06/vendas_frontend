@@ -10,10 +10,12 @@ description: >-
 
 ## Antes de codar
 
+0. **Filosofia:** `docs/00-product-philosophy.md` — Regra de Ouro (perguntas simples; zero jargão técnico na UI)
 1. Ler `docs/09-roadmap.md` — sprint atual e dependências
 2. Ler checklist da fase: `12-checklist-mvp.md` (MVP), `13-*`, `14-*`
 3. Conferir `docs/00-portas-locais.md` para dev local
 4. Seguir `docs/10-padroes-de-codigo.md`
+5. Cadastro/cardápio: `docs/17-modelo-categoria-produto.md` (Receita da categoria)
 
 ## Mapa de documentos por tarefa
 

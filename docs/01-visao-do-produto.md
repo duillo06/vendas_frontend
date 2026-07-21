@@ -161,6 +161,10 @@ Entregar valor cedo (MVP), validar com cliente real, evoluir em sprints planejad
 
 Código legível, baixo acoplamento, alta coesão, testes onde importam, documentação viva. O projeto será mantido por **anos**.
 
+### 4.11 Hierarquia acima de quantidade
+
+Cada tela deve possuir **apenas um protagonista**. Todo elemento secundário existe só para apoiar a ação principal. Se um componente não ajuda o usuário a concluir sua tarefa, ele deve ser **removido**, **simplificado** ou ter sua importância visual reduzida.
+
 ---
 
 ## 5. Público-Alvo e Segmentos
@@ -580,6 +584,9 @@ sequenceDiagram
 2. **Clareza na personalização** — Preço atualiza em tempo real conforme opções
 3. **Confiança** — Feedback visual constante, estados de erro humanizados
 4. **Consistência** — Design System rigoroso em toda a plataforma
+5. **Assistente conversacional de personalização** — O comerciante responde perguntas naturais (“Possui tamanhos?”, “Quais bordas?”); o sistema monta grupos/opções. Sem termos técnicos.
+6. **Biblioteca da empresa** — Tamanhos, bordas, adicionais e ingredientes criados uma vez e reaproveitados em todo o cardápio
+7. **Receitas da empresa (roadmap)** — Salvar um conjunto completo de personalizações (ex.: “Pizza Tradicional”) e aplicar em novos produtos com um toque
 
 ---
 
@@ -775,6 +782,7 @@ Este documento estabelece a **visão e o porquê** da plataforma. Os próximos d
 
 | # | Documento | Conteúdo |
 |---|-----------|----------|
+| 00 | `00-product-philosophy.md` | **Filosofia fundadora** — Regra de Ouro, o que nunca/sempre fazer |
 | 00 | `00-portas-locais.md` | Portas de dev local (projeto secundário) |
 | 02 | `02-arquitetura.md` | Arquitetura técnica, multi-tenant, pastas, módulos |
 | 03 | `03-modelagem-do-banco.md` | Entidades, relacionamentos, diagramas ER |
@@ -790,6 +798,10 @@ Este documento estabelece a **visão e o porquê** da plataforma. Os próximos d
 | 13 | `13-checklist-v1.md` | Escopo da versão 1 |
 | 14 | `14-checklist-v2.md` | Escopo da versão 2 |
 | 15 | `15-futuras-funcionalidades.md` | Backlog de longo prazo |
+| 16 | `16-product-builder-engine.md` | Motor de opções (runtime do cardápio) |
+| 17 | `17-modelo-categoria-produto.md` | Receita da categoria → produto (autoria) |
+| 18 | `18-domain-rules.md` | Regras de domínio do cardápio |
+| 19 | `19-future-ideas.md` | Backlog de ideias fora do MVP |
 
 ---
 

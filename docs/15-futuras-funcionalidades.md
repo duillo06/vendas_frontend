@@ -377,6 +377,9 @@ Evolução gateway V2 (Mercado Pago único).
 | IA-04 | Chatbot de pedido | WhatsApp com NLP | Média |
 | IA-05 | Análise de sentimento | Avaliações automáticas | Baixa |
 | IA-06 | Detecção de fraude | Pedidos suspeitos | Média |
+| IA-07 | Copiar estrutura/preços | "Pizza parecida — deseja copiar?" (hooks em `17`) | Alta |
+| IA-08 | Sugestão de receita | "Milk Shake — configurar tamanhos e coberturas?" | Alta |
+| IA-09 | Assistente 1ª configuração | Segmento do negócio → categorias e opções prontas | Alta |
 
 ---
 
@@ -592,10 +595,11 @@ flowchart LR
 
 ## 13. Documentação Completa
 
-Com a aprovação deste documento, a **série de 15 documentos** do Food Service fica completa:
+Com a evolução da documentação, a série inclui a **filosofia fundadora** e o modelo de receita:
 
 | # | Documento | Tipo |
 |---|-----------|------|
+| 00 | `00-product-philosophy.md` | **Filosofia** — Regra de Ouro |
 | 00 | `00-portas-locais.md` | Referência dev local |
 | 01 | `01-visao-do-produto.md` | Visão |
 | 02 | `02-arquitetura.md` | Arquitetura |
@@ -612,6 +616,8 @@ Com a aprovação deste documento, a **série de 15 documentos** do Food Service
 | 13 | `13-checklist-v1.md` | Checklist fechado |
 | 14 | `14-checklist-v2.md` | Checklist fechado |
 | 15 | `15-futuras-funcionalidades.md` | **Backlog estratégico** |
+| 16 | `16-product-builder-engine.md` | Motor de opções (runtime) |
+| 17 | `17-modelo-categoria-produto.md` | Receita da categoria (autoria) |
 
 ```mermaid
 graph TB

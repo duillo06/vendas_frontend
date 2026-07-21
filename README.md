@@ -4,7 +4,7 @@ Interface **Storefront** (consumidor) e **Backoffice** (operadores) do Food Serv
 
 **Stack:** React 19, Vite, TypeScript, Tailwind CSS, TanStack Query, React Router, Zustand.
 
-Documentação em [`docs/`](./docs/) — portas locais em [`docs/00-portas-locais.md`](./docs/00-portas-locais.md).
+Documentação em [`docs/`](./docs/) — comece pela filosofia [`docs/00-product-philosophy.md`](./docs/00-product-philosophy.md); portas locais em [`docs/00-portas-locais.md`](./docs/00-portas-locais.md).
 
 Skills Cursor em [`.cursor/skills/`](./.cursor/skills/).
 
