@@ -83,7 +83,7 @@ const pizza: Blueprint = {
       id: "sabores",
       emoji: "🍕",
       title: "Como seus clientes escolhem os sabores?",
-      subtitle: "Isso monta o grupo de sabores automaticamente.",
+          subtitle: "Isso libera as próximas perguntas no cadastro.",
       choices: [
         {
           key: "fixo",

@@ -11,7 +11,6 @@ import {
 import { ProductBuilderPreview } from "@/features/catalog/components/ProductBuilderPreview";
 import { ProductCustomizationsPanel } from "@/features/catalog/components/ProductCustomizationsPanel";
 import {
-  ProductCompositionEditor,
   DEFAULT_COMPOSITION,
   type CompositionForm,
 } from "@/features/catalog/components/ProductCompositionEditor";
@@ -29,6 +28,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { adminCopy } from "@/shared/copy/admin";
+import { createId } from "@/shared/lib/utils";
 
 const MAX_IMAGES = 5;
 
@@ -245,7 +245,7 @@ export function ProductFormPage() {
       setPendingImages((current) => [
         ...current,
         ...nextFiles.map((file) => ({
-          key: `${file.name}-${file.lastModified}-${crypto.randomUUID()}`,
+          key: `${file.name}-${file.lastModified}-${createId()}`,
           file,
           previewUrl: URL.createObjectURL(file),
         })),
@@ -395,16 +395,16 @@ export function ProductFormPage() {
           <ProductCustomizationsPanel
             links={form.product_option_groups}
             availableGroups={optionGroups ?? []}
+            categoryName={categories?.find((c) => c.id === form.category_id)?.name}
+            categories={categories}
+            currentProductId={product?.id}
+            composition={form.composition}
+            onCompositionChange={(composition) =>
+              setForm((current) => ({ ...current, composition }))
+            }
             onChange={(product_option_groups) =>
               setForm((current) => ({ ...current, product_option_groups }))
             }
-          />
-
-          <ProductCompositionEditor
-            value={form.composition}
-            onChange={(composition) => setForm((current) => ({ ...current, composition }))}
-            categories={categories}
-            currentProductId={product?.id}
           />
 
           <Button

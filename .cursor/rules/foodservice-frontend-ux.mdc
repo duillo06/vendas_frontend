@@ -12,6 +12,7 @@ alwaysApply: false
 - Estados: loading (Skeleton), vazio (EmptyState + ação), erro (mensagem + como corrigir)
 - Storefront: mobile first, toques grandes, carrinho acessível em 1 toque
 - Backoffice: ações frequentes em 1 clique; filtros em listas com volume
+- **Hierarquia acima de quantidade:** um protagonista por tela; remover ruído que não ajuda a comprar
 
 ## Layout mobile (obrigatório em todo layout novo)
 

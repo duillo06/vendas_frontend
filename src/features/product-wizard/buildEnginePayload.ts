@@ -1,5 +1,17 @@
-import { catalogAdminApi } from "@/features/catalog/api/catalogAdminApi";
-import { builderFieldsToPayload } from "@/features/catalog/components/OptionGroupBuilderFields";
+import {
+  catalogAdminApi,
+  type OptionGroupAdmin,
+} from "@/features/catalog/api/catalogAdminApi";
+import {
+  kindIdFromGroupName,
+  saveCanonicalFromDraft,
+} from "@/features/catalog/utils/canonicalLibrary";
+import {
+  draftFromKind,
+  kindById,
+  type CustomizationDraft,
+} from "@/features/catalog/utils/conversationalOptions";
+import { createId } from "@/shared/lib/utils";
 import type { WizardComposition, WizardGroup, WizardImage, WizardOptionInput } from "./types";
 
 export type BuildProductInput = {
@@ -13,34 +25,50 @@ export type BuildProductInput = {
   composition?: WizardComposition | null;
 };
 
-// Traduz as respostas do assistente pras chamadas reais do Product Engine.
-// Cria os grupos + opções, depois o produto vinculado, e sobe as imagens.
+/**
+ * Cria o produto reaproveitando a biblioteca da empresa.
+ * Nunca clona "Tamanho"/"Borda" se a casa já tem — só vincula.
+ */
 export async function createProductFromWizard(input: BuildProductInput) {
-  const createdGroupIds: string[] = [];
+  const library = await catalogAdminApi.listOptionGroups();
+  const linkedIds: string[] = [];
+  let workingLibrary = library;
 
-  for (const [index, group] of input.groups.entries()) {
+  for (const group of input.groups) {
     const options = (input.optionsByGroup[group.key] ?? []).filter((o) => o.name.trim());
-    // grupo sem nenhuma opção não vai pro engine (evita grupo vazio no cardápio)
     if (options.length === 0) continue;
 
-    const created = await catalogAdminApi.createOptionGroup({
-      name: group.name,
-      ...builderFieldsToPayload(group.fields),
-      is_active: true,
-      sort_order: index,
-    });
+    const kindId = kindIdFromGroupName(group.name);
+    const kind = kindId ? kindById(kindId) : null;
 
-    for (const [optIndex, option] of options.entries()) {
-      await catalogAdminApi.createOption(created.id, {
-        name: option.name.trim(),
-        price_modifier: option.price,
-        is_active: true,
-        is_available: true,
-        sort_order: optIndex,
-      });
-    }
+    const draft: CustomizationDraft = kind
+      ? {
+          ...draftFromKind(kind),
+          choices: options.map((o) => ({
+            key: o.key || createId(),
+            name: o.name.trim(),
+            price: o.price,
+          })),
+        }
+      : {
+          name: group.name,
+          description: group.fields.description || "",
+          selection_type: group.fields.selection_type === "multiple" ? "multiple" : "single",
+          is_required: group.fields.is_required,
+          min_selections: group.fields.min_selections,
+          max_selections: group.fields.max_selections,
+          choices: options.map((o) => ({
+            key: o.key || createId(),
+            name: o.name.trim(),
+            price: o.price,
+          })),
+        };
 
-    createdGroupIds.push(created.id);
+    const { group: saved } = await saveCanonicalFromDraft(draft, workingLibrary);
+    if (!linkedIds.includes(saved.id)) linkedIds.push(saved.id);
+
+    // atualiza cache local pra próximo grupo no mesmo save
+    workingLibrary = upsertLocal(workingLibrary, saved);
   }
 
   const product = await catalogAdminApi.createProduct({
@@ -50,11 +78,10 @@ export async function createProductFromWizard(input: BuildProductInput) {
     category_id: input.categoryId,
     is_active: true,
     is_available: true,
-    product_option_groups: createdGroupIds.map((id, i) => ({
+    product_option_groups: linkedIds.map((id, i) => ({
       option_group_id: id,
       sort_order: i,
     })),
-    // composição: produto formado por outros da mesma categoria (ex: meio a meio)
     ...(input.composition
       ? {
           composition: {
@@ -77,4 +104,9 @@ export async function createProductFromWizard(input: BuildProductInput) {
   }
 
   return product;
+}
+
+function upsertLocal(list: OptionGroupAdmin[], group: OptionGroupAdmin): OptionGroupAdmin[] {
+  const without = list.filter((g) => g.id !== group.id);
+  return [...without, group];
 }

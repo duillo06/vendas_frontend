@@ -8,7 +8,7 @@ export function ListDisplay({ group, items, basePrice, onChange, disabled }: Dis
   const inputType = group.selection_type === "single" ? "radio" : "checkbox";
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {group.options.map((option) => (
         <OptionCard
           key={option.id}
@@ -132,7 +132,7 @@ export function StepperDisplay({ group, items, basePrice, onChange, disabled }: 
   const { setQuantity, atMax } = usePickHandlers(group, items, onChange);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {group.options.map((option) => {
         const quantity = getItemQuantity(items, option.id);
         return (

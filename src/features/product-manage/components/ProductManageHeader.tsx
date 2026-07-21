@@ -85,7 +85,7 @@ function buildBadges(product: ProductAdminDetail): string[] {
   const badges: string[] = [];
   if (product.composition?.enabled) badges.push("Meio a meio");
   if ((product.product_option_groups?.length ?? 0) > 0 || product.option_group_ids.length > 0) {
-    badges.push("Personalizado");
+    badges.push("Opções da casa");
   }
   if (product.compare_price != null && product.compare_price > product.base_price) {
     badges.push("Em promoção");

@@ -24,12 +24,12 @@ export const GroupSection = forwardRef<HTMLElement, GroupSectionProps>(function 
       ref={ref}
       id={`option-group-${group.id}`}
       className={cn(
-        "scroll-mt-24 rounded-2xl border border-transparent p-1 transition-colors duration-200",
-        invalid && "animate-shake border-red-200 bg-red-50/50",
+        "scroll-mt-28 rounded-2xl border border-[hsl(var(--border))]/70 bg-white/60 p-4 transition-colors duration-200 sm:p-5",
+        invalid && "animate-shake border-red-200 bg-red-50/60",
       )}
     >
-      <fieldset className="space-y-3">
-        <legend className="flex w-full flex-wrap items-center gap-2 text-base font-semibold">
+      <fieldset className="space-y-4">
+        <legend className="flex w-full flex-wrap items-center gap-2 text-base font-semibold tracking-tight">
           {group.icon ? <span aria-hidden>{group.icon}</span> : null}
           <span>{group.name}</span>
           {group.is_required ? (

@@ -36,10 +36,10 @@ export function ProductBuilder({
   if (visibleGroups.length === 0) return null;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <ProductBuilderProgress progress={progress} />
 
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         {visibleGroups.map((group, index) => (
           <div
             key={group.id}

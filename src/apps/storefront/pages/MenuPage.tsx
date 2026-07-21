@@ -13,7 +13,6 @@ import { CatalogSearchSection } from "@/features/storefront/components/CatalogSe
 import { StoreHero } from "@/features/storefront/components/StoreHero";
 import { useCatalogSearch } from "@/features/storefront/hooks/useCatalogSearch";
 import { EmptyState } from "@/shared/components/EmptyState";
-import { BackLink } from "@/shared/components/visual";
 import { storefrontCopy } from "@/shared/copy/storefront";
 
 export function MenuPage() {
@@ -31,20 +30,19 @@ export function MenuPage() {
   const showEmpty = !loadingProducts && !isError && products.length === 0;
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <BackLink to="/" label="Início" />
-
+    // banner → busca → categorias → produtos — sem atalho rivalizando
+    <div className="-mt-4 space-y-3 pb-2 sm:-mt-6 sm:space-y-4">
       <StoreHero company={company} isLoading={loadingCompany} compact />
+
+      <CatalogSearchSection value={search} onChange={setSearch} className="space-y-2.5">
+        {loadingCategories ? <CategoryNavSkeleton /> : categories ? <CategoryNav categories={categories} /> : null}
+      </CatalogSearchSection>
 
       {hasSearch && productsPage ? (
         <p className="text-sm text-[hsl(var(--muted-foreground))]">
           {storefrontCopy.menu.searchResults(productsPage.count, debouncedSearch)}
         </p>
       ) : null}
-
-      <CatalogSearchSection value={search} onChange={setSearch}>
-        {loadingCategories ? <CategoryNavSkeleton /> : categories ? <CategoryNav categories={categories} /> : null}
-      </CatalogSearchSection>
 
       {loadingProducts ? (
         <ProductListRowSkeleton />

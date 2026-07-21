@@ -1,15 +1,18 @@
 import type { OptionGroupAdmin } from "@/features/catalog/api/catalogAdminApi";
 import type { OptionSelectionType } from "@/features/catalog/types/catalog.types";
+import { createId } from "@/shared/lib/utils";
 
 function formatMoney(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
+
 /** escolha na lista do assistente (ainda sem id = nova) */
 export type ChoiceDraft = {
   key: string;
   id?: string;
   name: string;
   price: number;
+  description?: string;
 };
 
 export type CustomizationDraft = {
@@ -20,8 +23,167 @@ export type CustomizationDraft = {
   min_selections: number;
   max_selections: number;
   choices: ChoiceDraft[];
+  /** atalho usado — pra achar a biblioteca certa */
+  kindId?: PersonalizationKindId;
 };
 
+export type PersonalizationKindId =
+  | "size"
+  | "crust"
+  | "extras"
+  | "buildable"
+  | "half"
+  | "sauces"
+  | "other";
+
+export type PersonalizationKind = {
+  id: PersonalizationKindId;
+  emoji: string;
+  label: string;
+  example: string;
+  /** pergunta sim/não */
+  gateQuestion: string;
+  gateHint?: string;
+  /** pergunta da biblioteca */
+  libraryQuestion: string;
+  libraryHint?: string;
+  createLabel: string;
+  /** nome do grupo no cardápio */
+  groupName: string;
+  groupDescription: string;
+  selection_type: OptionSelectionType;
+  is_required: boolean;
+  max_selections: number;
+  suggestions: string[];
+  /** palavras pra achar grupos salvos */
+  matchNames: string[];
+  /** meio a meio usa composition, não option group */
+  opensComposition?: boolean;
+};
+
+/** cartões do hub — linguagem do comerciante */
+export const PERSONALIZATION_KINDS: PersonalizationKind[] = [
+  {
+    id: "size",
+    emoji: "🍕",
+    label: "Possui tamanhos",
+    example: "Pequena, Média e Grande.",
+    gateQuestion: "Este produto será vendido em mais de um tamanho?",
+    libraryQuestion: "Quais tamanhos deseja oferecer?",
+    libraryHint: "Marque os que já existem ou crie um novo — fica salvo pra próxima vez.",
+    createLabel: "Criar novo tamanho",
+    groupName: "Tamanho",
+    groupDescription: "Escolha o tamanho",
+    selection_type: "single",
+    is_required: true,
+    max_selections: 1,
+    suggestions: ["Pequena", "Média", "Grande", "Família", "Gigante", "Broto", "Individual"],
+    matchNames: ["tamanho", "tamanhos", "size"],
+  },
+  {
+    id: "crust",
+    emoji: "🧀",
+    label: "Possui bordas",
+    example: "Cheddar, Catupiry.",
+    gateQuestion: "Esta pizza permite borda recheada?",
+    libraryQuestion: "Quais bordas deseja oferecer?",
+    libraryHint: "Escolha as da casa ou crie uma nova.",
+    createLabel: "Criar nova borda",
+    groupName: "Borda",
+    groupDescription: "Quer borda recheada?",
+    selection_type: "single",
+    is_required: false,
+    max_selections: 1,
+    suggestions: ["Sem borda", "Catupiry", "Cheddar", "Chocolate", "Cream Cheese"],
+    matchNames: ["borda", "bordas", "crust"],
+  },
+  {
+    id: "extras",
+    emoji: "🥓",
+    label: "Possui adicionais",
+    example: "Bacon, Queijo, Ovo.",
+    gateQuestion: "Este produto possui adicionais?",
+    libraryQuestion: "Quais adicionais deseja oferecer?",
+    libraryHint: "Tudo que você criar fica na biblioteca da empresa.",
+    createLabel: "Criar novo adicional",
+    groupName: "Adicionais",
+    groupDescription: "Quer algo a mais?",
+    selection_type: "multiple",
+    is_required: false,
+    max_selections: 5,
+    suggestions: ["Bacon", "Queijo", "Ovo", "Milho", "Calabresa", "Azeitona", "Cebola"],
+    matchNames: ["adicionais", "adicional", "extras", "complementos"],
+  },
+  {
+    id: "buildable",
+    emoji: "🥟",
+    label: "Produto montável",
+    example: "Monte seu pastel.",
+    gateQuestion: "O cliente monta este produto?",
+    gateHint: "Ex.: pastel, açaí, hambúrguer, pizza personalizada.",
+    libraryQuestion: "Quais ingredientes estarão disponíveis?",
+    libraryHint: "Usa a mesma biblioteca de adicionais — sem recriar.",
+    createLabel: "Criar novo ingrediente",
+    groupName: "Ingredientes",
+    groupDescription: "Monte do seu jeito",
+    selection_type: "multiple",
+    is_required: false,
+    max_selections: 0,
+    suggestions: ["Queijo", "Presunto", "Frango", "Carne", "Bacon", "Milho", "Catupiry"],
+    matchNames: ["ingredientes", "montagem", "monte", "recheio", "adicionais", "extras"],
+  },
+  {
+    id: "half",
+    emoji: "🍕",
+    label: "Meio a meio / Sabores",
+    example: "Escolher outro sabor.",
+    gateQuestion: "Este produto permite escolher outros sabores?",
+    libraryQuestion: "",
+    createLabel: "",
+    groupName: "",
+    groupDescription: "",
+    selection_type: "single",
+    is_required: false,
+    max_selections: 1,
+    suggestions: [],
+    matchNames: [],
+    opensComposition: true,
+  },
+  {
+    id: "sauces",
+    emoji: "🧴",
+    label: "Possui molhos",
+    example: "Ketchup, Barbecue, Alho.",
+    gateQuestion: "Este produto oferece molhos?",
+    libraryQuestion: "Quais molhos deseja oferecer?",
+    createLabel: "Criar novo molho",
+    groupName: "Molhos",
+    groupDescription: "Escolha os molhos",
+    selection_type: "multiple",
+    is_required: false,
+    max_selections: 3,
+    suggestions: ["Ketchup", "Maionese", "Mostarda", "Barbecue", "Alho"],
+    matchNames: ["molho", "molhos", "sauce"],
+  },
+  {
+    id: "other",
+    emoji: "✨",
+    label: "Outra personalização",
+    example: "Massa, ponto da carne, bebida…",
+    gateQuestion: "Quer criar uma personalização diferente?",
+    libraryQuestion: "Quais opções o cliente poderá escolher?",
+    createLabel: "Criar nova opção",
+    groupName: "",
+    groupDescription: "",
+    selection_type: "single",
+    is_required: false,
+    max_selections: 1,
+    suggestions: [],
+    matchNames: [],
+  },
+];
+
+/** @deprecated use PERSONALIZATION_KINDS — mantido pro script de check */
 export type CustomizationTemplate = {
   id: string;
   label: string;
@@ -34,63 +196,33 @@ export type CustomizationTemplate = {
   suggestions: string[];
 };
 
-export const CUSTOMIZATION_TEMPLATES: CustomizationTemplate[] = [
-  {
-    id: "size",
-    label: "Tamanho",
-    emoji: "📏",
-    name: "Tamanho",
-    description: "Escolha o tamanho",
-    selection_type: "single",
-    is_required: true,
-    max_selections: 1,
-    suggestions: ["Pequena", "Média", "Grande", "Família"],
-  },
-  {
-    id: "crust",
-    label: "Borda",
-    emoji: "🧀",
-    name: "Borda",
-    description: "Quer borda recheada?",
-    selection_type: "single",
-    is_required: false,
-    max_selections: 1,
-    suggestions: ["Sem borda", "Catupiry", "Cheddar", "Chocolate"],
-  },
-  {
-    id: "extras",
-    label: "Adicionais",
-    emoji: "➕",
-    name: "Adicionais",
-    description: "Quer algo a mais?",
-    selection_type: "multiple",
-    is_required: false,
-    max_selections: 5,
-    suggestions: ["Bacon", "Queijo extra", "Azeitona", "Cebola", "Catupiry"],
-  },
-  {
-    id: "sauces",
-    label: "Molhos",
-    emoji: "🧴",
-    name: "Molhos",
-    description: "Escolha os molhos",
-    selection_type: "multiple",
-    is_required: false,
-    max_selections: 3,
-    suggestions: ["Ketchup", "Maionese", "Mostarda", "Barbecue", "Alho"],
-  },
-  {
-    id: "other",
-    label: "Outra coisa",
-    emoji: "✨",
-    name: "",
-    description: "",
-    selection_type: "single",
-    is_required: false,
-    max_selections: 1,
-    suggestions: [],
-  },
-];
+export const CUSTOMIZATION_TEMPLATES: CustomizationTemplate[] = PERSONALIZATION_KINDS.filter(
+  (k) => !k.opensComposition,
+).map((k) => ({
+  id: k.id,
+  label: k.label,
+  emoji: k.emoji,
+  name: k.groupName,
+  description: k.groupDescription,
+  selection_type: k.selection_type,
+  is_required: k.is_required,
+  max_selections: k.max_selections,
+  suggestions: k.suggestions,
+}));
+
+export function kindById(id: PersonalizationKindId): PersonalizationKind | undefined {
+  return PERSONALIZATION_KINDS.find((k) => k.id === id);
+}
+
+/** categorias → cartões em destaque no hub */
+export function suggestedKindIds(categoryName?: string | null): PersonalizationKindId[] {
+  const name = (categoryName ?? "").toLowerCase();
+  if (/pizza|pizzaria/.test(name)) return ["size", "crust", "half", "extras"];
+  if (/hamb|burger|lanche/.test(name)) return ["extras", "sauces", "buildable"];
+  if (/pastel/.test(name)) return ["buildable", "extras"];
+  if (/a[cç]a[ií]|sorvete|milk/.test(name)) return ["extras", "buildable"];
+  return ["size", "extras", "other"];
+}
 
 export function emptyDraft(): CustomizationDraft {
   return {
@@ -104,7 +236,23 @@ export function emptyDraft(): CustomizationDraft {
   };
 }
 
+export function draftFromKind(kind: PersonalizationKind, customName?: string): CustomizationDraft {
+  const name = customName?.trim() || kind.groupName;
+  return {
+    name,
+    description: kind.groupDescription,
+    selection_type: kind.selection_type,
+    is_required: kind.is_required,
+    min_selections: kind.is_required ? 1 : 0,
+    max_selections: kind.selection_type === "single" ? 1 : kind.max_selections,
+    choices: [],
+    kindId: kind.id,
+  };
+}
+
 export function draftFromTemplate(template: CustomizationTemplate): CustomizationDraft {
+  const kind = kindById(template.id as PersonalizationKindId);
+  if (kind) return draftFromKind(kind);
   return {
     name: template.name,
     description: template.description,
@@ -118,6 +266,7 @@ export function draftFromTemplate(template: CustomizationTemplate): Customizatio
 
 export function draftFromGroup(group: OptionGroupAdmin): CustomizationDraft {
   const selection_type = (group.selection_type === "multiple" ? "multiple" : "single") as OptionSelectionType;
+  const kind = inferKindFromGroup(group);
   return {
     name: group.name,
     description: group.description ?? "",
@@ -130,8 +279,17 @@ export function draftFromGroup(group: OptionGroupAdmin): CustomizationDraft {
       id: option.id,
       name: option.name,
       price: option.price_modifier,
+      description: option.description ?? "",
     })),
+    kindId: kind?.id,
   };
+}
+
+export function inferKindFromGroup(group: OptionGroupAdmin): PersonalizationKind | undefined {
+  const name = group.name.toLowerCase();
+  return PERSONALIZATION_KINDS.find(
+    (k) => !k.opensComposition && k.matchNames.some((m) => name.includes(m) || m.includes(name)),
+  );
 }
 
 /** aplica regras simples quando o usuário muda perguntas */
@@ -207,7 +365,6 @@ export function mergeEssentialIntoGroup(
   const essential = essentialPayloadFromDraft(draft);
   return {
     ...essential,
-    // preserva o que o leigo não vê
     visibility: group.visibility ?? "always",
     pricing_config: group.pricing_config ?? { strategy: "additive" },
     ui_config: group.ui_config ?? {},
@@ -215,7 +372,6 @@ export function mergeEssentialIntoGroup(
     image_url: group.image_url ?? null,
     default_option_ids: group.default_option_ids ?? [],
     selection_mode: group.selection_mode ?? "pick",
-    // display: só troca se ainda for o padrão antigo/simples
     display_type:
       group.display_type && !["list", "radio", "checkbox"].includes(String(group.display_type))
         ? group.display_type
@@ -242,7 +398,7 @@ export function validateDraft(draft: CustomizationDraft): DraftValidation {
   }
   const named = draft.choices.filter((c) => c.name.trim());
   if (named.length === 0) {
-    return { ok: false, message: "Adicione pelo menos uma escolha pro cliente ver no cardápio." };
+    return { ok: false, message: "Marque ou crie pelo menos uma opção pro cliente ver no cardápio." };
   }
   if (named.some((c) => Number.isNaN(c.price) || c.price < 0)) {
     return { ok: false, message: "Tem preço inválido. Use zero se a escolha não muda o valor." };
@@ -299,44 +455,107 @@ export function buildPreviewLines(draft: CustomizationDraft): string[] {
 }
 
 export function summarizeGroup(group: OptionGroupAdmin): string {
-  const count = group.options_count || group.options.length;
-  const type =
-    group.selection_type === "multiple"
-      ? group.max_selections === 0
-        ? "várias (sem limite)"
-        : `até ${group.max_selections}`
-      : "1 escolha";
-  const req = group.is_required ? "obrigatório" : "opcional";
-  return `${count} escolha${count === 1 ? "" : "s"} · ${type} · ${req}`;
+  const names = group.options
+    .filter((o) => o.is_active !== false)
+    .map((o) => o.name)
+    .slice(0, 4);
+  if (names.length === 0) {
+    const count = group.options_count || group.options.length;
+    return `${count} escolha${count === 1 ? "" : "s"}`;
+  }
+  const extra =
+    (group.options_count || group.options.length) > names.length
+      ? ` +${(group.options_count || group.options.length) - names.length}`
+      : "";
+  return `${names.join(" · ")}${extra}`;
 }
 
-/** acha personalizações salvas parecidas com o atalho escolhido */
+/** grupos salvos parecidos com o atalho */
 export function findReusableGroups(
   groups: OptionGroupAdmin[],
-  template: CustomizationTemplate,
+  kindOrTemplate: PersonalizationKind | CustomizationTemplate,
   excludeIds: Set<string>,
 ): OptionGroupAdmin[] {
-  if (template.id === "other" || !template.name) return [];
-  const needle = template.name.toLowerCase();
+  const matchNames =
+    "matchNames" in kindOrTemplate
+      ? kindOrTemplate.matchNames
+      : kindOrTemplate.name
+        ? [kindOrTemplate.name.toLowerCase()]
+        : [];
+  if (matchNames.length === 0) return [];
+
   return groups.filter((group) => {
     if (excludeIds.has(group.id) || !group.is_active) return false;
     const name = group.name.toLowerCase();
-    return name === needle || name.includes(needle) || needle.includes(name);
+    return matchNames.some((m) => name.includes(m) || m.includes(name));
   });
 }
 
-export function newChoice(name = "", price = 0): ChoiceDraft {
-  return { key: crypto.randomUUID(), name, price };
+/** item da biblioteca da empresa (opções já criadas + sugestões) */
+export type LibraryItem = {
+  key: string;
+  name: string;
+  price: number;
+  description?: string;
+  /** veio de um grupo salvo */
+  fromLibrary: boolean;
+  optionId?: string;
+  groupId?: string;
+};
+
+export function buildLibraryItems(
+  groups: OptionGroupAdmin[],
+  kind: PersonalizationKind,
+  excludeGroupIds: Set<string>,
+): LibraryItem[] {
+  const reusable = findReusableGroups(groups, kind, excludeGroupIds);
+  const byName = new Map<string, LibraryItem>();
+
+  for (const group of reusable) {
+    for (const option of group.options) {
+      if (option.is_active === false) continue;
+      const name = option.name.trim();
+      if (!name) continue;
+      const needle = name.toLowerCase();
+      if (byName.has(needle)) continue;
+      byName.set(needle, {
+        key: `lib-${option.id}`,
+        name,
+        price: option.price_modifier,
+        description: option.description ?? undefined,
+        fromLibrary: true,
+        optionId: option.id,
+        groupId: group.id,
+      });
+    }
+  }
+
+  for (const suggestion of kind.suggestions) {
+    const needle = suggestion.toLowerCase();
+    if (byName.has(needle)) continue;
+    byName.set(needle, {
+      key: `sug-${needle}`,
+      name: suggestion,
+      price: 0,
+      fromLibrary: false,
+    });
+  }
+
+  return [...byName.values()];
+}
+
+export function newChoice(name = "", price = 0, description = ""): ChoiceDraft {
+  return { key: createId(), name, price, description };
 }
 
 /** checks dos mapeamentos — usado no script de verificação */
 export function selfCheckConversationalOptions(): void {
-  const size = CUSTOMIZATION_TEMPLATES.find((t) => t.id === "size");
-  if (!size) throw new Error("template size ausente");
+  const size = kindById("size");
+  if (!size) throw new Error("kind size ausente");
 
-  const draft = draftFromTemplate(size);
+  const draft = draftFromKind(size);
   if (draft.selection_type !== "single" || !draft.is_required || draft.max_selections !== 1) {
-    throw new Error("draftFromTemplate size inválido");
+    throw new Error("draftFromKind size inválido");
   }
 
   const multi = applySelectionType(draft, "multiple");
@@ -377,6 +596,11 @@ export function selfCheckConversationalOptions(): void {
   }
 
   if (validateDraft(emptyDraft()).ok) throw new Error("validateDraft deveria falhar");
+
+  const pizzaHints = suggestedKindIds("Pizzas");
+  if (!pizzaHints.includes("size") || !pizzaHints.includes("half")) {
+    throw new Error("suggestedKindIds pizza inválido");
+  }
 
   const legacy = {
     id: "g1",

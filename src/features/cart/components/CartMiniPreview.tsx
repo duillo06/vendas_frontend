@@ -5,6 +5,7 @@ import { useCart } from "../hooks/useCart";
 
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { Button } from "@/shared/components/ui/button";
+import { storefrontCopy } from "@/shared/copy/storefront";
 import { resolveMediaUrl } from "@/shared/lib/media";
 
 const PREVIEW_LIMIT = 3;
@@ -48,8 +49,8 @@ export function CartMiniPreview({ onClose }: CartMiniPreviewProps) {
           </Button>
         </Link>
         <Link to="/checkout" onClick={onClose} className="block">
-          <Button className="w-full" size="sm">
-            Continuar para checkout
+          <Button className="w-full whitespace-nowrap" size="sm">
+            {storefrontCopy.cart.checkoutCta}
           </Button>
         </Link>
       </div>

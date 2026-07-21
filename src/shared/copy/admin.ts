@@ -50,7 +50,7 @@ export const adminCopy = {
         description: "Sem categoria, o produto não pode ser salvo. Crie uma em poucos segundos.",
       },
       optionGroupsHelp:
-        "Adicione personalizações como Tamanho e Adicionais — o cliente monta o item sem erro.",
+        "Responda como vende o produto (tamanho, borda…). Sem jargão — tudo vai pra biblioteca.",
       successNew: "Produto cadastrado com sucesso",
       successEdit: "Produto atualizado com sucesso",
       imagesHelp:
@@ -64,28 +64,28 @@ export const adminCopy = {
     },
   },
   optionGroups: {
-    subtitle: "Biblioteca reutilizável — tamanho, borda, adicionais. O dia a dia é no produto.",
+    subtitle: "Tamanhos, bordas, adicionais e ingredientes — criados uma vez, usados em todo o cardápio.",
     guidance:
-      "Prefira criar personalizações direto no produto. Esta tela guarda o que você já montou pra reutilizar.",
-    createTitle: "Nova personalização",
-    createHint: "Exemplos: Tamanho, Borda, Adicionais. Depois vincule nos produtos.",
+      "O dia a dia é no cadastro do produto (perguntas simples). Aqui você organiza e ajusta preços da casa — mudar Catupiry aqui atualiza todos os produtos.",
+    createTitle: "Novo item na biblioteca",
+    createHint: "Ex.: Tamanho, Borda, Adicionais. Depois o produto só escolhe o que usar.",
     examples: ["Tamanho", "Borda", "Adicionais", "Ponto da carne"],
     empty: {
-      title: "Nenhuma personalização salva",
+      title: "Biblioteca vazia",
       description:
-        "Comece pelo produto (mais fácil) ou crie aqui pra reutilizar em vários itens.",
+        "Cadastre um produto e responda as perguntas — ou crie o primeiro item aqui.",
     },
-    linkProducts: "Dica: no cadastro do produto use “Adicionar personalização”.",
+    linkProducts: "Dica: no produto use “Como você vende este produto?”.",
     editor: {
       expandHint: "Edite nome, escolhas e preços.",
       requiredHelp:
         "Obrigatório: o cliente precisa escolher (ex: tamanho). Opcional: pode pular (ex: borda).",
       optionsEmpty: "Adicione pelo menos uma escolha — Pequena, Média, Grande...",
       priceHelp: "R$ 0,00 = sem acréscimo no preço base do produto.",
-      saveReminder: "Alterações só entram no cardápio após salvar.",
+      saveReminder: "Alterações entram no cardápio após salvar — e valem pra todos os produtos.",
       optionAdded: "Escolha adicionada",
-      saved: "Personalização atualizada",
-      created: "Personalização criada",
+      saved: "Biblioteca atualizada",
+      created: "Item criado na biblioteca",
     },
   },
   orders: {

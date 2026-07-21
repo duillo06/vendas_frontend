@@ -1,29 +1,30 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Check, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, Plus, Sparkles } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 
 import type { OptionGroupAdmin } from "@/features/catalog/api/catalogAdminApi";
 import {
-  CUSTOMIZATION_TEMPLATES,
-  applyMaxSelections,
-  applyRequired,
-  applySelectionType,
+  PERSONALIZATION_KINDS,
+  buildLibraryItems,
   buildPreviewLines,
   draftFromGroup,
-  draftFromTemplate,
+  draftFromKind,
   emptyDraft,
   findReusableGroups,
+  kindById,
   newChoice,
+  suggestedKindIds,
   validateDraft,
   type CustomizationDraft,
-  type CustomizationTemplate,
+  type LibraryItem,
+  type PersonalizationKind,
 } from "@/features/catalog/utils/conversationalOptions";
 import { CurrencyInput } from "@/shared/components/CurrencyInput";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { cn } from "@/shared/lib/utils";
 
-type Mode = "create" | "edit" | "reuse-pick";
+type Mode = "create" | "edit";
 
 type CustomizationAssistantProps = {
   mode?: Mode;
@@ -31,21 +32,18 @@ type CustomizationAssistantProps = {
   availableGroups?: OptionGroupAdmin[];
   /** ids já vinculados neste produto — não sugerir de novo */
   attachedIds?: Set<string>;
+  /** categoria do produto — destaca cartões relevantes */
+  categoryName?: string | null;
   onCancel: () => void;
   onSave: (draft: CustomizationDraft, existingGroup?: OptionGroupAdmin) => void | Promise<void>;
   onReuse?: (group: OptionGroupAdmin) => void | Promise<void>;
+  /** meio a meio — abre o assistente de sabores */
+  onOpenHalfAndHalf?: () => void;
   pending?: boolean;
   confirmLabel?: string;
 };
 
-type Step =
-  | "template"
-  | "reuse"
-  | "name"
-  | "selection"
-  | "required"
-  | "max"
-  | "choices";
+type Step = "hub" | "gate" | "reuse" | "library" | "create-item" | "name";
 
 const stepMotion = {
   initial: { opacity: 0, y: 12 },
@@ -59,9 +57,11 @@ export function CustomizationAssistant({
   initialGroup = null,
   availableGroups = [],
   attachedIds = new Set(),
+  categoryName,
   onCancel,
   onSave,
   onReuse,
+  onOpenHalfAndHalf,
   pending,
   confirmLabel,
 }: CustomizationAssistantProps) {
@@ -69,34 +69,106 @@ export function CustomizationAssistant({
   const saveLabel =
     confirmLabel ?? (isEdit ? "Salvar alterações" : "Adicionar ao produto");
 
-  const [template, setTemplate] = useState<CustomizationTemplate | null>(null);
+  const [kind, setKind] = useState<PersonalizationKind | null>(() => {
+    if (!initialGroup) return null;
+    const inferred = kindById(draftFromGroup(initialGroup).kindId ?? "other");
+    return inferred ?? kindById("other") ?? null;
+  });
   const [draft, setDraft] = useState<CustomizationDraft>(() =>
     initialGroup ? draftFromGroup(initialGroup) : emptyDraft(),
   );
-  const [step, setStep] = useState<Step>(isEdit ? "name" : "template");
+  const [step, setStep] = useState<Step>(isEdit ? "library" : "hub");
   const [error, setError] = useState<string | null>(null);
 
-  const reusable = useMemo(() => {
-    if (!template) return [];
-    return findReusableGroups(availableGroups, template, attachedIds);
-  }, [template, availableGroups, attachedIds]);
+  // formulário rápido de novo item
+  const [newName, setNewName] = useState("");
+  const [newPrice, setNewPrice] = useState(0);
+  const [newDescription, setNewDescription] = useState("");
 
-  const suggestions = template?.suggestions ?? [];
-  const usedNames = new Set(draft.choices.map((c) => c.name.toLowerCase()));
-  const availableSuggestions = suggestions.filter((s) => !usedNames.has(s.toLowerCase()));
+  const recommended = useMemo(() => suggestedKindIds(categoryName), [categoryName]);
+
+  const reusable = useMemo(() => {
+    if (!kind || kind.opensComposition) return [];
+    return findReusableGroups(availableGroups, kind, attachedIds);
+  }, [kind, availableGroups, attachedIds]);
+
+  const libraryItems = useMemo(() => {
+    if (!kind || kind.opensComposition) return [];
+    return buildLibraryItems(availableGroups, kind, new Set());
+  }, [kind, availableGroups]);
+
+  const selectedNames = useMemo(
+    () => new Set(draft.choices.map((c) => c.name.trim().toLowerCase()).filter(Boolean)),
+    [draft.choices],
+  );
 
   const preview = buildPreviewLines(draft);
 
-  const pickTemplate = (next: CustomizationTemplate) => {
-    setTemplate(next);
-    setDraft(draftFromTemplate(next));
+  const pickKind = (next: PersonalizationKind) => {
     setError(null);
-    const matches = findReusableGroups(availableGroups, next, attachedIds);
-    if (matches.length > 0 && onReuse) {
+    if (next.opensComposition) {
+      onOpenHalfAndHalf?.();
+      return;
+    }
+    setKind(next);
+    setDraft(draftFromKind(next));
+    setStep("gate");
+  };
+
+  const answerGate = (yes: boolean) => {
+    if (!kind) return;
+    if (!yes) {
+      setKind(null);
+      setDraft(emptyDraft());
+      setStep("hub");
+      return;
+    }
+    // personalização livre — precisa do nome primeiro
+    if (kind.id === "other") {
+      setStep("name");
+      return;
+    }
+    if (reusable.length > 0 && onReuse) {
       setStep("reuse");
       return;
     }
-    setStep(next.id === "other" ? "name" : "selection");
+    setStep("library");
+  };
+
+  const goLibrary = () => {
+    setError(null);
+    setStep("library");
+  };
+
+  const toggleLibraryItem = (item: LibraryItem) => {
+    const needle = item.name.toLowerCase();
+    setDraft((d) => {
+      const exists = d.choices.some((c) => c.name.trim().toLowerCase() === needle);
+      if (exists) {
+        return { ...d, choices: d.choices.filter((c) => c.name.trim().toLowerCase() !== needle) };
+      }
+      return {
+        ...d,
+        choices: [...d.choices, newChoice(item.name, item.price, item.description ?? "")],
+      };
+    });
+  };
+
+  const saveNewItem = () => {
+    const name = newName.trim();
+    if (!name) {
+      setError("Como se chama essa opção?");
+      return;
+    }
+    setError(null);
+    setDraft((d) => {
+      const without = d.choices.filter((c) => c.name.trim().toLowerCase() !== name.toLowerCase());
+      return { ...d, choices: [...without, newChoice(name, newPrice, newDescription.trim())] };
+    });
+    setNewName("");
+    setNewPrice(0);
+    setNewDescription("");
+    setStep("library");
   };
 
   const goNextFromName = () => {
@@ -105,7 +177,7 @@ export function CustomizationAssistant({
       return;
     }
     setError(null);
-    setStep("selection");
+    setStep("library");
   };
 
   const finish = async () => {
@@ -118,28 +190,51 @@ export function CustomizationAssistant({
     await onSave(draft, initialGroup ?? undefined);
   };
 
+  const goBack = () => {
+    setError(null);
+    if (isEdit) {
+      onCancel();
+      return;
+    }
+    if (step === "create-item") {
+      setStep("library");
+      return;
+    }
+    if (step === "library" || step === "name") {
+      if (kind?.id === "other" && step === "library") {
+        setStep("name");
+        return;
+      }
+      if (reusable.length && onReuse && kind) {
+        setStep("reuse");
+        return;
+      }
+      setStep("gate");
+      return;
+    }
+    if (step === "reuse") {
+      setStep("gate");
+      return;
+    }
+    if (step === "gate") {
+      setKind(null);
+      setDraft(emptyDraft());
+      setStep("hub");
+    }
+  };
+
+  const hubKinds = PERSONALIZATION_KINDS.filter((k) => {
+    if (k.opensComposition && !onOpenHalfAndHalf) return false;
+    return true;
+  });
+
   return (
-    <div className="space-y-6">
-      {step !== "template" && step !== "reuse" ? (
+    <div className="space-y-5">
+      {step !== "hub" ? (
         <button
           type="button"
           className="inline-flex items-center gap-1 text-sm text-[hsl(var(--muted-foreground))] hover:text-foreground"
-          onClick={() => {
-            setError(null);
-            if (isEdit) {
-              onCancel();
-              return;
-            }
-            if (step === "name") {
-              setStep(reusable.length && template && onReuse ? "reuse" : "template");
-            } else if (step === "selection") {
-              setStep(template && template.id !== "other" && draft.name === template.name ? (reusable.length && onReuse ? "reuse" : "template") : "name");
-            } else if (step === "required") setStep("selection");
-            else if (step === "max") setStep("required");
-            else if (step === "choices") {
-              setStep(draft.selection_type === "multiple" ? "max" : "required");
-            }
-          }}
+          onClick={goBack}
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar
@@ -147,53 +242,81 @@ export function CustomizationAssistant({
       ) : null}
 
       <AnimatePresence mode="wait">
-        {step === "template" ? (
-          <motion.div key="template" {...stepMotion}>
+        {step === "hub" ? (
+          <motion.div key="hub" {...stepMotion}>
             <QuestionBlock
-              title="O que o cliente pode personalizar?"
-              description="Escolha um atalho — ou monte algo do zero."
+              title="Como seus clientes podem personalizar este produto?"
+              description="Toque no que faz sentido — o resto você ignora."
             >
-              <div className="grid gap-2 sm:grid-cols-2">
-                {CUSTOMIZATION_TEMPLATES.map((item) => (
-                  <OptionCard
-                    key={item.id}
-                    emoji={item.emoji}
-                    label={item.label}
-                    description={
-                      item.id === "other"
-                        ? "Massa, ponto da carne, bebida…"
-                        : item.description || undefined
-                    }
-                    selected={false}
-                    onSelect={() => pickTemplate(item)}
-                  />
-                ))}
+              {recommended.length > 0 && categoryName ? (
+                <p className="mb-3 inline-flex items-center gap-1.5 text-xs font-medium text-brand">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Sugestões pra {categoryName}
+                </p>
+              ) : null}
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                {hubKinds.map((item) => {
+                  const highlighted = recommended.includes(item.id);
+                  return (
+                    <HubCard
+                      key={item.id}
+                      emoji={item.emoji}
+                      label={item.label}
+                      example={item.example}
+                      highlighted={highlighted}
+                      onSelect={() => pickKind(item)}
+                    />
+                  );
+                })}
               </div>
             </QuestionBlock>
           </motion.div>
         ) : null}
 
-        {step === "reuse" && template ? (
+        {step === "gate" && kind ? (
+          <motion.div key="gate" {...stepMotion}>
+            <QuestionBlock title={kind.gateQuestion} description={kind.gateHint}>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <OptionCard label="Sim" selected={false} onSelect={() => answerGate(true)} />
+                <OptionCard
+                  label="Não"
+                  description="Voltar às opções"
+                  selected={false}
+                  onSelect={() => answerGate(false)}
+                />
+              </div>
+            </QuestionBlock>
+          </motion.div>
+        ) : null}
+
+        {step === "reuse" && kind ? (
           <motion.div key="reuse" className="space-y-4" {...stepMotion}>
             <QuestionBlock
-              title={`Você já tem “${template.name}” salva`}
-              description="Pode reutilizar no produto ou criar uma nova."
+              title={`Você já tem “${kind.groupName || kind.label}” na biblioteca`}
+              description="Reaproveite no produto ou monte uma combinação nova."
             >
               <div className="space-y-2">
                 {reusable.map((group) => (
                   <OptionCard
                     key={group.id}
                     label={group.name}
-                    description={`${group.options.length || group.options_count} escolhas`}
+                    description={
+                      group.options.length
+                        ? group.options
+                            .slice(0, 4)
+                            .map((o) => o.name)
+                            .join(", ")
+                        : `${group.options_count} escolhas`
+                    }
                     selected={false}
                     onSelect={() => onReuse?.(group)}
                   />
                 ))}
                 <OptionCard
-                  label="Criar uma nova"
-                  description="Com nome e escolhas diferentes."
+                  label="Escolher ou criar opções"
+                  description="Marcar da biblioteca ou criar novas."
                   selected={false}
-                  onSelect={() => setStep(template.id === "other" ? "name" : "name")}
+                  onSelect={goLibrary}
                 />
               </div>
             </QuestionBlock>
@@ -208,7 +331,7 @@ export function CustomizationAssistant({
             >
               <Input
                 value={draft.name}
-                placeholder="Ex.: Borda recheada"
+                placeholder="Ex.: Ponto da carne"
                 className="h-11"
                 onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
                 autoFocus
@@ -226,210 +349,118 @@ export function CustomizationAssistant({
           </motion.div>
         ) : null}
 
-        {step === "selection" ? (
-          <motion.div key="selection" className="space-y-4" {...stepMotion}>
+        {step === "library" && kind ? (
+          <motion.div key="library" className="space-y-4" {...stepMotion}>
             <QuestionBlock
-              title="O cliente escolhe uma opção ou pode escolher várias?"
-              description="Ex.: tamanho = uma. Adicionais = várias."
+              title={kind.libraryQuestion || "Quais opções deseja oferecer?"}
+              description={
+                isEdit
+                  ? "Atenção: preço e nome valem para todos os produtos que usam este item."
+                  : kind.libraryHint
+              }
             >
-              <div className="grid gap-2 sm:grid-cols-2">
-                <OptionCard
-                  label="Só uma"
-                  description="Tamanho, massa, ponto…"
-                  selected={draft.selection_type === "single"}
-                  onSelect={() => {
-                    setDraft((d) => applySelectionType(d, "single"));
-                    setStep("required");
-                  }}
-                />
-                <OptionCard
-                  label="Várias"
-                  description="Adicionais, molhos, extras…"
-                  selected={draft.selection_type === "multiple"}
-                  onSelect={() => {
-                    setDraft((d) => applySelectionType(d, "multiple"));
-                    setStep("required");
-                  }}
-                />
-              </div>
-            </QuestionBlock>
-          </motion.div>
-        ) : null}
-
-        {step === "required" ? (
-          <motion.div key="required" className="space-y-4" {...stepMotion}>
-            <QuestionBlock
-              title="Ele é obrigado a escolher?"
-              description="Se sim, o pedido só segue depois dessa escolha."
-            >
-              <div className="grid gap-2 sm:grid-cols-2">
-                <OptionCard
-                  label="Não"
-                  description="Pode pular se quiser."
-                  selected={!draft.is_required}
-                  onSelect={() => {
-                    setDraft((d) => applyRequired(d, false));
-                    setStep(draft.selection_type === "multiple" ? "max" : "choices");
-                  }}
-                />
-                <OptionCard
-                  label="Sim"
-                  description="Ex.: precisa escolher o tamanho."
-                  selected={draft.is_required}
-                  onSelect={() => {
-                    setDraft((d) => applyRequired(d, true));
-                    setStep(draft.selection_type === "multiple" ? "max" : "choices");
-                  }}
-                />
-              </div>
-            </QuestionBlock>
-          </motion.div>
-        ) : null}
-
-        {step === "max" ? (
-          <motion.div key="max" className="space-y-4" {...stepMotion}>
-            <QuestionBlock
-              title="Quantas opções ele pode escolher?"
-              description="Limite o que faz sentido na cozinha."
-            >
-              <div className="grid gap-2 sm:grid-cols-2">
-                {[2, 3, 5].map((n) => (
-                  <OptionCard
-                    key={n}
-                    label={`Até ${n}`}
-                    selected={draft.max_selections === n}
-                    onSelect={() => {
-                      setDraft((d) => applyMaxSelections(d, n));
-                      setStep("choices");
-                    }}
-                  />
-                ))}
-                <OptionCard
-                  label="Sem limite"
-                  description="Pode marcar todas."
-                  selected={draft.max_selections === 0}
-                  onSelect={() => {
-                    setDraft((d) => applyMaxSelections(d, 0));
-                    setStep("choices");
-                  }}
-                />
-              </div>
-              <div className="mt-3 flex items-center gap-2">
-                <span className="text-sm text-[hsl(var(--muted-foreground))]">Outro:</span>
-                <Input
-                  type="number"
-                  min={1}
-                  max={99}
-                  className="h-11 w-24 text-center"
-                  value={draft.max_selections > 0 ? draft.max_selections : ""}
-                  placeholder="—"
-                  onChange={(e) =>
-                    setDraft((d) => applyMaxSelections(d, Number(e.target.value) || 1))
-                  }
-                />
-                <Button type="button" variant="outline" onClick={() => setStep("choices")}>
-                  Continuar
-                </Button>
-              </div>
-            </QuestionBlock>
-          </motion.div>
-        ) : null}
-
-        {step === "choices" ? (
-          <motion.div key="choices" className="space-y-4" {...stepMotion}>
-            <QuestionBlock
-              title="Quais escolhas você oferece?"
-              description="Nome + preço. Deixe R$ 0,00 se não muda o valor."
-            >
-              {availableSuggestions.length ? (
-                <div className="mb-3 flex flex-wrap gap-2">
-                  {availableSuggestions.map((suggestion) => (
-                    <button
-                      key={suggestion}
-                      type="button"
-                      className="inline-flex items-center gap-1 rounded-full border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30 px-3 py-1 text-sm font-medium text-brand transition hover:bg-[hsl(var(--muted))]/50"
-                      onClick={() =>
-                        setDraft((d) => ({ ...d, choices: [...d.choices, newChoice(suggestion)] }))
-                      }
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-
-              <div className="space-y-2">
-                <AnimatePresence initial={false}>
-                  {draft.choices.map((choice) => (
-                    <motion.div
-                      key={choice.key}
-                      layout
-                      initial={{ opacity: 0, y: -6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="flex items-center gap-2 rounded-xl border border-[hsl(var(--border))] bg-white p-2"
-                    >
-                      <Input
-                        value={choice.name}
-                        placeholder="Nome da escolha"
-                        className="flex-1"
-                        onChange={(e) =>
-                          setDraft((d) => ({
-                            ...d,
-                            choices: d.choices.map((c) =>
-                              c.key === choice.key ? { ...c, name: e.target.value } : c,
-                            ),
-                          }))
-                        }
-                      />
-                      <div className="w-28 shrink-0">
-                        <CurrencyInput
-                          value={choice.price}
-                          onChange={(value) =>
-                            setDraft((d) => ({
-                              ...d,
-                              choices: d.choices.map((c) =>
-                                c.key === choice.key ? { ...c, price: value } : c,
-                              ),
-                            }))
-                          }
-                        />
-                      </div>
-                      <Button
+              <ul className="space-y-1.5">
+                {libraryItems.map((item) => {
+                  const checked = selectedNames.has(item.name.toLowerCase());
+                  return (
+                    <li key={item.key}>
+                      <button
                         type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="shrink-0 text-red-600"
-                        onClick={() =>
-                          setDraft((d) => ({
-                            ...d,
-                            choices: d.choices.filter((c) => c.key !== choice.key),
-                          }))
-                        }
+                        onClick={() => toggleLibraryItem(item)}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-xl border-2 px-3 py-2.5 text-left transition",
+                          checked
+                            ? "border-[hsl(var(--primary)/0.45)] bg-[hsl(var(--primary-soft))]"
+                            : "border-[hsl(var(--border))] bg-white hover:border-[hsl(var(--primary)/0.25)]",
+                        )}
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
+                        <span
+                          className={cn(
+                            "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2",
+                            checked ? "border-brand bg-brand text-white" : "border-[hsl(var(--border))]",
+                          )}
+                        >
+                          {checked ? <Check className="h-3 w-3" /> : null}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-medium">{item.name}</span>
+                          {item.fromLibrary && item.price > 0 ? (
+                            <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                              +{item.price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                            </span>
+                          ) : null}
+                        </span>
+                        {item.fromLibrary ? (
+                          <span className="text-[10px] font-medium uppercase tracking-wide text-brand">
+                            Biblioteca
+                          </span>
+                        ) : null}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
 
               <Button
                 type="button"
                 variant="outline"
-                className="mt-2 gap-1"
-                onClick={() => setDraft((d) => ({ ...d, choices: [...d.choices, newChoice()] }))}
+                className="mt-3 w-full gap-2 sm:w-auto"
+                onClick={() => {
+                  setNewName("");
+                  setNewPrice(0);
+                  setNewDescription("");
+                  setError(null);
+                  setStep("create-item");
+                }}
               >
                 <Plus className="h-4 w-4" />
-                Adicionar escolha
+                {kind.createLabel || "Criar novo"}
+              </Button>
+            </QuestionBlock>
+          </motion.div>
+        ) : null}
+
+        {step === "create-item" && kind ? (
+          <motion.div key="create-item" className="space-y-4" {...stepMotion}>
+            <QuestionBlock
+              title={kind.createLabel || "Nova opção"}
+              description="Só o essencial — entra na biblioteca da empresa e serve nos próximos produtos."
+            >
+              <label className="block space-y-1.5">
+                <span className="text-sm font-medium">Nome</span>
+                <Input
+                  value={newName}
+                  placeholder="Ex.: Família"
+                  className="h-11"
+                  autoFocus
+                  onChange={(e) => setNewName(e.target.value)}
+                />
+              </label>
+              <label className="mt-3 block space-y-1.5">
+                <span className="text-sm font-medium">Preço</span>
+                <CurrencyInput value={newPrice} onChange={setNewPrice} />
+                <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                  Zero se não altera o valor do produto.
+                </span>
+              </label>
+              <label className="mt-3 block space-y-1.5">
+                <span className="text-sm font-medium">Descrição (opcional)</span>
+                <Input
+                  value={newDescription}
+                  placeholder="Curta, se quiser"
+                  className="h-11"
+                  onChange={(e) => setNewDescription(e.target.value)}
+                />
+              </label>
+              <Button type="button" className="mt-4 bg-brand hover:brightness-95" onClick={saveNewItem}>
+                Salvar na biblioteca
               </Button>
             </QuestionBlock>
           </motion.div>
         ) : null}
       </AnimatePresence>
 
-      {step !== "template" && step !== "reuse" ? (
+      {step === "library" || step === "create-item" ? (
         <motion.div
           layout
           className="rounded-2xl border border-[hsl(var(--primary)/0.25)] bg-[hsl(var(--primary-soft))]/40 p-4 sm:p-5"
@@ -451,7 +482,7 @@ export function CustomizationAssistant({
         </p>
       ) : null}
 
-      {step === "choices" ? (
+      {step === "library" ? (
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button type="button" variant="outline" onClick={onCancel} disabled={pending}>
             Cancelar
@@ -465,7 +496,7 @@ export function CustomizationAssistant({
             {pending ? "Salvando…" : saveLabel}
           </Button>
         </div>
-      ) : step === "template" || step === "reuse" ? (
+      ) : step === "hub" || step === "reuse" || step === "gate" ? (
         <div className="flex justify-end">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancelar
@@ -488,13 +519,48 @@ function QuestionBlock({
   return (
     <section className="space-y-3">
       <div>
-        <h3 className="text-base font-semibold leading-snug tracking-tight">{title}</h3>
+        <h3 className="text-base font-semibold leading-snug tracking-tight sm:text-lg">{title}</h3>
         {description ? (
           <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">{description}</p>
         ) : null}
       </div>
       {children}
     </section>
+  );
+}
+
+function HubCard({
+  emoji,
+  label,
+  example,
+  highlighted,
+  onSelect,
+}: {
+  emoji: string;
+  label: string;
+  example: string;
+  highlighted?: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <motion.button
+      type="button"
+      whileHover={{ y: -2 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onSelect}
+      className={cn(
+        "flex min-h-[7.5rem] flex-col items-start gap-1.5 rounded-2xl border-2 p-3.5 text-left transition-colors sm:min-h-[8.5rem]",
+        highlighted
+          ? "border-[hsl(var(--primary)/0.4)] bg-[hsl(var(--primary-soft))]/70 shadow-sm"
+          : "border-[hsl(var(--border))] bg-white hover:border-[hsl(var(--primary)/0.28)] hover:bg-[hsl(var(--muted))]/35",
+      )}
+    >
+      <span className="text-3xl sm:text-4xl">{emoji}</span>
+      <span className="text-sm font-semibold leading-snug">{label}</span>
+      <span className="text-xs leading-snug text-[hsl(var(--muted-foreground))]">
+        Ex.: {example}
+      </span>
+    </motion.button>
   );
 }
 

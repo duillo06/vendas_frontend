@@ -95,12 +95,12 @@ export const PRODUCT_INTENTS: ProductIntent[] = [
   },
   {
     id: "options",
-    label: "Gerenciar personalizações",
-    shortLabel: "Personalizar",
-    description: "Tamanho, borda, adicionais — perguntas simples pro cliente.",
+    label: "Como você vende este produto?",
+    shortLabel: "Como vende",
+    description: "Tamanhos, bordas, adicionais — perguntas simples, biblioteca reutilizável.",
     emoji: "🧀",
     category: "personalize",
-    keywords: ["adicional", "adicionais", "borda", "massa", "opção", "opcao", "extra", "grupo", "personalização", "personalizacao", "tamanho"],
+    keywords: ["adicional", "adicionais", "borda", "massa", "opção", "opcao", "extra", "tamanho", "vende", "como vende", "personalização", "personalizacao"],
   },
   {
     id: "promo",
@@ -161,7 +161,7 @@ export const PRODUCT_INTENTS: ProductIntent[] = [
 
 export const INTENT_CATEGORY_LABELS: Record<ProductIntentCategory, string> = {
   essentials: "Essenciais",
-  personalize: "Personalização",
+  personalize: "Como vende",
   sales: "Vendas",
   danger: "Zona de risco",
 };

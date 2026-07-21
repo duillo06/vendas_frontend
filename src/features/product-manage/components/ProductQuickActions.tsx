@@ -99,7 +99,7 @@ function contextualHint(intent: ProductIntent, product: ProductAdminDetail): str
   if (intent.id === "options") {
     const count = product.product_option_groups?.length ?? product.option_group_ids.length;
     return count
-      ? `${count} personalizaç${count === 1 ? "ão" : "ões"}`
+      ? `${count} opção${count === 1 ? "" : "ões"} da biblioteca`
       : intent.description;
   }
   if (intent.id === "pause") {

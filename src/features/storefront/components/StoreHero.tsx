@@ -1,4 +1,4 @@
-import { Lock, Search, Share2, Star, Store } from "lucide-react";
+import { Bike, Clock, Lock, MapPin, Search, Share2, Star, Store } from "lucide-react";
 import { useMemo, type ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -20,6 +20,7 @@ import { cn } from "@/shared/lib/utils";
 type StoreHeroProps = {
   company?: CompanyPublic | null;
   isLoading?: boolean;
+  /** cardápio: hero mais baixo, com infos compactas da loja */
   compact?: boolean;
   onSearchClick?: () => void;
 };
@@ -110,6 +111,13 @@ export function StoreHero({ company, isLoading, compact = false, onSearchClick }
 
   const nextOpen = !isOpen ? getNextOpenLabel(company) : null;
 
+  const fulfillment = useMemo(() => {
+    const parts: string[] = [];
+    if (company?.settings.accepts_delivery) parts.push("Delivery");
+    if (company?.settings.accepts_pickup) parts.push("Retirada");
+    return parts.join(" · ");
+  }, [company]);
+
   async function handleShare() {
     const url = window.location.origin + "/";
     const title = company?.trade_name ?? "Cardápio";
@@ -127,8 +135,8 @@ export function StoreHero({ company, isLoading, compact = false, onSearchClick }
 
   if (isLoading) {
     return (
-      <div className={cn(!compact && "-mx-4")}>
-        <Skeleton className={cn("w-full rounded-none", compact ? "h-36" : "h-[240px]")} />
+      <div className={cn("-mx-4", compact && "px-0")}>
+        <Skeleton className={cn("w-full rounded-none", compact ? "h-32 sm:h-36" : "h-[240px]")} />
         <div className="space-y-2 px-4 pt-4">
           <Skeleton className="h-14 w-14 rounded-2xl" />
           <Skeleton className="h-6 w-48" />
@@ -138,19 +146,83 @@ export function StoreHero({ company, isLoading, compact = false, onSearchClick }
     );
   }
 
+  // cardápio — banner protagonista, mais baixo que a home, com infos úteis
   if (compact) {
     return (
-      <section className="overflow-hidden rounded-2xl">
-        <div className="relative h-28 overflow-hidden sm:h-32">
+      <section className="-mx-4">
+        <div className="relative h-[7.5rem] overflow-hidden sm:h-36">
           <HeroBackdrop coverUrl={company?.cover_url} closed={!isOpen} />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/25 to-black/10" />
-          <div className="absolute inset-x-0 bottom-0 flex items-end gap-3 p-3">
-            <StoreLogo url={company?.logo_url} size="sm" />
-            <div className="min-w-0 pb-0.5 text-white">
-              <h1 className="truncate text-base font-bold">{company?.trade_name}</h1>
-              <p className="truncate text-[11px] text-white/80">{metaLine}</p>
-            </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/20 to-black/10" />
+
+          <div className="absolute top-2.5 right-3 z-20 flex gap-2">
+            {instagramUrl ? (
+              <GlassIconButton label="Instagram" href={instagramUrl}>
+                <InstagramIcon className="h-4 w-4" />
+              </GlassIconButton>
+            ) : null}
+            <GlassIconButton label="Compartilhar" onClick={() => void handleShare()}>
+              <Share2 className="h-4 w-4" />
+            </GlassIconButton>
           </div>
+
+          {isOpen ? (
+            <div className="absolute top-2.5 left-3 z-20 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/95 px-2.5 py-1 text-[11px] font-semibold text-white shadow-[var(--shadow-sm)]">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/70 opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
+              </span>
+              Aberto
+            </div>
+          ) : (
+            <div className="absolute top-2.5 left-3 z-20 inline-flex items-center gap-1.5 rounded-full bg-black/75 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
+              <Lock className="h-3 w-3" />
+              Fechado
+            </div>
+          )}
+        </div>
+
+        <div className="relative z-10 -mt-8 space-y-2.5 px-4 pb-1">
+          <StoreLogo url={company?.logo_url} size="md" />
+
+          <div>
+            <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+              {company?.trade_name ?? "Cardápio digital"}
+            </h1>
+            {!isOpen && nextOpen ? (
+              <p className="mt-0.5 text-xs text-[hsl(var(--muted-foreground))]">{nextOpen}</p>
+            ) : null}
+          </div>
+
+          <ul className="flex flex-wrap gap-1.5">
+            {marketing.show_rating && marketing.rating ? (
+              <MetaChip>
+                <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                {marketing.rating.toFixed(1)}
+              </MetaChip>
+            ) : null}
+            {deliveryMinutes ? (
+              <MetaChip>
+                <Bike className="h-3 w-3 text-brand" />
+                {deliveryWindowLabel(deliveryMinutes) ?? `${deliveryMinutes} min`}
+              </MetaChip>
+            ) : company?.settings.estimated_prep_time ? (
+              <MetaChip>
+                <Clock className="h-3 w-3 text-brand" />
+                ~{company.settings.estimated_prep_time} min
+              </MetaChip>
+            ) : null}
+            {company?.settings.min_order_value ? (
+              <MetaChip>
+                Pedido mín. {formatCurrency(company.settings.min_order_value)}
+              </MetaChip>
+            ) : null}
+            {fulfillment ? (
+              <MetaChip>
+                <MapPin className="h-3 w-3 text-brand" />
+                {fulfillment}
+              </MetaChip>
+            ) : null}
+          </ul>
         </div>
       </section>
     );
@@ -218,6 +290,14 @@ export function StoreHero({ company, isLoading, compact = false, onSearchClick }
   );
 }
 
+function MetaChip({ children }: { children: ReactNode }) {
+  return (
+    <li className="inline-flex items-center gap-1 rounded-full border border-[hsl(var(--border))] bg-white px-2.5 py-1 text-[11px] font-medium text-[hsl(var(--foreground))]/85 shadow-[var(--shadow-xs)]">
+      {children}
+    </li>
+  );
+}
+
 function HeroBackdrop({ coverUrl, closed }: { coverUrl?: string | null; closed: boolean }) {
   const src = resolveMediaUrl(coverUrl);
   if (src) {
@@ -234,10 +314,7 @@ function HeroBackdrop({ coverUrl, closed }: { coverUrl?: string | null; closed: 
   }
 
   return (
-    <div
-      className={cn("absolute inset-0", closed && "grayscale")}
-      aria-hidden
-    >
+    <div className={cn("absolute inset-0", closed && "grayscale")} aria-hidden>
       <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary)/0.55)] via-[hsl(220_18%_22%)] to-[hsl(var(--accent)/0.45)]" />
       <div className="absolute -top-8 -right-10 h-48 w-48 rounded-full bg-white/15 blur-3xl" />
       <div className="absolute bottom-0 left-6 h-36 w-36 rounded-full bg-[hsl(var(--primary)/0.35)] blur-3xl" />
@@ -246,8 +323,13 @@ function HeroBackdrop({ coverUrl, closed }: { coverUrl?: string | null; closed: 
   );
 }
 
-function StoreLogo({ url, size }: { url?: string | null; size: "sm" | "lg" }) {
-  const box = size === "lg" ? "h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem]" : "h-12 w-12";
+function StoreLogo({ url, size }: { url?: string | null; size: "sm" | "md" | "lg" }) {
+  const box =
+    size === "lg"
+      ? "h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem]"
+      : size === "md"
+        ? "h-14 w-14"
+        : "h-12 w-12";
   const src = resolveMediaUrl(url);
   return (
     <div

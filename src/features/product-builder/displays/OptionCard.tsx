@@ -45,7 +45,7 @@ export function OptionCard({
         layout === "card"
           ? "min-h-11 flex-col justify-between rounded-xl border p-3 sm:p-4"
           : layout === "row"
-            ? "min-h-11 items-center justify-between rounded-lg border px-4 py-3"
+            ? "min-h-12 items-center justify-between gap-3 rounded-xl border px-4 py-3.5"
             : "",
         layout !== "image" &&
           (selected
@@ -94,29 +94,47 @@ export function OptionCard({
         </div>
 
         {showStepper ? (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-[hsl(var(--border))] bg-white transition hover:bg-[hsl(var(--muted))]"
-              disabled={disabled || unavailable || quantity <= 0}
-              onClick={onDecrement}
-            >
-              <Minus className="h-4 w-4" />
-            </button>
-            <span className="min-w-[1.5rem] text-center text-sm font-semibold tabular-nums">{quantity}</span>
-            <button
-              type="button"
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-[hsl(var(--border))] bg-white transition hover:bg-[hsl(var(--muted))]"
-              disabled={disabled || unavailable}
-              onClick={onIncrement}
-            >
-              <Plus className="h-4 w-4" />
-            </button>
+          <div className="flex shrink-0 items-center gap-3">
+            {priceLabel ? (
+              <span className="text-sm font-medium tabular-nums text-[hsl(var(--foreground))]/80">
+                {priceLabel}
+              </span>
+            ) : null}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[hsl(var(--border))] bg-white transition hover:bg-[hsl(var(--muted))]"
+                disabled={disabled || unavailable || quantity <= 0}
+                onClick={onDecrement}
+              >
+                <Minus className="h-4 w-4" />
+              </button>
+              <span className="min-w-[1.5rem] text-center text-sm font-semibold tabular-nums">
+                {quantity}
+              </span>
+              <button
+                type="button"
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[hsl(var(--border))] bg-white transition hover:bg-[hsl(var(--muted))]"
+                disabled={disabled || unavailable}
+                onClick={onIncrement}
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         ) : null}
 
         {priceLabel && !showStepper ? (
-          <span className="text-sm text-[hsl(var(--muted-foreground))] sm:ml-auto">{priceLabel}</span>
+          <span
+            className={cn(
+              "shrink-0 text-sm font-medium tabular-nums",
+              layout === "row"
+                ? "text-[hsl(var(--foreground))]/80"
+                : "text-[hsl(var(--muted-foreground))] sm:ml-auto",
+            )}
+          >
+            {priceLabel}
+          </span>
         ) : null}
       </label>
 

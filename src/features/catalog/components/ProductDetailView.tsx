@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from "react";
-import { Link } from "react-router";
-import { Check, Clock, Flame, Heart } from "lucide-react";
+import { Link, useNavigate } from "react-router";
+import { Clock, Flame, Heart } from "lucide-react";
 import { toast } from "sonner";
 
 import { useFavorites } from "@/features/favorites";
@@ -21,10 +21,15 @@ import {
 } from "@/features/storefront/utils/productBadges";
 import { ProductImageCarousel } from "./ProductImageCarousel";
 import { CompositionPicker, composedBasePrice } from "./CompositionPicker";
+import {
+  ProductOrderSummary,
+  type OrderSummaryLine,
+} from "./ProductOrderSummary";
+import { ProductPurchaseBar } from "./ProductPurchaseBar";
+import { ProductSuggestionRail } from "./ProductSuggestionRail";
 import type { ProductDetail, ProductListItem } from "../types/catalog.types";
 import type { CartComponent } from "@/features/cart/types/cart.types";
 
-import { ProductCard } from "@/shared/components/ProductCard";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { UiHint } from "@/shared/components/UiHint";
 import { Badge } from "@/shared/components/ui/badge";
@@ -40,6 +45,7 @@ export type ProductAddToCartPayload = {
   imageUrl: string | null;
   basePrice: number;
   unitPrice: number;
+  quantity?: number;
   selectedOptions: Array<{
     optionId: string;
     optionGroupId: string;
@@ -55,26 +61,38 @@ export type ProductAddToCartPayload = {
 type ProductDetailViewProps = {
   product: ProductDetail;
   relatedProducts?: ProductListItem[];
+  categoryName?: string;
   onAddToCart?: (payload: ProductAddToCartPayload) => void;
 };
 
-export function ProductDetailView({ product, relatedProducts = [], onAddToCart }: ProductDetailViewProps) {
+export function ProductDetailView({
+  product,
+  relatedProducts = [],
+  categoryName,
+  onAddToCart,
+}: ProductDetailViewProps) {
   const [selections, setSelections] = useState<ProductBuilderState>(() =>
     buildInitialSelections(product.option_groups),
   );
   const [invalidGroupId, setInvalidGroupId] = useState<string | null>(null);
-  const [justAdded, setJustAdded] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
   const [priceBump, setPriceBump] = useState(false);
   const [compositionParts, setCompositionParts] = useState<CartComponent[]>([]);
+  const [quantity, setQuantity] = useState(1);
   const isFirstPriceRender = useRef(true);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   const { isFavorite, toggle } = useFavorites();
 
   useEffect(() => {
     setSelections(buildInitialSelections(product.option_groups));
     setCompositionParts([]);
+    setQuantity(1);
+    setInvalidGroupId(null);
+    setAddedToCart(false);
   }, [product.id]);
 
-  const totalPrice = useMemo(() => {
+  const unitPrice = useMemo(() => {
     const withOptions = calculateProductPrice(product, selections);
     if (!product.composition?.enabled || compositionParts.length === 0) {
       return withOptions;
@@ -92,7 +110,25 @@ export function ProductDetailView({ product, relatedProducts = [], onAddToCart }
     setPriceBump(true);
     const timer = window.setTimeout(() => setPriceBump(false), 350);
     return () => window.clearTimeout(timer);
-  }, [totalPrice]);
+  }, [unitPrice, quantity]);
+
+  const summaryLines = useMemo((): OrderSummaryLine[] => {
+    const lines: OrderSummaryLine[] = [];
+
+    for (const part of compositionParts) {
+      lines.push({ id: `comp-${part.productId}`, label: part.productName });
+    }
+
+    for (const opt of flattenSelectionsForCart(product, selections)) {
+      lines.push({
+        id: `${opt.optionGroupId}-${opt.optionId}`,
+        label: opt.quantity > 1 ? `${opt.quantity}× ${opt.name}` : opt.name,
+        detail: opt.optionGroupName,
+      });
+    }
+
+    return lines;
+  }, [product, selections, compositionParts]);
 
   const primaryImage = product.images.find((img) => img.is_primary) ?? product.images[0];
   const isPopular = product.tags.some((tag) =>
@@ -103,6 +139,15 @@ export function ProductDetailView({ product, relatedProducts = [], onAddToCart }
   const badges = getProductBadges(product.tags, { hasPromotion });
   const featureChips = getProductFeatureChips(product.tags);
   const favorite = isFavorite(product.id);
+  const hasCustomization =
+    (product.composition?.enabled ?? false) || product.option_groups.length > 0;
+  const personalizeEmoji = /pizza/i.test(`${product.name} ${categoryName ?? ""}`)
+    ? "🍕"
+    : /pastel/i.test(`${product.name} ${categoryName ?? ""}`)
+      ? "🥟"
+      : /a[cç]a[ií]/i.test(`${product.name} ${categoryName ?? ""}`)
+        ? "🫐"
+        : storefrontCopy.product.personalizeEmoji;
 
   const handleAddToCart = () => {
     const validation = validateAllGroups(product.option_groups, selections);
@@ -113,7 +158,6 @@ export function ProductDetailView({ product, relatedProducts = [], onAddToCart }
       return;
     }
 
-    // composição: exige o mínimo de sabores antes de adicionar
     if (product.composition?.enabled) {
       const minAdditional = Math.max(0, product.composition.min_parts - 1);
       if (compositionParts.length < minAdditional) {
@@ -123,7 +167,6 @@ export function ProductDetailView({ product, relatedProducts = [], onAddToCart }
     }
 
     setInvalidGroupId(null);
-
     if (!onAddToCart) return;
 
     const optionsPayload = flattenSelectionsForCart(product, selections).map((opt) => ({
@@ -142,31 +185,46 @@ export function ProductDetailView({ product, relatedProducts = [], onAddToCart }
       productName: product.name,
       imageUrl: primaryImage?.image_url ?? null,
       basePrice: product.base_price,
-      unitPrice: totalPrice,
+      unitPrice,
+      quantity,
       selectedOptions: optionsPayload,
       components: compositionParts.length > 0 ? compositionParts : undefined,
     });
 
-    setJustAdded(true);
-    window.setTimeout(() => setJustAdded(false), 500);
+    setAddedToCart(true);
+  };
+
+  const handleContinueShopping = () => {
+    setAddedToCart(false);
+    if (relatedProducts.length > 0 && suggestionsRef.current) {
+      suggestionsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    navigate("/cardapio");
   };
 
   return (
-    <div className="space-y-12">
-      <div className="grid gap-8 lg:grid-cols-2">
+    <div className="pb-[calc(8.5rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(7rem+env(safe-area-inset-bottom,0px))]">
+      {/* protagonista: foto + identidade do produto */}
+      <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
         <ProductImageCarousel images={product.images} productName={product.name} />
 
-        <div className="space-y-6">
+        <div className="space-y-5">
           <div className="space-y-3">
-            <div className="flex flex-wrap gap-2">
-              {badges.map((badge) => (
-                <Badge key={badge.label} className="border-0 bg-brand-soft text-brand">
-                  {badge.label}
-                </Badge>
-              ))}
-            </div>
+            {badges.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {badges.map((badge) => (
+                  <Badge key={badge.label} className="border-0 bg-brand-soft text-brand">
+                    {badge.label}
+                  </Badge>
+                ))}
+              </div>
+            ) : null}
+
             <div className="flex items-start justify-between gap-3">
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{product.name}</h1>
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-[2.75rem] lg:leading-tight">
+                {product.name}
+              </h1>
               <button
                 type="button"
                 aria-label={favorite ? "Remover dos favoritos" : "Favoritar"}
@@ -174,16 +232,27 @@ export function ProductDetailView({ product, relatedProducts = [], onAddToCart }
                 onClick={() => {
                   toggle(product.id);
                   toast.success(
-                    favorite ? storefrontCopy.product.favoriteRemoved : storefrontCopy.product.favoriteSaved,
+                    favorite
+                      ? storefrontCopy.product.favoriteRemoved
+                      : storefrontCopy.product.favoriteSaved,
                   );
                 }}
               >
-                <Heart className={cn("h-5 w-5", favorite ? "fill-red-500 text-red-500" : "text-slate-500")} />
+                <Heart
+                  className={cn(
+                    "h-5 w-5",
+                    favorite ? "fill-red-500 text-red-500" : "text-slate-500",
+                  )}
+                />
               </button>
             </div>
+
             {product.description ? (
-              <p className="text-base leading-relaxed text-[hsl(var(--muted-foreground))]">{product.description}</p>
+              <p className="max-w-prose text-base leading-relaxed text-[hsl(var(--muted-foreground))]">
+                {product.description}
+              </p>
             ) : null}
+
             {!product.is_available ? <Badge variant="outline">Indisponível</Badge> : null}
           </div>
 
@@ -204,7 +273,9 @@ export function ProductDetailView({ product, relatedProducts = [], onAddToCart }
 
           {product.is_available ? (
             <UiHint icon={isPopular ? Flame : Heart} tone="warm">
-              {isPopular ? storefrontCopy.product.favorite : "Monte do seu jeito — cada detalhe conta."}
+              {isPopular
+                ? storefrontCopy.product.favorite
+                : storefrontCopy.product.customizeHint}
             </UiHint>
           ) : (
             <UiHint tone="neutral">{storefrontCopy.product.unavailable}</UiHint>
@@ -212,15 +283,16 @@ export function ProductDetailView({ product, relatedProducts = [], onAddToCart }
 
           <ProductFeatureChips items={featureChips} title={storefrontCopy.product.highlightsTitle} />
 
-          <div className="flex items-baseline gap-3 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/50 px-4 py-3">
+          {/* preço de referência — o total vivo fica na barra fixa */}
+          <div className="flex items-baseline gap-3">
             <PriceDisplay
-              value={totalPrice}
+              value={unitPrice}
               className={cn(
                 "text-3xl font-bold text-brand transition-transform",
                 priceBump && "animate-price-pop",
               )}
             />
-            {totalPrice !== product.base_price ? (
+            {unitPrice !== product.base_price ? (
               <span className="text-sm text-[hsl(var(--muted-foreground))] line-through">
                 <PriceDisplay value={product.base_price} />
               </span>
@@ -231,11 +303,37 @@ export function ProductDetailView({ product, relatedProducts = [], onAddToCart }
             ) : null}
           </div>
 
+          <Link to="/cardapio" className="hidden sm:inline-flex">
+            <Button type="button" variant="ghost" size="sm" className="px-0 text-brand">
+              ← Voltar ao cardápio
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* personalização — continuação do produto, não um bloco rival */}
+      {hasCustomization ? (
+        <section className="mt-12 space-y-6 border-t border-[hsl(var(--border))]/80 pt-10 sm:mt-16 sm:pt-12">
+          <div className="space-y-1">
+            <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
+              <span aria-hidden className="mr-1.5">
+                {personalizeEmoji}
+              </span>
+              {storefrontCopy.product.personalizeTitle}
+            </h2>
+            <p className="text-sm text-[hsl(var(--muted-foreground))]">
+              {storefrontCopy.product.personalizeSubtitle}
+            </p>
+          </div>
+
           {product.composition?.enabled ? (
             <CompositionPicker
               product={product}
               selected={compositionParts}
-              onChange={setCompositionParts}
+              onChange={(parts) => {
+                setCompositionParts(parts);
+                setAddedToCart(false);
+              }}
             />
           ) : null}
 
@@ -246,59 +344,48 @@ export function ProductDetailView({ product, relatedProducts = [], onAddToCart }
             invalidGroupId={invalidGroupId}
             onChange={(groupId, items) => {
               setInvalidGroupId((current) => (current === groupId ? null : current));
+              setAddedToCart(false);
               setSelections((prev) =>
                 pruneHiddenSelections(product.option_groups, { ...prev, [groupId]: items }),
               );
             }}
           />
 
-          <div className="space-y-3 max-lg:sticky max-lg:bottom-4 max-lg:z-10 max-lg:rounded-2xl max-lg:border max-lg:border-[hsl(var(--border))] max-lg:bg-white/95 max-lg:p-3 max-lg:pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] max-lg:shadow-lg max-lg:backdrop-blur-md">
-            <Button
-              type="button"
-              size="lg"
-              className={cn("h-12 w-full text-base font-semibold", justAdded && "animate-cart-bump")}
-              disabled={!product.is_available || !onAddToCart}
-              onClick={handleAddToCart}
-            >
-              {justAdded ? (
-                <span className="inline-flex items-center gap-2">
-                  <Check className="h-5 w-5" />
-                  {storefrontCopy.product.added}
-                </span>
-              ) : (
-                storefrontCopy.product.addToCart
-              )}
-            </Button>
-            <Link to="/cardapio" className="hidden sm:block">
-              <Button type="button" variant="outline" size="lg" className="h-12 w-full">
-                Voltar ao cardápio
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {relatedProducts.length > 0 ? (
-        <section className="space-y-4 border-t border-[hsl(var(--border))] pt-10">
-          <h2 className="text-xl font-bold">{storefrontCopy.product.relatedTitle}</h2>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {relatedProducts.map((item) => (
-              <ProductCard
-                key={item.id}
-                id={item.id}
-                slug={item.slug}
-                name={item.name}
-                description={item.description ?? undefined}
-                price={item.base_price}
-                comparePrice={item.compare_price}
-                imageUrl={item.image_url}
-                tags={item.tags}
-                unavailable={!item.is_available}
-              />
-            ))}
-          </div>
+          <ProductOrderSummary
+            productName={product.name}
+            lines={summaryLines}
+            total={unitPrice}
+          />
         </section>
       ) : null}
+
+      {/* sugestões — apoio visual, nunca protagonista */}
+      {relatedProducts.length > 0 ? (
+        <div
+          ref={suggestionsRef}
+          className="mt-14 scroll-mt-24 border-t border-[hsl(var(--border))]/60 pt-10 sm:mt-16 sm:pt-12"
+        >
+          <ProductSuggestionRail
+            products={relatedProducts}
+            currentProductName={product.name}
+            currentCategoryName={categoryName}
+          />
+        </div>
+      ) : null}
+
+      <ProductPurchaseBar
+        unitPrice={unitPrice}
+        quantity={quantity}
+        onQuantityChange={(next) => {
+          setQuantity(next);
+          setAddedToCart(false);
+        }}
+        onAdd={handleAddToCart}
+        onContinueShopping={handleContinueShopping}
+        disabled={!product.is_available || !onAddToCart}
+        addedToCart={addedToCart}
+        priceBump={priceBump}
+      />
     </div>
   );
 }

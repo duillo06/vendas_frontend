@@ -17,10 +17,11 @@ import type { IntentFlowProps } from "../types";
 
 export function CompositionIntentFlow({ product, onClose, onSuccess }: IntentFlowProps) {
   const queryClient = useQueryClient();
+  const alreadySaved = !!product.composition?.enabled;
   const [composition, setComposition] = useState<CompositionForm>(
     product.composition
       ? { ...DEFAULT_COMPOSITION, ...product.composition }
-      : { ...DEFAULT_COMPOSITION, enabled: true },
+      : { ...DEFAULT_COMPOSITION, enabled: false },
   );
 
   const { data: categories } = useQuery({
@@ -47,16 +48,27 @@ export function CompositionIntentFlow({ product, onClose, onSuccess }: IntentFlo
       onClose={onClose}
       emoji="🍕"
       title="Meio a meio e sabores"
-      description="Responda as perguntas — em menos de 30 segundos seu cliente já pode combinar sabores."
+      description="Responda as perguntas e toque em Salvar — só então vale no cardápio."
       wide
     >
+      {!alreadySaved && composition.enabled ? (
+        <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          Ainda não está no cardápio. Toque em <strong>Salvar</strong> embaixo pra liberar a
+          combinação de sabores.
+        </p>
+      ) : null}
       <ProductCompositionEditor
         value={composition}
         onChange={setComposition}
         categories={categories}
         currentProductId={product.id}
       />
-      <FlowActions onCancel={onClose} onConfirm={() => save.mutate()} pending={save.isPending} />
+      <FlowActions
+        onCancel={onClose}
+        onConfirm={() => save.mutate()}
+        pending={save.isPending}
+        confirmLabel={composition.enabled ? "Salvar e liberar no cardápio" : "Salvar"}
+      />
     </IntentFlowDialog>
   );
 }

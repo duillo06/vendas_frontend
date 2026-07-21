@@ -98,6 +98,7 @@ graph TB
 | **Simplicidade** | Remover até não poder mais | Progressive disclosure |
 | **Leveza premium** | Marca do tenant assina, não pinta | Primary em controles; fundos neutros |
 | **Densidade adaptável** | Dados no admin, respiro no cliente | Espaçamento diferente por app |
+| **Hierarquia acima de quantidade** | Um protagonista por tela | Remover ruído; secundário só apoia a ação principal |
 | **Acessível por padrão** | WCAG 2.1 AA mínimo | Contraste, foco, ARIA |
 
 ### 2.1 O que NÃO fazer

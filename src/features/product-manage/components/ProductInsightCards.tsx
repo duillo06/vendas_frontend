@@ -38,9 +38,9 @@ export function ProductInsightCards({ product }: ProductInsightCardsProps) {
       icon: Package,
     },
     {
-      label: "Personalização",
-      value: optionCount ? `${optionCount} grupos` : "Sem extras",
-      hint: product.composition?.enabled ? "Com meio a meio" : undefined,
+      label: "Como vende",
+      value: optionCount ? `${optionCount} itens` : "Só o básico",
+      hint: product.composition?.enabled ? "Com combinação de sabores" : undefined,
       icon: Star,
     },
     {

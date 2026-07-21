@@ -32,6 +32,7 @@ export async function createCustomizationFromDraft(
     await catalogAdminApi.createOption(created.id, {
       name: choice.name.trim(),
       price_modifier: choice.price,
+      description: choice.description?.trim() || null,
       is_active: true,
       is_available: true,
       sort_order: index,
@@ -64,7 +65,7 @@ export async function updateCustomizationFromDraft(
 
   const fresh = await catalogAdminApi.listOptionGroups();
   const updated = fresh.find((item) => item.id === group.id);
-  if (!updated) throw new Error("Personalização salva, mas não encontramos na lista. Atualize a página.");
+  if (!updated) throw new Error("Salvo, mas não encontramos na biblioteca. Atualize a página.");
 
   return { group: updated };
 }
@@ -84,6 +85,7 @@ async function syncChoices(group: OptionGroupAdmin, choices: ChoiceDraft[]) {
         await catalogAdminApi.updateOption(group.id, choice.id, {
           name: choice.name.trim(),
           price_modifier: choice.price,
+          description: choice.description?.trim() || null,
           sort_order: index,
         });
       }
@@ -93,6 +95,7 @@ async function syncChoices(group: OptionGroupAdmin, choices: ChoiceDraft[]) {
     const created = (await catalogAdminApi.createOption(group.id, {
       name: choice.name.trim(),
       price_modifier: choice.price,
+      description: choice.description?.trim() || null,
       is_active: true,
       is_available: true,
       sort_order: index,

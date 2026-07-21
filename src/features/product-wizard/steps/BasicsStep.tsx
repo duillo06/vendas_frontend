@@ -5,6 +5,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import type { ProductWizard } from "../useProductWizard";
 import type { WizardImage } from "../types";
+import { createId } from "@/shared/lib/utils";
 
 const MAX_IMAGES = 5;
 
@@ -21,7 +22,7 @@ export function BasicsStep({ wizard, categories }: BasicsStepProps) {
     const slots = MAX_IMAGES - state.images.length;
     if (slots <= 0) return;
     const images: WizardImage[] = incoming.slice(0, slots).map((file) => ({
-      key: `${file.name}-${file.lastModified}-${crypto.randomUUID()}`,
+      key: `${file.name}-${file.lastModified}-${createId()}`,
       file,
       previewUrl: URL.createObjectURL(file),
     }));
