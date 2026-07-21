@@ -43,11 +43,12 @@ type KindAnswer = {
   };
 };
 
-type Step = "intro" | "gate" | "library" | "create-item" | "half" | "summary";
+type Step = "intro" | "gate" | "library" | "create-item" | "half" | "summary" | "apply";
 
 type CategoryRecipeAssistantProps = {
   categoryId: string;
   categoryName: string;
+  productCount?: number;
   initialRecipe?: CategoryRecipe | null;
   onCancel: () => void;
   onSaved: (recipe: CategoryRecipe) => void;
@@ -114,6 +115,7 @@ function buildQueue(categoryName: string, existing: KindAnswer[]): Personalizati
 export function CategoryRecipeAssistant({
   categoryId,
   categoryName,
+  productCount = 0,
   initialRecipe,
   onCancel,
   onSaved,
@@ -136,6 +138,7 @@ export function CategoryRecipeAssistant({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [localGroups, setLocalGroups] = useState<OptionGroupAdmin[]>([]);
+  const [applyMode, setApplyMode] = useState<"new_only" | "all" | "later">("new_only");
 
   const mergedGroups = useMemo(() => {
     const map = new Map<string, OptionGroupAdmin>();
@@ -289,7 +292,7 @@ export function CategoryRecipeAssistant({
     goNextKind();
   };
 
-  const buildPayload = (): CategoryRecipeWrite => {
+  const buildPayload = (mode: "new_only" | "all" | "later" = "new_only"): CategoryRecipeWrite => {
     const enabled = answers.filter((a) => a.enabled);
     const capabilities = enabled.map((a, index) => ({
       kind: a.kindId,
@@ -313,11 +316,11 @@ export function CategoryRecipeAssistant({
         sort_order: index,
         option_ids: a.optionIds,
       }));
-    return { capabilities, libraries, template_key: "" };
+    return { capabilities, libraries, template_key: "", apply_mode: mode };
   };
 
-  const saveRecipe = async () => {
-    const payload = buildPayload();
+  const saveRecipe = async (mode: "new_only" | "all" | "later" = applyMode) => {
+    const payload = buildPayload(mode);
     if (payload.capabilities.length === 0) {
       setError("Marque pelo menos uma coisa que esta categoria faz — ou cancele.");
       return;
@@ -346,6 +349,18 @@ export function CategoryRecipeAssistant({
       return `✓ ${label} — ${a.optionNames.length} ${a.optionNames.length === 1 ? "opção" : "opções"}`;
     });
 
+  const confirmSummary = () => {
+    if (summaryLines.length === 0) {
+      setError("Marque pelo menos uma coisa que esta categoria faz — ou cancele.");
+      return;
+    }
+    if (productCount > 0) {
+      setStep("apply");
+      return;
+    }
+    void saveRecipe("new_only");
+  };
+
   const goBack = () => {
     setError(null);
     if (step === "create-item") {
@@ -354,6 +369,10 @@ export function CategoryRecipeAssistant({
     }
     if (step === "library" || step === "half") {
       setStep("gate");
+      return;
+    }
+    if (step === "apply") {
+      setStep("summary");
       return;
     }
     if (step === "gate") {
@@ -634,7 +653,68 @@ export function CategoryRecipeAssistant({
                 type="button"
                 className="bg-brand hover:brightness-95"
                 disabled={pending || summaryLines.length === 0}
-                onClick={() => void saveRecipe()}
+                onClick={confirmSummary}
+              >
+                {productCount > 0 ? "Continuar" : pending ? "Salvando…" : "Salvar"}
+              </Button>
+            </div>
+          </motion.div>
+        ) : null}
+
+        {step === "apply" ? (
+          <motion.div key="apply" className="space-y-4" {...stepMotion}>
+            <div>
+              <h3 className="text-base font-semibold sm:text-lg">Como deseja aplicar?</h3>
+              <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
+                Esta categoria já tem {productCount} produto{productCount === 1 ? "" : "s"}. Preços e
+                escolhas especiais de cada um ficam.
+              </p>
+            </div>
+            <div className="space-y-2">
+              {(
+                [
+                  {
+                    value: "new_only" as const,
+                    label: "Só nos produtos novos",
+                    hint: "Os que já existem continuam como estão.",
+                  },
+                  {
+                    value: "all" as const,
+                    label: "Atualizar os produtos que já existem",
+                    hint: "Eles passam a seguir o novo jeito (preços ficam).",
+                  },
+                  {
+                    value: "later" as const,
+                    label: "Decido depois",
+                    hint: "Salva a receita; você aplica quando quiser.",
+                  },
+                ] as const
+              ).map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setApplyMode(opt.value)}
+                  className={cn(
+                    "flex w-full flex-col rounded-xl border-2 px-3 py-2.5 text-left transition",
+                    applyMode === opt.value
+                      ? "border-[hsl(var(--primary)/0.45)] bg-[hsl(var(--primary-soft))]"
+                      : "border-[hsl(var(--border))] bg-white",
+                  )}
+                >
+                  <span className="text-sm font-medium">{opt.label}</span>
+                  <span className="text-xs text-[hsl(var(--muted-foreground))]">{opt.hint}</span>
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button type="button" variant="outline" onClick={() => setStep("summary")} disabled={pending}>
+                Voltar
+              </Button>
+              <Button
+                type="button"
+                className="bg-brand hover:brightness-95"
+                disabled={pending}
+                onClick={() => void saveRecipe(applyMode)}
               >
                 {pending ? "Salvando…" : "Salvar"}
               </Button>

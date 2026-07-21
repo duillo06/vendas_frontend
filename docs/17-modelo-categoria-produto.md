@@ -349,6 +349,7 @@ Quando iniciar a Fase 0 (após aprovação):
 | 1.1 | Jul/2026 | **Aprovado** — Architecture Freeze; Fase 0 liberada |
 | 1.2 | Jul/2026 | Fase 1 em código — catálogo sem preço na autoria; `option_prices` no produto |
 | 1.3 | Jul/2026 | Fase 2 em código — assistente + árvore + `GET/PUT .../recipe/` |
+| 1.4 | Jul/2026 | Fase 3 — materialize no create, exclusões, apply_mode, copiar preços |
 | 1.0 | Jul/2026 | Receita normalizada, assistentes, materialização, fases 0–4 |
 
 ---

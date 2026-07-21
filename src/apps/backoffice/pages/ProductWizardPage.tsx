@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Settings2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 
@@ -17,6 +17,7 @@ import { BasicsStep } from "@/features/product-wizard/steps/BasicsStep";
 import { OptionBuilderStep } from "@/features/product-wizard/steps/OptionBuilderStep";
 import { PriceStep } from "@/features/product-wizard/steps/PriceStep";
 import { QuestionStep } from "@/features/product-wizard/steps/QuestionStep";
+import { RecipeProductFlow } from "@/features/product-wizard/steps/RecipeProductFlow";
 import { ReviewStep } from "@/features/product-wizard/steps/ReviewStep";
 import { SegmentStep } from "@/features/product-wizard/steps/SegmentStep";
 import { useProductWizard } from "@/features/product-wizard/useProductWizard";
@@ -31,13 +32,27 @@ export function ProductWizardPage() {
   const queryClient = useQueryClient();
   const wizard = useProductWizard();
   const [createdId, setCreatedId] = useState<string | null>(null);
+  const [recipeMode, setRecipeMode] = useState(false);
 
   const { data: categories } = useQuery({
     queryKey: catalogAdminKeys.categories(),
     queryFn: () => catalogAdminApi.listCategories(),
   });
 
-  // limpa os object URLs das imagens ao desmontar
+  const selectedCategory = useMemo(
+    () => categories?.find((c) => c.id === wizard.state.basics.categoryId),
+    [categories, wizard.state.basics.categoryId],
+  );
+
+  const { data: siblingProducts } = useQuery({
+    queryKey: [...catalogAdminKeys.products(), "by-cat", wizard.state.basics.categoryId],
+    queryFn: () =>
+      catalogAdminApi.listProducts({
+        category: selectedCategory?.slug ?? "",
+      }),
+    enabled: Boolean(selectedCategory?.slug && recipeMode),
+  });
+
   useEffect(() => {
     return () => {
       wizard.state.images.forEach((img) => URL.revokeObjectURL(img.previewUrl));
@@ -62,7 +77,6 @@ export function ProductWizardPage() {
       setCreatedId(product.id);
     },
     onError: (error: Error) => {
-      // erro nunca frio: fala do Flow
       toast.error(`${flowMessages.error.emoji} ${flowMessages.error.text}`);
       if (error.message) console.error(error);
     },
@@ -70,15 +84,70 @@ export function ProductWizardPage() {
 
   const header = getHeader(wizard);
   const flowLine = getFlowLine(wizard);
-  const progress = (wizard.stepIndex + 1) / wizard.screens.length;
+  const progress = recipeMode
+    ? 0.66
+    : (wizard.stepIndex + 1) / wizard.screens.length;
 
   const handleNext = () => {
+    if (wizard.currentScreen.kind === "basics" && selectedCategory?.has_recipe) {
+      setRecipeMode(true);
+      return;
+    }
     if (wizard.isLast) {
       create.mutate();
       return;
     }
     wizard.goNext();
   };
+
+  if (recipeMode && selectedCategory) {
+    return (
+      <>
+        <div className="mx-auto max-w-2xl space-y-5">
+          <div className="flex items-center justify-between gap-3">
+            <BackLink to="/produtos" label="Produtos" />
+          </div>
+          <WizardStepper currentPhase="preco" progress={progress} />
+          <FlowPanel
+            line={{
+              mood: "happy",
+              emoji: "✨",
+              text: "A categoria já sabe como funciona — agora é só preço.",
+            }}
+            compact
+          />
+          <Card>
+            <CardContent className="space-y-6 p-5 sm:p-6">
+              <WizardShell
+                stepKey="recipe-flow"
+                emoji="✨"
+                title={`Montando ${wizard.state.basics.name}`}
+                subtitle={`Como funciona ${selectedCategory.name}`}
+              >
+                <RecipeProductFlow
+                  basics={wizard.state.basics}
+                  images={wizard.state.images}
+                  category={selectedCategory}
+                  siblings={siblingProducts?.results ?? []}
+                  onBack={() => setRecipeMode(false)}
+                  onCreated={(id) => {
+                    void queryClient.invalidateQueries({ queryKey: catalogAdminKeys.all });
+                    setCreatedId(id);
+                  }}
+                />
+              </WizardShell>
+            </CardContent>
+          </Card>
+        </div>
+        <FlowSuccess
+          open={createdId !== null}
+          line={flowMessages.success}
+          actionLabel="Ver produto"
+          onAction={() => navigate(`/produtos/${createdId}`)}
+        />
+      </>
+    );
+  }
 
   return (
     <>
@@ -105,7 +174,11 @@ export function ProductWizardPage() {
               stepKey={screenKey(wizard)}
               emoji={header.emoji}
               title={header.title}
-              subtitle={header.subtitle}
+              subtitle={
+                wizard.currentScreen.kind === "basics" && selectedCategory?.has_recipe
+                  ? "Esta categoria já tem “como funciona” — na próxima tela só os preços."
+                  : header.subtitle
+              }
             >
               {renderStep(wizard, categories ?? [])}
             </WizardShell>
@@ -139,7 +212,6 @@ function screenKey(wizard: ReturnType<typeof useProductWizard>): string {
   return s.kind;
 }
 
-// mensagem do Flow por tela — humaniza cada etapa
 function getFlowLine(wizard: ReturnType<typeof useProductWizard>): FlowLine {
   const s = wizard.currentScreen;
   const m = flowMessages.wizard;
@@ -149,7 +221,6 @@ function getFlowLine(wizard: ReturnType<typeof useProductWizard>): FlowLine {
     case "segment":
       return m.segment;
     case "question": {
-      // na primeira pergunta do segmento, o Flow "percebe" o tipo escolhido
       const first = wizard.activeQuestions[0]?.id === s.questionId;
       const intro = wizard.blueprint ? flowMessages.segmentIntro[wizard.blueprint.id] : undefined;
       if (first && intro) return { mood: "happy", ...intro };

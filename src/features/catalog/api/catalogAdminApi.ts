@@ -53,6 +53,7 @@ export type CategoryRecipeWrite = {
     option_ids: string[];
   }[];
   template_key?: string;
+  apply_mode?: "new_only" | "all" | "later";
 };
 
 export interface ProductAdminListItem {
@@ -119,6 +120,7 @@ export interface ProductAdminDetail {
   product_option_groups: ProductOptionGroupLink[];
   composition?: ProductCompositionAdmin | null;
   option_prices?: { option_id: string; price: number }[];
+  option_exclusions?: string[];
   images: ProductImageAdmin[];
   created_at?: string;
   updated_at?: string;
@@ -224,6 +226,19 @@ export const catalogAdminApi = {
   putCategoryRecipe: (id: string, data: CategoryRecipeWrite) =>
     apiClient
       .put<CategoryRecipe>(`/admin/categories/${id}/recipe/`, data)
+      .then((response) => response.data),
+
+  copyProductPrices: (
+    productId: string,
+    data: {
+      source_product_id: string;
+      mode?: "same" | "percent" | "fixed";
+      percent?: number;
+      fixed?: number;
+    },
+  ) =>
+    apiClient
+      .post<ProductAdminDetail>(`/admin/products/${productId}/copy-prices/`, data)
       .then((response) => response.data),
 
   listOptionGroups: () =>

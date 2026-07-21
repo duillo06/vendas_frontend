@@ -465,6 +465,7 @@ export function CategoriesPage() {
               <CategoryRecipeAssistant
                 categoryId={recipeDialog.category.id}
                 categoryName={recipeDialog.category.name}
+                productCount={recipeDialog.category.product_count}
                 initialRecipe={recipeDialog.recipe}
                 onCancel={closeRecipe}
                 onSaved={(recipe) => {
