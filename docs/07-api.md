@@ -1313,7 +1313,8 @@ Substitui a receita completa (após resumo no assistente).
   "template_key": "pizza",
   "capabilities": [
     { "kind": "size", "enabled": true, "is_required": true, "sort_order": 0, "settings": {} },
-    { "kind": "half", "enabled": true, "is_required": false, "sort_order": 1, "settings": { "max_parts": 2, "pricing_rule": "highest" } }
+    { "kind": "crust", "enabled": true, "is_required": false, "sort_order": 1, "settings": {} },
+    { "kind": "half", "enabled": true, "is_required": false, "sort_order": 2, "settings": { "max_parts": 2, "pricing_rule": "highest" } }
   ],
   "libraries": [
     {
@@ -1321,12 +1322,23 @@ Substitui a receita completa (após resumo no assistente).
       "option_group_id": "aa0e8400-e29b-41d4-a716-446655440006",
       "sort_order": 0,
       "option_ids": ["bb0e8400-e29b-41d4-a716-446655440001"]
+    },
+    {
+      "kind": "crust",
+      "option_group_id": "cc0e8400-e29b-41d4-a716-446655440007",
+      "sort_order": 1,
+      "option_ids": ["dd0e8400-e29b-41d4-a716-446655440002"]
     }
-  ]
+  ],
+  "option_prices": [
+    { "option_id": "dd0e8400-e29b-41d4-a716-446655440002", "price": 10.00 }
+  ],
+  "apply_mode": "new_only"
 }
 ```
 
-> Não rematerializa produtos existentes — prompt de aplicação entra na Fase 3.
+`option_prices` = preços padrão da categoria (Tipo 2 — bordas, adicionais…). Tamanhos continuam no produto.  
+Resolução efetiva: produto → categoria → `price_modifier` legado (`17` §8).
 
 ---
 

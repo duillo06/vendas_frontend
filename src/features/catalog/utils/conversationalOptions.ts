@@ -36,6 +36,27 @@ export type PersonalizationKindId =
   | "sauces"
   | "other";
 
+/** Tipo 1 — preço no produto (varia por item) */
+export const PRODUCT_PRICE_KINDS = new Set<string>(["size", "volume"]);
+
+/** Tipo 2 — preço padrão na categoria */
+export const CATEGORY_PRICE_KINDS = new Set<string>([
+  "crust",
+  "extras",
+  "buildable",
+  "sauces",
+  "dough",
+  "other",
+]);
+
+export function isProductPricedKind(kind: string) {
+  return PRODUCT_PRICE_KINDS.has(kind);
+}
+
+export function isCategoryPricedKind(kind: string) {
+  return CATEGORY_PRICE_KINDS.has(kind);
+}
+
 export type PersonalizationKind = {
   id: PersonalizationKindId;
   emoji: string;

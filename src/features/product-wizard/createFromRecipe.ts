@@ -2,6 +2,10 @@ import {
   catalogAdminApi,
   type CategoryRecipe,
 } from "@/features/catalog/api/catalogAdminApi";
+import {
+  isCategoryPricedKind,
+  isProductPricedKind,
+} from "@/features/catalog/utils/conversationalOptions";
 
 export type CreateFromRecipeInput = {
   name: string;
@@ -13,7 +17,7 @@ export type CreateFromRecipeInput = {
   images: { file: File }[];
 };
 
-/** produto mágico: herda a receita no backend; aqui só preços e exclusões */
+/** produto mágico: herda a receita no backend; aqui só preços Tipo 1 + overrides */
 export async function createProductFromRecipe(input: CreateFromRecipeInput) {
   const product = await catalogAdminApi.createProduct({
     name: input.name.trim(),
@@ -41,23 +45,51 @@ export type RecipePriceRow = {
   name: string;
   kind: string;
   group_name: string;
+  /** preço efetivo no form (editável se Tipo 1 ou personalizado) */
   price: number;
+  /** preço padrão da categoria (Tipo 2) */
+  category_price: number;
+  /** true = grava no produto; false = herda da categoria */
+  customized: boolean;
   included: boolean;
 };
 
 export function recipeToPriceRows(recipe: CategoryRecipe): RecipePriceRow[] {
+  const categoryPrices = new Map(
+    (recipe.option_prices ?? []).map((p) => [p.option_id, Number(p.price)]),
+  );
   const rows: RecipePriceRow[] = [];
   for (const lib of recipe.libraries) {
     for (const opt of lib.options ?? []) {
+      const categoryPrice = categoryPrices.get(opt.id) ?? 0;
+      const productOwned = isProductPricedKind(lib.kind);
       rows.push({
         option_id: opt.id,
         name: opt.name,
         kind: lib.kind,
         group_name: lib.option_group_name ?? lib.kind,
-        price: 0,
+        price: productOwned ? 0 : categoryPrice,
+        category_price: categoryPrice,
+        customized: productOwned,
         included: true,
       });
     }
   }
   return rows;
+}
+
+/** só manda pro produto o que é Tipo 1 ou override explícito */
+export function productOptionPricesFromRows(rows: RecipePriceRow[]) {
+  return rows
+    .filter((r) => r.included && (isProductPricedKind(r.kind) || r.customized))
+    .map((r) => ({ option_id: r.option_id, price: r.price }));
+}
+
+export function formatInheritedHint(row: RecipePriceRow) {
+  if (isProductPricedKind(row.kind)) return null;
+  if (!isCategoryPricedKind(row.kind)) return null;
+  return row.category_price.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
 }

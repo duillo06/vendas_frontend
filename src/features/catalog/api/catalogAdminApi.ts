@@ -42,6 +42,7 @@ export type CategoryRecipe = {
   template_key: string;
   capabilities: CategoryRecipeCapability[];
   libraries: CategoryRecipeLibrary[];
+  option_prices?: { option_id: string; price: number }[];
 };
 
 export type CategoryRecipeWrite = {
@@ -52,6 +53,7 @@ export type CategoryRecipeWrite = {
     sort_order?: number;
     option_ids: string[];
   }[];
+  option_prices?: { option_id: string; price: number }[];
   template_key?: string;
   apply_mode?: "new_only" | "all" | "later";
 };

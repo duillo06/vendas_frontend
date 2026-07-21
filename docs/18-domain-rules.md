@@ -2,7 +2,7 @@
 
 > **Documento:** Regras de negócio do cardápio — como cada tipo de produto funciona  
 > **Produto:** Food Service *(nome comercial provisório)*  
-> **Versão:** 1.0  
+> **Versão:** 1.1  
 > **Status:** Aprovado  
 > **Última atualização:** Julho/2026  
 > **Depende de:** `00-product-philosophy.md`, `17-modelo-categoria-produto.md`  
@@ -14,19 +14,22 @@
 
 1. [Como ler este documento](#1-como-ler-este-documento)
 2. [Regras universais](#2-regras-universais)
-3. [Categoria (Receita)](#3-categoria-receita)
-4. [Base reutilizável (nome UI provisório)](#4-base-reutilizável-nome-ui-provisório)
-5. [Produto](#5-produto)
-6. [Pizza](#6-pizza)
-7. [Hambúrguer](#7-hambúrguer)
-8. [Pastel](#8-pastel)
-9. [Açaí](#9-açaí)
-10. [Bebidas](#10-bebidas)
-11. [Outros tipos](#11-outros-tipos)
-12. [Meio a meio / sabores](#12-meio-a-meio--sabores)
-13. [Caminho até o cardápio (runtime)](#13-caminho-até-o-cardápio-runtime)
-14. [MVP First](#14-mvp-first)
-15. [Histórico de Revisões](#15-histórico-de-revisões)
+3. [Onde vive cada informação](#3-onde-vive-cada-informação)
+4. [Dois tipos de preço](#4-dois-tipos-de-preço)
+5. [Herança e personalização](#5-herança-e-personalização)
+6. [Categoria (Receita)](#6-categoria-receita)
+7. [Base reutilizável (nome UI provisório)](#7-base-reutilizável-nome-ui-provisório)
+8. [Produto](#8-produto)
+9. [Pizza](#9-pizza)
+10. [Hambúrguer](#10-hambúrguer)
+11. [Pastel](#11-pastel)
+12. [Açaí](#12-açaí)
+13. [Bebidas](#13-bebidas)
+14. [Outros tipos](#14-outros-tipos)
+15. [Meio a meio / sabores](#15-meio-a-meio--sabores)
+16. [Caminho até o cardápio (runtime)](#16-caminho-até-o-cardápio-runtime)
+17. [MVP First](#17-mvp-first)
+18. [Histórico de Revisões](#18-histórico-de-revisões)
 
 ---
 
@@ -45,141 +48,196 @@ Filosofia de UX: `00-product-philosophy.md`.
 
 ## 2. Regras universais
 
-1. **Preço de venda vive no produto.** Nunca na categoria. Nunca na base reutilizável.  
-2. **A categoria define o comportamento padrão** (a “receita”). O produto usa essa receita.  
-3. **O produto pode ter exceções** (não usar todas as bordas, preços próprios). Isso **não altera** a categoria.  
-4. **Itens de identidade** (Catupiry, Broto, Bacon…) cadastram-se **uma vez** e reaparecem em todo o cardápio.  
-5. **O comerciante não configura “grupos” ou “features”.** Ele responde perguntas.  
-6. **Mudança na receita da categoria** que afete produtos existentes **sempre pergunta** como aplicar.  
-7. **O que o cliente vê no app** é o resultado final do produto já montado — sem ver a receita.
+1. **O sistema trabalha para o comerciante** — nunca o contrário. Cadastro mínimo; sem repetição desnecessária.  
+2. **O que é igual para quase todos os produtos da categoria configura-se uma vez** (na categoria).  
+3. **O que muda de produto para produto configura-se no produto.**  
+4. **A categoria define o comportamento padrão** (a “receita”) **e os preços compartilhados**.  
+5. **O produto herda** essa receita e esses preços. Só grava diferença quando for exceção.  
+6. **Itens de identidade** (Catupiry, Broto, Bacon…) cadastram-se **uma vez** na base reutilizável.  
+7. **O comerciante não configura “grupos” ou “features”.** Ele responde perguntas.  
+8. **Mudança na receita** (estrutura ou preço padrão) que afete produtos **sempre comunica** o impacto — estrutura pede como aplicar; preço padrão vale na hora para quem herda.  
+9. **O que o cliente vê no app** é o produto já montado, com o preço efetivo — sem ver a receita.
 
 ---
 
-## 3. Categoria (Receita)
+## 3. Onde vive cada informação
+
+Pilar arquitetural (espelhado em `17`):
+
+> Tudo que normalmente tem o **mesmo valor** para todos os produtos da categoria → **categoria**.  
+> Tudo que **varia** de um produto para outro → **produto**.
+
+| Categoria | Produto |
+|-----------|---------|
+| Bordas, adicionais, molhos, massas, coberturas… | Nome, foto, descrição |
+| **Preço padrão** dessas opções | **Preço dos tamanhos** (e similares) |
+| Meio a meio e regra de cálculo | Promoções |
+| “Possui X?” / quais itens entram | Quais itens **não** usa (exceção) |
+| | Preço **próprio** só quando personalizar |
+
+---
+
+## 4. Dois tipos de preço
+
+### 4.1 Tipo 1 — Pertence ao produto
+
+Exemplo clássico: **tamanhos**. Cada pizza/lanche tem valores diferentes.
+
+Perguntado **no cadastro do produto**. Nada muda nesse ponto em relação ao fluxo atual de tamanhos.
+
+### 4.2 Tipo 2 — Pertence à categoria
+
+Exemplo clássico: **bordas e adicionais**. O Catupiry custa o mesmo na Calabresa e na Frango — quase sempre.
+
+Perguntado **na configuração da categoria** (“Quanto custa cada borda normalmente?”).
+
+**Não** se pergunta de novo em cada produto.
+
+### 4.3 Como o preço é escolhido na hora de vender
+
+```text
+Este produto tem preço próprio nesta opção?
+  → Sim → usa esse preço
+  → Não → a categoria tem preço padrão?
+        → Sim → usa o da categoria
+        → Não → sem preço
+```
+
+Detalhe técnico da ordem: `17-modelo-categoria-produto.md` §8.
+
+---
+
+## 5. Herança e personalização
+
+- **Padrão:** o produto usa o preço da categoria (Tipo 2).  
+- **Exceção:** ação discreta do tipo “Personalizar somente neste produto” → grava preço só daquele produto.  
+- **Voltar ao padrão:** remover a personalização → herda de novo.  
+- **Subir o Catupiry na categoria** de R$ 10 para R$ 12 → todas as pizzas **sem** personalização passam a R$ 12. Quem personalizou mantém o valor próprio.
+
+Na interface: nunca falar “override” ou “herança técnica”. Falar como o comerciante fala.
+
+---
+
+## 6. Categoria (Receita)
 
 A categoria funciona como **modelo / receita** dos produtos daquela seção.
 
 | Pode | Não pode |
 |------|----------|
-| Definir se trabalha com tamanhos, bordas, adicionais, meio a meio, etc. | Guardar preços de venda |
-| Escolher quais itens da base reutilizável entram na receita | Ser um formulário técnico de “features” |
-| Servir de padrão para **novos** produtos | Surpreender produtos antigos sem confirmação |
-| Oferecer “atualizar todos” / “só novos” / “decidir depois” | |
+| Definir se trabalha com tamanhos, bordas, adicionais, meio a meio, etc. | Guardar preço de **tamanho** (isso é do produto) |
+| Escolher quais itens da base entram na receita | Ser um formulário técnico de “features” |
+| Guardar **preço padrão** de bordas, adicionais, molhos… | Surpreender produtos com mudança de **estrutura** sem confirmação |
+| Servir de padrão para novos e existentes (preço herdado) | Forçar o comerciante a repetir o mesmo preço em 80 produtos |
 
-Configuração = **assistente conversacional** + resumo + visão em fluxograma (só leitura).
+Configuração = **assistente conversacional** + resumo (com valores padrão) + visão em fluxograma (só leitura).
 
 ---
 
-## 4. Base reutilizável (nome UI provisório)
+## 7. Base reutilizável (nome UI provisório)
 
 **Nome provisório na interface:** “Base do cardápio”  
 *(Fácil de trocar depois — não amarrar copy ao código interno.)*
 
 | É | Não é |
 |---|-------|
-| Catálogo de identidades: tamanhos, bordas, adicionais, massas, molhos, volumes… | Lugar de preço |
+| Catálogo de identidades: tamanhos, bordas, adicionais, massas, molhos, volumes… | Lugar do preço de venda |
 | Criável no meio do fluxo sem sair da conversa | “Biblioteca técnica” |
+
+Preço de venda: na **categoria** (Tipo 2) ou no **produto** (Tipo 1 / personalização) — nunca como “verdade” da identidade isolada.
 
 Exemplos de itens: Broto, Catupiry, Bacon, Massa fina, 600 ml.
 
 ---
 
-## 5. Produto
+## 8. Produto
 
 | Regra | Detalhe |
 |-------|---------|
 | Herda a receita da categoria | Estrutura pronta ao escolher a categoria |
-| Define preços | Matriz simples (ex.: preço por tamanho) |
+| Define preços Tipo 1 | Matriz por tamanho (e similares) |
+| Herda preços Tipo 2 | Bordas/adicionais sem digitar de novo |
+| Pode personalizar um preço Tipo 2 | Só neste produto |
 | Pode sobrescrever o que usa | “Usa todas as bordas?” → Sim / escolher |
 | Nunca altera a categoria | Exceção é só deste produto |
-| Cadastro seguinte é mais rápido | Copiar preços / % / fixo / manual |
+| Cadastro seguinte é mais rápido | Copiar preços de tamanho / % / fixo / manual |
 
-Momento esperado após escolher categoria: o sistema “prepara” o cadastro e pede o que falta (em geral preços).
+Momento esperado após escolher categoria: o sistema prepara o cadastro e pede **o que falta** — em geral preços de tamanho, não a lista inteira de bordas.
 
 ---
 
-## 6. Pizza
+## 9. Pizza
 
-- Pode possuir vários tamanhos.  
+- Pode possuir vários tamanhos → **preço no produto**.  
 - Pode possuir vários sabores / combinação de sabores.  
 - Pode permitir **meio a meio** (ou mais sabores).  
-- Cálculo do meio a meio pode ser: **maior preço**, **média**, **proporcional** (soma).  
-- Pode possuir bordas.  
-- Pode possuir adicionais.  
-- Pode remover opções herdadas da categoria (exceção no produto).  
-- **Preço sempre no produto.**  
+- Cálculo do meio a meio: **maior preço**, **média**, **proporcional** (combinado na categoria).  
+- Pode possuir bordas → **preço padrão na categoria**; personalizar no produto se precisar.  
+- Pode possuir adicionais → idem.  
+- Pode remover opções herdadas (exceção no produto).  
 
 ---
 
-## 7. Hambúrguer
+## 10. Hambúrguer
 
-- Pode possuir adicionais.  
-- Pode possuir ponto da carne.  
-- Pode possuir molhos.  
-- Pode possuir combos (MVP: só se estiver no escopo fechado da sprint; senão → backlog).  
-- Pode possuir observações.  
-- Preço no produto; estrutura na receita da categoria.
+- Pode possuir adicionais / ponto da carne / molhos → estrutura e preços padrão na receita da categoria; personalização no produto.  
+- Preço do lanche em si (quando houver tamanhos ou valor base do produto) → produto.  
+- Combos: só se estiver no escopo fechado da sprint; senão → backlog.
 
 ---
 
-## 8. Pastel
+## 11. Pastel
 
-- Pode possuir massas.  
-- Pode possuir recheios.  
-- Pode possuir adicionais.  
-- Preço no produto.
+- Massas, recheios, adicionais → receita + preços padrão na categoria quando forem compartilhados.  
+- Preço por tamanho / valor do pastel → produto.
 
 ---
 
-## 9. Açaí
+## 12. Açaí
 
-- Pode possuir tamanhos.  
-- Pode possuir coberturas.  
-- Pode possuir frutas.  
-- Pode possuir complementos.  
-- Preço no produto (incluindo por tamanho).
+- Tamanhos → preço no produto.  
+- Coberturas, frutas, complementos → preço padrão na categoria; personalizar no produto se for exceção.
 
 ---
 
-## 10. Bebidas
+## 13. Bebidas
 
-- Pode possuir volumes.  
-- Pode possuir temperatura.  
-- Pode possuir gelo.  
-- Pode possuir limão / extras simples.  
-- Muitos produtos de bebida **não** precisam de receita rica — cadastro curto é válido e desejável.
+- Volumes com preço diferente por produto → preço no produto.  
+- Extras simples (gelo, limão…) com valor fixo da casa → preço padrão na categoria.  
+- Cadastro curto continua válido quando a receita for simples.
 
 ---
 
-## 11. Outros tipos
+## 14. Outros tipos
 
 Marmitas, doces, porções, sushi, cafés, drinks, etc. seguem o mesmo padrão:
 
-> A receita da categoria diz o que perguntar.  
+> A receita da categoria diz o que perguntar e guarda o que é compartilhado (incluindo preços padrão).  
 > A base reutilizável guarda os itens.  
-> O produto guarda os preços e as exceções.
+> O produto guarda o que varia e as exceções.
 
-Novos tipos **não** exigem remodelar o cardápio — só novas perguntas e kinds internos.
+Novos tipos **não** exigem remodelar o cardápio — só novas perguntas e a decisão: *compartilhado ou por produto?*
 
 ---
 
-## 12. Meio a meio / sabores
+## 15. Meio a meio / sabores
 
-- É capacidade da **receita da categoria** (e depois do produto).  
+- Capacidade da **receita da categoria** (e depois do produto).  
 - O cliente combina sabores no cardápio.  
 - Regras de preço (maior / média / proporcional) fazem parte da conversa da categoria.  
 - Não misturar com “adicional” na cabeça do usuário: é “pode escolher mais de um sabor?”.
 
 ---
 
-## 13. Caminho até o cardápio (runtime)
+## 16. Caminho até o cardápio (runtime)
 
 Visão de domínio (nomes internos só para o time técnico):
 
 ```text
-Categoria (Receita)
+Categoria (Receita + preços padrão compartilhados)
     ↓
-Produto (preços + exceções)
+Produto (preços que variam + exclusões + personalizações)
+    ↓
+Resolução de preço (produto → categoria → vazio)
     ↓
 Materialização (monta o que o motor já entende)
     ↓
@@ -194,7 +252,7 @@ O cliente final só vê o produto montado e o preço certo.
 
 ---
 
-## 14. MVP First
+## 17. MVP First
 
 Antes de implementar qualquer coisa nova:
 
@@ -205,14 +263,17 @@ Antes de implementar qualquer coisa nova:
 
 Se a resposta for “não” na maior parte → `19-future-ideas.md`.
 
+A herança de preços Tipo 2 **aumenta simplicidade e velocidade de cadastro** — entra no escopo da Fase 5 de `17`, não no backlog estratégico.
+
 ---
 
-## 15. Histórico de Revisões
+## 18. Histórico de Revisões
 
 | Versão | Data | Descrição |
 |--------|------|-----------|
+| 1.1 | Jul/2026 | **Aprovado** — dois tipos de preço; herança categoria → produto; personalização discreta |
 | 1.0 | Jul/2026 | Criação — regras por tipo + caminho até o cardápio + MVP First |
 
 ---
 
-> **Documento aprovado.** Fonte oficial de regras de domínio do cardápio.
+> **Documento aprovado.** Fonte oficial de regras de domínio do cardápio. Próximo: Fase 5 (`17`).

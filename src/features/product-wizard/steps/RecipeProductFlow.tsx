@@ -9,6 +9,10 @@ import {
   type ProductAdminListItem,
 } from "@/features/catalog/api/catalogAdminApi";
 import { catalogAdminKeys } from "@/features/catalog/constants/catalog-admin-keys";
+import {
+  isCategoryPricedKind,
+  isProductPricedKind,
+} from "@/features/catalog/utils/conversationalOptions";
 import { CurrencyInput } from "@/shared/components/CurrencyInput";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
@@ -17,6 +21,8 @@ import { cn } from "@/shared/lib/utils";
 
 import {
   createProductFromRecipe,
+  formatInheritedHint,
+  productOptionPricesFromRows,
   recipeToPriceRows,
   type RecipePriceRow,
 } from "../createFromRecipe";
@@ -32,6 +38,10 @@ type RecipeProductFlowProps = {
   onBack: () => void;
   onCreated: (productId: string) => void;
 };
+
+function money(value: number) {
+  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
 
 export function RecipeProductFlow({
   basics,
@@ -61,15 +71,34 @@ export function RecipeProductFlow({
     return () => window.clearTimeout(t);
   }, [recipeQuery.data]);
 
-  const grouped = useMemo(() => {
+  const productRows = useMemo(
+    () => rows.filter((r) => isProductPricedKind(r.kind)),
+    [rows],
+  );
+  const categoryRows = useMemo(
+    () => rows.filter((r) => isCategoryPricedKind(r.kind)),
+    [rows],
+  );
+
+  const groupedProduct = useMemo(() => {
     const map = new Map<string, RecipePriceRow[]>();
-    for (const row of rows) {
+    for (const row of productRows) {
       const list = map.get(row.group_name) ?? [];
       list.push(row);
       map.set(row.group_name, list);
     }
     return [...map.entries()];
-  }, [rows]);
+  }, [productRows]);
+
+  const groupedCategory = useMemo(() => {
+    const map = new Map<string, RecipePriceRow[]>();
+    for (const row of categoryRows) {
+      const list = map.get(row.group_name) ?? [];
+      list.push(row);
+      map.set(row.group_name, list);
+    }
+    return [...map.entries()];
+  }, [categoryRows]);
 
   const applyCopyFromSibling = async () => {
     if (!copyFromId) return;
@@ -80,6 +109,7 @@ export function RecipeProductFlow({
       );
       setRows((current) =>
         current.map((row) => {
+          if (!isProductPricedKind(row.kind)) return row;
           if (!priceMap.has(row.option_id)) return row;
           let price = priceMap.get(row.option_id)!;
           if (copyMode === "percent") {
@@ -87,10 +117,10 @@ export function RecipeProductFlow({
           } else if (copyMode === "fixed") {
             price = copyFixed;
           }
-          return { ...row, price, included: true };
+          return { ...row, price, included: true, customized: true };
         }),
       );
-      toast.success("Preços copiados — ajuste o que quiser");
+      toast.success("Preços de tamanho copiados — ajuste o que quiser");
     } catch {
       toast.error("Não deu pra copiar os preços.");
     }
@@ -103,9 +133,7 @@ export function RecipeProductFlow({
         description: basics.description,
         categoryId: basics.categoryId,
         basePrice,
-        optionPrices: rows
-          .filter((r) => r.included)
-          .map((r) => ({ option_id: r.option_id, price: r.price })),
+        optionPrices: productOptionPricesFromRows(rows),
         optionExclusions: rows.filter((r) => !r.included).map((r) => r.option_id),
         images,
       }),
@@ -146,18 +174,25 @@ export function RecipeProductFlow({
         <div className="rounded-2xl border border-[hsl(var(--primary)/0.25)] bg-[hsl(var(--primary-soft))]/40 p-4">
           <p className="text-sm font-semibold">{basics.name}</p>
           <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">
-            {category.name} · base{" "}
-            {basePrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+            {category.name} · base {money(basePrice)}
           </p>
           <ul className="mt-3 space-y-1 text-sm">
-            {included.slice(0, 8).map((r) => (
-              <li key={r.option_id}>
-                {r.name}
-                {r.price > 0
-                  ? ` (+${r.price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })})`
-                  : ""}
-              </li>
-            ))}
+            {included.slice(0, 8).map((r) => {
+              const hint = formatInheritedHint(r);
+              const showPrice = isProductPricedKind(r.kind) || r.customized;
+              return (
+                <li key={r.option_id}>
+                  {r.name}
+                  {showPrice && r.price > 0 ? ` (+${money(r.price)})` : null}
+                  {!showPrice && hint ? (
+                    <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                      {" "}
+                      · herdado {hint}
+                    </span>
+                  ) : null}
+                </li>
+              );
+            })}
             {included.length > 8 ? (
               <li className="text-xs text-[hsl(var(--muted-foreground))]">
                 +{included.length - 8} opções
@@ -189,9 +224,9 @@ export function RecipeProductFlow({
         <CurrencyInput value={basePrice} onChange={setBasePrice} />
       </div>
 
-      {siblings.length > 0 ? (
+      {siblings.length > 0 && productRows.length > 0 ? (
         <div className="space-y-2 rounded-xl border border-[hsl(var(--border))] bg-white p-3">
-          <p className="text-sm font-medium">Quer aproveitar preços de outro produto?</p>
+          <p className="text-sm font-medium">Quer aproveitar preços de tamanho de outro produto?</p>
           <select
             className="h-10 w-full rounded-md border border-[hsl(var(--border))] bg-white px-3 text-sm"
             value={copyFromId}
@@ -254,46 +289,27 @@ export function RecipeProductFlow({
       ) : null}
 
       <div className="space-y-4">
-        <p className="text-sm font-medium">Quanto custa cada opção neste produto?</p>
-        <p className="text-xs text-[hsl(var(--muted-foreground))]">
-          Desmarque o que este produto não oferece.
-        </p>
-        {grouped.map(([groupName, items]) => (
-          <div key={groupName} className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-brand">{groupName}</p>
-            <ul className="space-y-2">
-              {items.map((row) => (
-                <li
-                  key={row.option_id}
-                  className={cn(
-                    "flex flex-col gap-2 rounded-xl border px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between",
-                    row.included
-                      ? "border-[hsl(var(--border))] bg-white"
-                      : "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40 opacity-70",
-                  )}
-                >
-                  <button
-                    type="button"
-                    className="flex items-center gap-2 text-left text-sm font-medium"
-                    onClick={() =>
-                      setRows((current) =>
-                        current.map((r) =>
-                          r.option_id === row.option_id ? { ...r, included: !r.included } : r,
-                        ),
-                      )
-                    }
+        <div>
+          <p className="text-sm font-medium">Preços deste produto</p>
+          <p className="text-xs text-[hsl(var(--muted-foreground))]">
+            Só o que muda de um item para outro — em geral os tamanhos.
+          </p>
+        </div>
+        {groupedProduct.length === 0 ? (
+          <p className="text-sm text-[hsl(var(--muted-foreground))]">
+            Esta categoria não tem tamanhos — informe só o preço base.
+          </p>
+        ) : (
+          groupedProduct.map(([groupName, items]) => (
+            <div key={groupName} className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-brand">{groupName}</p>
+              <ul className="space-y-2">
+                {items.map((row) => (
+                  <li
+                    key={row.option_id}
+                    className="flex flex-col gap-2 rounded-xl border border-[hsl(var(--border))] bg-white px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <span
-                      className={cn(
-                        "flex h-5 w-5 items-center justify-center rounded-md border-2",
-                        row.included ? "border-brand bg-brand text-white" : "border-[hsl(var(--border))]",
-                      )}
-                    >
-                      {row.included ? <Check className="h-3 w-3" /> : null}
-                    </span>
-                    {row.name}
-                  </button>
-                  {row.included ? (
+                    <span className="text-sm font-medium">{row.name}</span>
                     <CurrencyInput
                       value={row.price}
                       onChange={(price) =>
@@ -304,15 +320,146 @@ export function RecipeProductFlow({
                         )
                       }
                     />
-                  ) : (
-                    <span className="text-xs text-[hsl(var(--muted-foreground))]">Não oferece</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        )}
       </div>
+
+      {groupedCategory.length > 0 ? (
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm font-medium">Já vem da categoria</p>
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">
+              Desmarque o que este produto não oferece. Personalize o preço só se for exceção.
+            </p>
+          </div>
+          {groupedCategory.map(([groupName, items]) => (
+            <div key={groupName} className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-brand">{groupName}</p>
+              <ul className="space-y-2">
+                {items.map((row) => (
+                  <li
+                    key={row.option_id}
+                    className={cn(
+                      "rounded-xl border px-3 py-2.5",
+                      row.included
+                        ? "border-[hsl(var(--border))] bg-white"
+                        : "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40 opacity-70",
+                    )}
+                  >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <button
+                        type="button"
+                        className="flex items-center gap-2 text-left text-sm font-medium"
+                        onClick={() =>
+                          setRows((current) =>
+                            current.map((r) =>
+                              r.option_id === row.option_id
+                                ? { ...r, included: !r.included }
+                                : r,
+                            ),
+                          )
+                        }
+                      >
+                        <span
+                          className={cn(
+                            "flex h-5 w-5 items-center justify-center rounded-md border-2",
+                            row.included
+                              ? "border-brand bg-brand text-white"
+                              : "border-[hsl(var(--border))]",
+                          )}
+                        >
+                          {row.included ? <Check className="h-3 w-3" /> : null}
+                        </span>
+                        {row.name}
+                      </button>
+                      {!row.included ? (
+                        <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                          Não oferece
+                        </span>
+                      ) : null}
+                    </div>
+                    {row.included ? (
+                      <div className="mt-2 space-y-2 border-t border-[hsl(var(--border))]/70 pt-2">
+                        {!row.customized ? (
+                          <>
+                            <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                              Preço herdado da categoria ({money(row.category_price)})
+                            </p>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-2 text-xs"
+                              onClick={() =>
+                                setRows((current) =>
+                                  current.map((r) =>
+                                    r.option_id === row.option_id
+                                      ? {
+                                          ...r,
+                                          customized: true,
+                                          price: r.category_price,
+                                        }
+                                      : r,
+                                  ),
+                                )
+                              }
+                            >
+                              Personalizar somente neste produto
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                              <span className="text-xs font-medium text-brand">
+                                Este produto usa preço próprio
+                              </span>
+                              <CurrencyInput
+                                value={row.price}
+                                onChange={(price) =>
+                                  setRows((current) =>
+                                    current.map((r) =>
+                                      r.option_id === row.option_id ? { ...r, price } : r,
+                                    ),
+                                  )
+                                }
+                              />
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-2 text-xs"
+                              onClick={() =>
+                                setRows((current) =>
+                                  current.map((r) =>
+                                    r.option_id === row.option_id
+                                      ? {
+                                          ...r,
+                                          customized: false,
+                                          price: r.category_price,
+                                        }
+                                      : r,
+                                  ),
+                                )
+                              }
+                            >
+                              Voltar ao preço da categoria
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
         <Button type="button" variant="outline" onClick={onBack}>
@@ -321,7 +468,7 @@ export function RecipeProductFlow({
         <Button
           type="button"
           className="bg-brand hover:brightness-95"
-          disabled={basePrice <= 0 || rows.every((r) => !r.included)}
+          disabled={basePrice <= 0}
           onClick={() => setStep("review")}
         >
           Continuar

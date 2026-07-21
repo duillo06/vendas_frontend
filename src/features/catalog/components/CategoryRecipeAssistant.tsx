@@ -16,6 +16,7 @@ import {
 import {
   buildLibraryItems,
   draftFromKind,
+  isCategoryPricedKind,
   kindById,
   newChoice,
   suggestedKindIds,
@@ -24,6 +25,7 @@ import {
   type PersonalizationKind,
   type PersonalizationKindId,
 } from "@/features/catalog/utils/conversationalOptions";
+import { CurrencyInput } from "@/shared/components/CurrencyInput";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { cn } from "@/shared/lib/utils";
@@ -35,6 +37,8 @@ type KindAnswer = {
   groupName?: string;
   optionIds: string[];
   optionNames: string[];
+  /** preços padrão Tipo 2 (paralelo a optionIds) */
+  optionPrices: number[];
   half?: {
     min_parts: number;
     max_parts: number;
@@ -43,7 +47,7 @@ type KindAnswer = {
   };
 };
 
-type Step = "intro" | "gate" | "library" | "create-item" | "half" | "summary" | "apply";
+type Step = "intro" | "gate" | "library" | "create-item" | "prices" | "half" | "summary" | "apply";
 
 type CategoryRecipeAssistantProps = {
   categoryId: string;
@@ -70,6 +74,9 @@ const HALF_RULES = [
 function answersFromRecipe(recipe: CategoryRecipe | null | undefined): KindAnswer[] {
   if (!recipe?.capabilities?.length) return [];
   const libs = new Map(recipe.libraries.map((l) => [l.kind, l]));
+  const priceMap = new Map(
+    (recipe.option_prices ?? []).map((p) => [p.option_id, Number(p.price)]),
+  );
   const out: KindAnswer[] = [];
   for (const cap of recipe.capabilities) {
     const kindId = cap.kind as PersonalizationKindId;
@@ -81,13 +88,19 @@ function answersFromRecipe(recipe: CategoryRecipe | null | undefined): KindAnswe
       cap.settings?.pricing_rule === "main"
         ? cap.settings.pricing_rule
         : "highest";
+    const optionIds = lib?.option_ids ?? [];
+    const optionNames = (lib?.options ?? []).map((o) => o.name);
     out.push({
       kindId,
       enabled: cap.enabled,
       groupId: lib?.option_group_id,
       groupName: lib?.option_group_name,
-      optionIds: lib?.option_ids ?? [],
-      optionNames: (lib?.options ?? []).map((o) => o.name),
+      optionIds,
+      optionNames:
+        optionNames.length === optionIds.length
+          ? optionNames
+          : optionIds.map((_, i) => optionNames[i] ?? `Item ${i + 1}`),
+      optionPrices: optionIds.map((id) => priceMap.get(id) ?? 0),
       half:
         kindId === "half"
           ? {
@@ -206,7 +219,10 @@ export function CategoryRecipeAssistant({
   const recordDisabled = (kind: PersonalizationKind) => {
     setAnswers((current) => {
       const without = current.filter((a) => a.kindId !== kind.id);
-      return [...without, { kindId: kind.id, enabled: false, optionIds: [], optionNames: [] }];
+      return [
+        ...without,
+        { kindId: kind.id, enabled: false, optionIds: [], optionNames: [], optionPrices: [] },
+      ];
     });
     goNextKind();
   };
@@ -259,10 +275,15 @@ export function CategoryRecipeAssistant({
             groupName: group.name,
             optionIds,
             optionNames,
+            optionPrices: optionIds.map(() => 0),
           },
         ];
       });
-      goNextKind();
+      if (isCategoryPricedKind(kind.id)) {
+        setStep("prices");
+      } else {
+        goNextKind();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não deu pra salvar na base.");
     } finally {
@@ -280,6 +301,7 @@ export function CategoryRecipeAssistant({
           enabled: true,
           optionIds: [],
           optionNames: [],
+          optionPrices: [],
           half: {
             min_parts: 2,
             max_parts: halfDraft.max_parts,
@@ -289,6 +311,10 @@ export function CategoryRecipeAssistant({
         },
       ];
     });
+    goNextKind();
+  };
+
+  const confirmCategoryPrices = () => {
     goNextKind();
   };
 
@@ -316,7 +342,15 @@ export function CategoryRecipeAssistant({
         sort_order: index,
         option_ids: a.optionIds,
       }));
-    return { capabilities, libraries, template_key: "", apply_mode: mode };
+    const option_prices = enabled
+      .filter((a) => isCategoryPricedKind(a.kindId))
+      .flatMap((a) =>
+        a.optionIds.map((option_id, i) => ({
+          option_id,
+          price: a.optionPrices[i] ?? 0,
+        })),
+      );
+    return { capabilities, libraries, option_prices, template_key: "", apply_mode: mode };
   };
 
   const saveRecipe = async (mode: "new_only" | "all" | "later" = applyMode) => {
@@ -346,6 +380,16 @@ export function CategoryRecipeAssistant({
         const rule = HALF_RULES.find((r) => r.value === a.half!.pricing_rule)?.label ?? "";
         return `✓ ${label} — até ${a.half.max_parts} sabores · ${rule.toLowerCase()}`;
       }
+      if (isCategoryPricedKind(a.kindId) && a.optionNames.length) {
+        const priced = a.optionNames
+          .map((name, i) => {
+            const p = a.optionPrices[i] ?? 0;
+            return `${name} ${p.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`;
+          })
+          .slice(0, 4)
+          .join(" · ");
+        return `✓ ${label} — ${priced}${a.optionNames.length > 4 ? "…" : ""}`;
+      }
       return `✓ ${label} — ${a.optionNames.length} ${a.optionNames.length === 1 ? "opção" : "opções"}`;
     });
 
@@ -364,6 +408,10 @@ export function CategoryRecipeAssistant({
   const goBack = () => {
     setError(null);
     if (step === "create-item") {
+      setStep("library");
+      return;
+    }
+    if (step === "prices") {
       setStep("library");
       return;
     }
@@ -530,7 +578,7 @@ export function CategoryRecipeAssistant({
             <div>
               <h3 className="text-base font-semibold">{currentKind.createLabel || "Nova opção"}</h3>
               <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
-                Entra na base do cardápio — sem preço.
+                Entra na base do cardápio — o preço padrão vem no próximo passo.
               </p>
             </div>
             <Input
@@ -567,6 +615,60 @@ export function CategoryRecipeAssistant({
             >
               Adicionar
             </Button>
+          </motion.div>
+        ) : null}
+
+        {step === "prices" && currentKind ? (
+          <motion.div key="prices" className="space-y-4" {...stepMotion}>
+            <div>
+              <h3 className="text-base font-semibold">
+                Quanto custa cada {currentKind.label.replace(/^Possui\s+/i, "").toLowerCase()} normalmente?
+              </h3>
+              <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
+                Esse valor vale pra todos os produtos desta categoria — só personaliza no produto se for
+                exceção.
+              </p>
+            </div>
+            <ul className="space-y-2">
+              {(answers.find((a) => a.kindId === currentKind.id)?.optionNames ?? []).map((name, i) => {
+                const answer = answers.find((a) => a.kindId === currentKind.id);
+                const price = answer?.optionPrices[i] ?? 0;
+                return (
+                  <li
+                    key={`${name}-${i}`}
+                    className="flex flex-col gap-2 rounded-xl border border-[hsl(var(--border))] bg-white px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <span className="text-sm font-medium">{name}</span>
+                    <CurrencyInput
+                      value={price}
+                      onChange={(value) => {
+                        setAnswers((current) =>
+                          current.map((a) => {
+                            if (a.kindId !== currentKind.id) return a;
+                            const optionPrices = [...a.optionPrices];
+                            while (optionPrices.length < a.optionIds.length) optionPrices.push(0);
+                            optionPrices[i] = value;
+                            return { ...a, optionPrices };
+                          }),
+                        );
+                      }}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button type="button" variant="outline" onClick={() => setStep("library")}>
+                Voltar
+              </Button>
+              <Button
+                type="button"
+                className="bg-brand hover:brightness-95"
+                onClick={confirmCategoryPrices}
+              >
+                Continuar
+              </Button>
+            </div>
           </motion.div>
         ) : null}
 

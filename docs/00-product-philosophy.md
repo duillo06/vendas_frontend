@@ -2,7 +2,7 @@
 
 > **Documento:** Filosofia de Produto e Princípios Invioláveis  
 > **Produto:** Food Service *(nome comercial provisório)*  
-> **Versão:** 1.1  
+> **Versão:** 1.2  
 > **Status:** Aprovado  
 > **Última atualização:** Julho/2026  
 > **Depende de:** — (documento fundador; todos os demais devem respeitá-lo)  
@@ -101,7 +101,7 @@ Não negociar. Não “deixar avançado escondido no caminho feliz”. O caminho
 5. **Herdar** — o produto nasce da receita da categoria.
 6. **Confirmar** — alterações que afetam muitos produtos.
 7. **Reutilizar** — tudo criado uma vez serve em centenas de produtos.
-8. **Antecipar** — próximos passos óbvios (“Agora só faltam os preços”).
+8. **Antecipar** — próximos passos óbvios (“Agora só os preços que mudam neste produto”).
 
 ---
 
@@ -142,13 +142,19 @@ UI: perguntas, cartões, resumos, confirmações.
 
 ### 6.7 Reutilização máxima
 
-Itens de identidade (tamanhos, bordas, adicionais…) sem preço de venda — preço no produto.
+Itens de identidade (tamanhos, bordas, adicionais…) cadastram-se uma vez na base.
 
-### 6.8 Escalabilidade silenciosa
+**Preços:** o que é igual para a categoria → na categoria; o que varia por produto (ex.: tamanhos) → no produto. Herança + personalização discreta — ver `17` §3–§4 e `18` §3–§5.
+
+### 6.8 Cadastro mínimo (não repetir)
+
+Se o comerciante digita o mesmo valor em todo produto da categoria, esse dado está no lugar errado.
+
+### 6.9 Escalabilidade silenciosa
 
 Novos tipos (ponto da carne, temperatura, gelo…) = novas perguntas e kinds internos — **sem** redesenhar o cardápio nem o checkout.
 
-### 6.9 Hierarquia acima de quantidade
+### 6.10 Hierarquia acima de quantidade
 
 Cada tela tem **um protagonista**. Remover ruído que não ajuda a concluir a tarefa.  
 *(Alinha ao 11º mandamento do Design System.)*
@@ -162,8 +168,8 @@ Cada tela tem **um protagonista**. Remover ruído que não ajuda a concluir a ta
 | OptionGroup, Library | Em avaliação — ver §7.1 |
 | Capability / Feature | “Possui tamanhos?”, “Possui bordas?” |
 | Template | “Tipo de categoria” / modelo pronto (sem jargão) |
-| Override | “Quero escolher só para este produto” |
-| Herança | “Já deixamos pronto com base na categoria” |
+| Override | “Personalizar somente neste produto” |
+| Herança | “Preço herdado da categoria” / “Já deixamos pronto” |
 | Materialização | Invisível (“Preparando o cadastro…”) |
 | ProductOptionGroup | Invisível |
 | PricingEngine | Invisível |
@@ -213,7 +219,7 @@ Internamente a receita mapeia para capabilities + vínculos com o catálogo + co
 ┌─────────────────────────────────────────────┐
 │  UX: perguntas, resumos, fluxograma visual  │  ← único lugar que o comerciante vive
 ├─────────────────────────────────────────────┤
-│  Autoria: Receita da categoria + produto    │  ← preços, exclusões, cópia inteligente
+│  Autoria: Receita + preços padrão + produto │  ← herança, exclusões, overrides
 ├─────────────────────────────────────────────┤
 │  Runtime (já existente):                    │
 │  OptionGroup → ProductOptionGroup → Engine  │  ← storefront + checkout intactos
@@ -242,12 +248,13 @@ Preparando o cadastro…
 ✓ Carregando bordas
 ✓ Carregando adicionais
 ✓ Configurando meio a meio
-Tudo pronto. Agora só os preços desta pizza.
+Tudo pronto. Agora só os preços que mudam nesta pizza (tamanhos).
+Bordas e adicionais já vêm da categoria — personalize só se for exceção.
 ```
 
 ### 10.3 Catálogo reutilizável
 
-Cadastro mínimo: nome (+ ícone/descrição). Sem preço. Criável **sem sair** do fluxo da categoria/produto.
+Cadastro mínimo: nome (+ ícone/descrição). Sem preço de venda na identidade. Criável **sem sair** do fluxo. Preço padrão de opções compartilhadas entra na conversa da **categoria**.
 
 ---
 
@@ -321,9 +328,10 @@ Checklist rápido antes de merge:
 
 | Versão | Data | Descrição |
 |--------|------|-----------|
+| 1.2 | Jul/2026 | **Aprovado** — herança de preços (categoria vs produto); §6.8 cadastro mínimo |
 | 1.1 | Jul/2026 | **Aprovado** — Architecture Freeze + MVP First |
 | 1.0 | Jul/2026 | Criação — filosofia fundadora, Regra de Ouro, receita da categoria, vocabulário |
 
 ---
 
-> **Documento aprovado.** Fonte oficial da verdade de produto. Próximo: implementação Fase 0 (`17`).
+> **Documento aprovado.** Fonte oficial da verdade de produto. Próximo: implementação **Fase 5** (`17`).

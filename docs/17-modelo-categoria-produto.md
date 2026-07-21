@@ -2,10 +2,10 @@
 
 > **Documento:** Arquitetura de Autoria — Receita da Categoria, Catálogo Reutilizável e Produto  
 > **Produto:** Food Service *(nome comercial provisório)*  
-> **Versão:** 1.5  
+> **Versão:** 1.6  
 > **Status:** Aprovado  
 > **Última atualização:** Julho/2026  
-> **Depende de:** `00-product-philosophy.md`, `02-arquitetura.md`, `03-modelagem-do-banco.md`, `16-product-builder-engine.md`  
+> **Depende de:** `00-product-philosophy.md`, `02-arquitetura.md`, `03-modelagem-do-banco.md`, `16-product-builder-engine.md`, `18-domain-rules.md`  
 > **Filosofia:** Toda UI descrita aqui é **conversacional**. Nomes de tabelas/campos abaixo são **internos** — jamais exibidos ao comerciante.
 
 ---
@@ -14,18 +14,21 @@
 
 1. [Objetivo](#1-objetivo)
 2. [Alinhamento com a filosofia](#2-alinhamento-com-a-filosofia)
-3. [Visão em camadas](#3-visão-em-camadas)
-4. [Modelo mental do usuário](#4-modelo-mental-do-usuário)
-5. [Modelo de dados normalizado](#5-modelo-de-dados-normalizado)
-6. [Materialização (runtime intacto)](#6-materialização-runtime-intacto)
-7. [Fluxos de UX (assistentes)](#7-fluxos-de-ux-assistentes)
-8. [Nomenclatura de produto (UI)](#8-nomenclatura-de-produto-ui)
-9. [Alterações na categoria e impacto](#9-alterações-na-categoria-e-impacto)
-10. [Inteligência futura (hooks)](#10-inteligência-futura-hooks)
-11. [Fases de implementação](#11-fases-de-implementação)
-12. [Anti-padrões](#12-anti-padrões)
-13. [Documentos a atualizar na implementação](#13-documentos-a-atualizar-na-implementação)
-14. [Histórico de Revisões](#14-histórico-de-revisões)
+3. [Princípio: o que vive onde](#3-princípio-o-que-vive-onde)
+4. [Dois tipos de preço](#4-dois-tipos-de-preço)
+5. [Visão em camadas](#5-visão-em-camadas)
+6. [Modelo mental do usuário](#6-modelo-mental-do-usuário)
+7. [Modelo de dados normalizado](#7-modelo-de-dados-normalizado)
+8. [Resolução de preço (obrigatória)](#8-resolução-de-preço-obrigatória)
+9. [Materialização (runtime intacto)](#9-materialização-runtime-intacto)
+10. [Fluxos de UX (assistentes)](#10-fluxos-de-ux-assistentes)
+11. [Nomenclatura de produto (UI)](#11-nomenclatura-de-produto-ui)
+12. [Alterações na categoria e impacto](#12-alterações-na-categoria-e-impacto)
+13. [Inteligência futura (hooks)](#13-inteligência-futura-hooks)
+14. [Fases de implementação](#14-fases-de-implementação)
+15. [Anti-padrões](#15-anti-padrões)
+16. [Documentos a atualizar na implementação](#16-documentos-a-atualizar-na-implementação)
+17. [Histórico de Revisões](#17-histórico-de-revisões)
 
 ---
 
@@ -33,11 +36,13 @@
 
 Definir a **camada de autoria** do cardápio:
 
-1. **Catálogo reutilizável** — identidade sem preço (tamanhos, bordas, adicionais…).  
-2. **Categoria = Receita (Modelo de Produto)** — comportamento padrão, configurado por **assistente**.  
-3. **Produto** — usa a receita; pergunta sobretudo **preços** e **exceções**.
+1. **Catálogo reutilizável** — identidade dos itens (tamanhos, bordas, adicionais…).  
+2. **Categoria = Receita** — comportamento padrão **e preços compartilhados** daquele tipo de produto.  
+3. **Produto** — preços que **variam por item** (ex.: tamanhos) + **exceções** (exclusões e overrides).
 
 Sem alterar o contrato de runtime do storefront/checkout (`OptionGroup` → `ProductOptionGroup` → Pricing Engine), conforme `16-product-builder-engine.md`.
+
+**Meta de UX:** o comerciante cadastra o **mínimo possível**. O que é igual para quase todos os produtos da categoria pergunta-se **uma vez**. Só exceções pedem configuração individual.
 
 ---
 
@@ -47,16 +52,83 @@ Sem alterar o contrato de runtime do storefront/checkout (`OptionGroup` → `Pro
 |-------------------------------------|----------------------|
 | Esconder arquitetura | Tabelas e “materialização” só no backend |
 | Conversação > configuração | Categoria e produto = assistentes |
-| Herança > repetição | Produto nasce da receita |
-| Exceções > reconfigurar tudo | Subset / exclusões no produto |
-| Preço no produto | `product_option_prices` |
-| Confirmar mudanças em massa | Prompt de aplicação ao salvar categoria |
+| Herança > repetição | Preços de borda/adicional vêm da categoria |
+| Exceções > reconfigurar tudo | Override discreto no produto; exclusões |
+| Confirmar mudanças em massa | Prompt ao alterar receita / preços da categoria |
+| Sistema trabalha para o comerciante | Não repetir Catupiry em 80 pizzas |
 
-**Regra de Ouro:** se a tela da categoria parecer um CRUD de “features”, está errada.
+**Regra de Ouro:** se a tela da categoria parecer um CRUD de “features”, está errada.  
+**Regra de Ouro (preço):** se o comerciante digita o mesmo valor em todo produto da categoria, esse preço **está no lugar errado**.
 
 ---
 
-## 3. Visão em camadas
+## 3. Princípio: o que vive onde
+
+Regra arquitetural oficial (pilar do sistema — também em `18-domain-rules.md`):
+
+> **Toda informação que normalmente é compartilhada por todos os produtos de uma categoria existe apenas na categoria.**  
+> **Toda informação que varia de produto para produto existe apenas no produto.**
+
+| Vive na **categoria** | Vive no **produto** |
+|----------------------|---------------------|
+| Quais bordas / adicionais / molhos / massas… | Nome, foto, descrição |
+| **Preço padrão** dessas opções compartilhadas | **Preço dos tamanhos** (e kinds equivalentes) |
+| Meio a meio e regras de cálculo | Promoções |
+| Capacidade (possui X?) | Exclusões (“não usa esta borda”) |
+| | **Override** de preço só quando for exceção |
+
+Isso orienta **toda** decisão futura de UX e modelagem.
+
+---
+
+## 4. Dois tipos de preço
+
+### 4.1 Tipo 1 — Preço pertencente ao **produto**
+
+Varia de um item para outro. Continua sendo perguntado **no cadastro do produto**.
+
+Exemplo — tamanhos:
+
+| | Pizza Calabresa | Pizza Frango |
+|--|-----------------|--------------|
+| Pequena | R$ 35 | R$ 38 |
+| Média | R$ 48 | R$ 50 |
+| Grande | R$ 60 | R$ 63 |
+
+**Kinds típicos (produto):** `size`, e equivalentes (ex.: `volume` em bebidas quando o preço muda por produto).
+
+### 4.2 Tipo 2 — Preço pertencente à **categoria**
+
+Normalmente **igual** para todos os produtos da categoria. Configurado **uma vez** na receita.
+
+Exemplo — bordas da categoria Pizza:
+
+| Borda | Preço padrão |
+|-------|--------------|
+| Catupiry | +R$ 10 |
+| Cheddar | +R$ 9 |
+| Chocolate | +R$ 14 |
+
+**Kinds típicos (categoria):** `crust`, `extras`, `dough`, `sauce`, coberturas, massas, “bebidas extras”, e qualquer opção padrão daquela categoria que não seja tamanho/volume do produto.
+
+### 4.3 Exceção no produto
+
+Por padrão o produto **herda** o preço da categoria.  
+Só grava preço próprio quando o comerciante usa a ação discreta:
+
+```text
+Catupiry
+Preço herdado da categoria (R$ 10)
+[ Personalizar somente neste produto ]
+→ Novo preço R$ 15
+✓ Este produto usa preço próprio
+```
+
+Copy de UI: **nunca** “override”, “herança”, “default”. Preferir “herdado da categoria” / “personalizar neste produto”.
+
+---
+
+## 5. Visão em camadas
 
 ```mermaid
 flowchart TB
@@ -67,9 +139,9 @@ flowchart TB
   end
 
   subgraph AUTORIA["Camada de autoria"]
-    C[Catálogo reutilizável]
-    R[Receita da categoria]
-    P[Preços e exceções do produto]
+    C[Catálogo reutilizável — identidade]
+    R[Receita + preços padrão da categoria]
+    P[Preços de tamanho + exceções do produto]
   end
 
   subgraph RUNTIME["Runtime — não reescrever"]
@@ -92,70 +164,59 @@ flowchart TB
 
 ---
 
-## 4. Modelo mental do usuário
+## 6. Modelo mental do usuário
 
-### 4.1 Receita da categoria
+### 6.1 Receita da categoria
 
-“Como normalmente funciona uma Pizza?” → conversa → resumo → salvar.
+“Como normalmente funciona uma Pizza?” → quais opções → **quanto custam as compartilhadas** → resumo → salvar.
 
-Depois: **ver a receita** (fluxograma só leitura).
+### 6.2 Produto “mágico”
 
-### 4.2 Produto “mágico”
+Escolhe categoria → preparação → pergunta **só** o que varia (tamanhos) + exclusões se quiser.  
+**Não** repete preço de borda/adicional.
 
-Escolhe categoria Pizza → animação curta de preparação → “Agora só os preços”.
+### 6.3 Segunda pizza
 
-### 4.3 Segunda pizza
+Copiar preços de tamanho / % / fixo / manual — estrutura e preços de borda já vêm da categoria.
 
-Copiar preços / % / fixo / manual — não repetir a estrutura.
+### 6.4 Mudança de preço compartilhado
+
+Catupiry de R$ 10 → R$ 12 **na categoria** → todos os produtos **sem override** passam a usar R$ 12 automaticamente.
 
 ---
 
-## 5. Modelo de dados normalizado
+## 7. Modelo de dados normalizado
 
 Evitar JSON monolítico de “features” na categoria. Preferir tabelas para BI, API, import/export.
 
-### 5.1 Catálogo reutilizável (evoluir existente)
+### 7.1 Catálogo reutilizável
 
 | Tabela | Evolução |
 |--------|----------|
 | `option_groups` | `+ kind` (`size`, `crust`, `extras`, `dough`, `volume`, …) |
-| `options` | Identidade; `price_modifier` torna-se **legado** (0 na autoria nova) |
+| `options` | Identidade; `price_modifier` = **legado** (não é fonte da verdade na autoria nova) |
 
-Sem preço de venda no cadastro conversacional do catálogo.
+A base reutilizável **não** é o lugar do preço de venda — nem de tamanho, nem de borda.
 
-### 5.2 Receita da categoria (novas tabelas)
+### 7.2 Receita da categoria
 
-**`category_capabilities`**
+**`category_capabilities`**, **`category_libraries`**, **`category_library_items`** — como já definido (Fases 0–2).
 
-| Campo | Papel interno |
-|-------|----------------|
-| `category_id` | FK |
-| `kind` | size, crust, extras, half, … |
-| `enabled` | bool |
-| `is_required` | bool |
-| `sort_order` | ordem na conversa / fluxograma |
-| `settings` | JSONB **mínimo** (ex.: half → `max_parts`, `pricing_rule`) |
-
-**`category_libraries`**
+**`category_option_prices`** *(novo — Fase 5)*
 
 | Campo | Papel |
 |-------|--------|
 | `category_id` | FK |
-| `option_group_id` | conjunto reutilizável usado nesta receita |
-| `kind` | alinhado à capability |
-| `sort_order` | |
+| `option_id` | FK |
+| `price` | DECIMAL — preço padrão da categoria |
+| UNIQUE `(category_id, option_id)` | |
 
-**`category_library_items`**
+Aplica-se a options de kinds **categoria** (`crust`, `extras`, …) vinculadas à receita.  
+Não substitui preço de tamanho no produto.
 
-| Campo | Papel |
-|-------|--------|
-| `category_library_id` | FK |
-| `option_id` | item disponível nesta categoria |
-| `sort_order` | |
+Alternativa aceitável na implementação: coluna `default_price` em `category_library_items` — desde que a resolução e a UX fiquem equivalentes. Preferência: tabela explícita para BI/API.
 
-Uma categoria pode usar **vários** conjuntos (ex.: “Bordas Tradicionais” + futuramente outro conjunto).
-
-### 5.3 Produto (preço e exceções)
+### 7.3 Produto (preço e exceções)
 
 **`product_option_prices`**
 
@@ -166,109 +227,132 @@ Uma categoria pode usar **vários** conjuntos (ex.: “Bordas Tradicionais” + 
 | `price` | DECIMAL |
 | UNIQUE `(product_id, option_id)` | |
 
-**`product_option_exclusions`**
+**Quando gravar:**
 
-| Campo | Papel |
-|-------|--------|
-| `product_id` | FK |
-| `option_id` | FK |
+| Situação | Grava em `product_option_prices`? |
+|----------|-----------------------------------|
+| Preço de tamanho / kind produto | **Sim** (obrigatório na autoria) |
+| Preço herdado de borda/adicional | **Não** |
+| Personalizar neste produto (override) | **Sim** |
+| Remover personalização | **Apaga** a linha → volta a herdar |
 
-Ausência de exclusão = **inclui** (herda a receita).  
-Padrão: herdar tudo; só gravar exclusão quando o usuário disser “quero escolher”.
+**`product_option_exclusions`** — inalterado: ausência = inclui; só grava exclusão quando o usuário escolhe subset.
 
-### 5.4 O que permanece
+### 7.4 O que permanece
 
-- `product_option_groups` — gerado/atualizado pelo MaterializeService  
+- `product_option_groups` — MaterializeService  
 - `product_compositions` — meio a meio  
-- Pedidos com snapshot de preço (já existente)
+- Pedidos com **snapshot** de preço (já existente)
 
-### 5.5 Resolução de preço (engine)
+### 7.5 Classificação de kind (orientação)
 
-Ordem sugerida:
+| Kind | Preço padrão em | No produto pede |
+|------|-----------------|-----------------|
+| `size`, `volume` (quando preço = o produto) | — | Matriz de preços |
+| `crust`, `extras`, `dough`, `sauce`, … | `category_option_prices` | Só se personalizar / excluir |
 
-1. `product_option_prices.price`  
-2. (opcional futuro) default de categoria  
-3. `options.price_modifier` legado  
-
-Modo tamanho absoluto: documentar em implementação (ex.: `base_price` 0 + preços absolutos por tamanho, ou strategy no merge) **sem** expor ao usuário.
+Kinds novos seguem a pergunta: *“Esse valor costuma ser o mesmo em todos os produtos da categoria?”* → sim = categoria; não = produto.
 
 ---
 
-## 6. Materialização (runtime intacto)
+## 8. Resolução de preço (obrigatória)
 
-**MaterializeService** (nome interno) ao salvar categoria/produto:
+Ao calcular o preço efetivo de **qualquer** opção (admin preview, storefront, checkout, engine):
+
+```text
+Existe preço específico no produto?
+        │
+       Sim ──► Usa o preço do produto
+        │
+       Não
+        │
+Existe preço padrão na categoria?
+        │
+       Sim ──► Usa o preço da categoria
+        │
+       Não ──► Preço vazio (tratar como 0 / inválido conforme regra do kind)
+```
+
+Ordem canônica (código / dual-read):
+
+1. `product_option_prices.price`  
+2. `category_option_prices.price` (da categoria do produto)  
+3. `options.price_modifier` **legado** (só compatibilidade)  
+
+Modo tamanho absoluto: preços de tamanho **sempre** no passo 1 (produto). Não misturar com default de categoria.
+
+---
+
+## 9. Materialização (runtime intacto)
+
+**MaterializeService** ao salvar categoria/produto:
 
 1. Lê capabilities + libraries + items (+ composition settings).  
 2. Garante `ProductOptionGroup` por library vinculada.  
 3. Opções visíveis = items da receita − exclusions do produto.  
-4. Preços efetivos via `product_option_prices` (serializados no public API como o storefront já espera).  
+4. Preços **efetivos** pela §8 (produto → categoria → legado) e serializados no public API como o storefront já espera.  
 5. Meio a meio → `ProductComposition`.
 
-Storefront e checkout **não** precisam conhecer a receita.
+Storefront e checkout **não** precisam conhecer a receita nem a distinção categoria/produto — só o preço efetivo.
 
 ---
 
-## 7. Fluxos de UX (assistentes)
+## 10. Fluxos de UX (assistentes)
 
-### 7.1 Assistente da categoria (não é CRUD)
+### 10.1 Assistente da categoria
 
 ```text
 Vamos configurar como normalmente funciona uma Pizza.
-→ Possui tamanhos? → Quais?
+→ Possui tamanhos? → Quais?          (identidade; sem preço aqui)
 → Possui bordas? → Quais?
+→ Quanto custa cada borda normalmente?   ← preços Tipo 2
 → Meio a meio? → Como calcula?
 → Adicionais? → Quais?
-→ Resumo
+→ Quanto custa cada adicional?           ← preços Tipo 2
+→ Resumo (inclui valores padrão)
 → Salvar
 ```
 
-**Resumo antes de salvar (obrigatório):**
+**Resumo antes de salvar (obrigatório)** — incluir preços padrão das opções compartilhadas.
 
-```text
-Resumo
-✓ Trabalha com tamanhos — 4 tamanhos
-✓ Trabalha com bordas — 6 bordas
-✓ Permite meio a meio — até 2 sabores · maior preço
-✓ Trabalha com adicionais — 12 adicionais
-```
+### 10.2 Visualização da receita (só leitura)
 
-### 7.2 Visualização da receita (só leitura)
+Fluxograma / árvore; editar = reabrir o assistente.
 
-Fluxograma / árvore da categoria (não edição). Editar = reabrir o assistente.
-
-### 7.3 Assistente do produto
+### 10.3 Assistente do produto
 
 1. Nome, foto, descrição  
-2. Momento de preparação (“Carregando tamanhos…”)  
-3. Matriz de preços  
+2. Momento de preparação  
+3. **Matriz só dos preços Tipo 1** (tamanhos / equivalentes)  
 4. “Usa todas as bordas da categoria?” → Sim / escolher  
-5. Idem adicionais / outros kinds  
+5. Para cada opção compartilhada visível: mostrar valor herdado + ação discreta **Personalizar somente neste produto**  
+6. **Não** listar campos obrigatórios de preço de borda/adicional  
 
-**Segunda pizza:** copiar preços / % / fixo / manual.
+**Segunda pizza:** copiar preços de tamanho / % / fixo / manual.
 
-### 7.4 Criar item no meio do fluxo
+### 10.4 Criar item no meio do fluxo
 
-“Criar Catupiry agora” → nome (+ ícone) → entra no catálogo → já selecionável — sem sair da conversa.
+“Criar Catupiry agora” → nome → entra no catálogo → se kind for de categoria, **já perguntar o preço padrão** na conversa da categoria (ou no mesmo passo).
 
 ---
 
-## 8. Nomenclatura de produto (UI)
+## 11. Nomenclatura de produto (UI)
 
 | Conceito | UI (direção) |
 |----------|----------------|
-| Catálogo reutilizável | **TBD** — candidatos em `00-product-philosophy.md` §7.1 |
+| Catálogo reutilizável | **TBD** — “Base do cardápio” provisório |
 | Category capabilities | Perguntas (“Possui bordas?”) |
-| Receita | “Como funciona esta categoria” / fluxograma |
+| Preço padrão da categoria | “Quanto custa normalmente?” |
+| Preço efetivo herdado | “Preço herdado da categoria (R$ X)” |
+| Override | “Personalizar somente neste produto” |
 | Materialize | “Preparando o cadastro…” |
 | Exclusion | “Quero escolher quais utilizar” |
 
-Decisão do nome do catálogo: **aprovação de produto** antes de gravar no menu.
-
 ---
 
-## 9. Alterações na categoria e impacto
+## 12. Alterações na categoria e impacto
 
-Sempre que a receita mudar de forma que afete produtos:
+### 12.1 Mudança de estrutura (itens / capabilities)
 
 ```text
 Você alterou: Cream Cheese (borda)
@@ -282,78 +366,94 @@ Como deseja aplicar?
 | Escolha | Comportamento |
 |---------|----------------|
 | Apenas novos | Materializa só em creates futuros |
-| Atualizar todos | Rematerializa produtos da categoria, **preservando** preços e exclusões já definidas |
-| Depois | Flag/pendência no produto ou categoria (detalhe na Fase 2+) |
+| Atualizar todos | Rematerializa, **preservando** exclusões e **overrides** de preço do produto |
+| Depois | Pendência (já suportada na receita) |
+
+### 12.2 Mudança só de preço padrão (Tipo 2)
+
+Alterar Catupiry R$ 10 → R$ 12 na categoria:
+
+- Produtos **sem** linha em `product_option_prices` para Catupiry → passam a R$ 12 **na hora** (resolução §8).  
+- Produtos **com** override → **mantêm** o preço próprio.  
+- Não exige rematerializar estrutura; pode invalidar cache do cardápio.
+
+Confirmação amigável recomendada: “Isso vale para todos os produtos que usam o preço padrão. Quem personalizou continua com o valor próprio.”
 
 ---
 
-## 10. Inteligência futura (hooks)
-
-Prever na API/modelo (sem implementar agora):
+## 13. Inteligência futura (hooks)
 
 | Hook | Uso futuro |
 |------|------------|
-| Similaridade de produto | “Copiar preços/estrutura desta pizza?” |
+| Similaridade de produto | “Copiar preços de tamanho desta pizza?” |
 | Sugestão de receita por nome/tipo | “Milk Shake → tamanhos + coberturas?” |
-| `CompanySettings.setup` | **Fase 4** — assistente de 1ª configuração (presets determinísticos) |
-| `GET/POST /admin/ai/suggestions/` | Stub Fase 4 — IA real depois |
+| `CompanySettings.setup` | Fase 4 — feito |
+| `GET/POST /admin/ai/suggestions/` | Stub Fase 4 |
 | Eventos de autoria | Treino / sugestões |
 
-Ver também `15-futuras-funcionalidades.md` e `19-future-ideas.md`.
+Ver `15-futuras-funcionalidades.md` e `19-future-ideas.md`.
 
 ---
 
-## 11. Fases de implementação
+## 14. Fases de implementação
 
 | Fase | Entrega | Quebra runtime? |
 |------|---------|-----------------|
-| **0** | Migrations + dual-read de preço + MaterializeService esqueleto + backfill | Não |
-| **1** | Catálogo sem preço na autoria + preços no produto (`option_prices` no admin; dual-read público) | Não |
-| **2** | Assistente da categoria + resumo + fluxograma + receita normalizada | Não |
-| **3** | Produto mágico + exceções + copiar preços + prompt de aplicação | Não |
-| **4** | Assistente de 1ª configuração + hooks de IA (opcional) | Não |
+| **0–4** | Receita, materialize, produto mágico, 1ª config | Não (já em código) |
+| **5** | Preços padrão na categoria + herança + override discreto + resolução §8 | Não — **em código** |
+
+**Fase 5 (escopo):**
+
+- Persistência `category_option_prices` (ou equivalente)  
+- Assistente da categoria pergunta preços Tipo 2  
+- Assistente do produto: matriz só Tipo 1 + herança / personalizar  
+- Engine / dual-read / MaterializeService usam §8  
+- Migração: preços atuais de borda/adicional no produto → sugerir promover à categoria **ou** manter como override até o comerciante limpar  
 
 **Nenhuma fase** substitui OptionGroup no storefront.
 
 ---
 
-## 12. Anti-padrões
+## 15. Anti-padrões
 
 | Anti-padrão | Por quê |
 |-------------|---------|
 | Tela de categoria com grid de “features” | Viola conversação |
-| JSON único `categories.features` com tudo | Dificulta BI/API; aceitável só settings pontuais |
-| Preço no Option compartilhado como fonte da verdade | Impede pizza A ≠ pizza B |
-| Clonar OptionGroup por produto | Quebra reutilização e preço global de identidade |
+| JSON único `categories.features` com tudo | Dificulta BI/API |
+| Pedir preço de borda/adicional em **todo** produto | Viola herança; manutenção impossível (80 pizzas) |
+| Guardar preço de tamanho **só** na categoria | Tamanho varia por produto |
+| Usar `options.price_modifier` como verdade na autoria nova | Mistura identidade com venda; impede herança clara |
+| Clonar OptionGroup por produto | Quebra reutilização |
 | Mostrar “Materializar” / “Override” na UI | Viola filosofia |
-| Aplicar mudança de categoria em todos sem perguntar | Quebra confiança |
+| Aplicar mudança de estrutura em todos sem perguntar | Quebra confiança |
+| Apagar override sem avisar ao “atualizar todos” | Perde exceção consciente do comerciante |
 
 ---
 
-## 13. Documentos a atualizar na implementação
+## 16. Documentos a atualizar na implementação (Fase 5)
 
-Quando iniciar a Fase 0 (após aprovação):
-
-- [ ] `03-modelagem-do-banco.md` — novas tabelas  
-- [ ] `07-api.md` — endpoints de receita / preços  
-- [ ] `08-regras-de-negocio.md` — herança, exclusões, aplicação  
-- [ ] `11-guia-ui-ux.md` — assistentes e resumos  
-- [ ] `16-product-builder-engine.md` — ponte autoria → runtime  
-- [ ] Checklists da sprint correspondente  
+- [ ] `03-modelagem-do-banco.md` — `category_option_prices`  
+- [ ] `07-api.md` — receita com preços; resolução documentada  
+- [ ] `08-regras-de-negocio.md` — herança e override  
+- [ ] `11-guia-ui-ux.md` — perguntas de preço na categoria; CTA discreto no produto  
+- [ ] `16-product-builder-engine.md` — cascade §8  
+- [x] `00-product-philosophy.md` — §6.7 / §6.8 alinhados (v1.2)  
+- [ ] Checklist da sprint correspondente  
 
 ---
 
-## 14. Histórico de Revisões
+## 17. Histórico de Revisões
 
 | Versão | Data | Descrição |
 |--------|------|-----------|
+| 1.6 | Jul/2026 | **Aprovado** — herança inteligente de preços; Fase 5 em código |
 | 1.5 | Jul/2026 | Fase 4 — 1ª configuração (presets) + stub `/admin/ai/suggestions/` |
-| 1.1 | Jul/2026 | **Aprovado** — Architecture Freeze; Fase 0 liberada |
-| 1.2 | Jul/2026 | Fase 1 em código — catálogo sem preço na autoria; `option_prices` no produto |
-| 1.3 | Jul/2026 | Fase 2 em código — assistente + árvore + `GET/PUT .../recipe/` |
 | 1.4 | Jul/2026 | Fase 3 — materialize no create, exclusões, apply_mode, copiar preços |
+| 1.3 | Jul/2026 | Fase 2 — assistente + árvore + `GET/PUT .../recipe/` |
+| 1.2 | Jul/2026 | Fase 1 — catálogo sem preço na autoria; `option_prices` no produto |
+| 1.1 | Jul/2026 | **Aprovado** — Architecture Freeze; Fase 0 liberada |
 | 1.0 | Jul/2026 | Receita normalizada, assistentes, materialização, fases 0–4 |
 
 ---
 
-> **Documento aprovado.** Architecture Freeze. Implementação incremental a partir da Fase 0.
+> **Documento aprovado.** Próximo: implementação da **Fase 5** (preços na categoria + herança + override discreto).
