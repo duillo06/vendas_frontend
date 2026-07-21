@@ -5,6 +5,7 @@ import {
 import {
   kindIdFromGroupName,
   saveCanonicalFromDraft,
+  buildOptionPricesFromDraft,
 } from "@/features/catalog/utils/canonicalLibrary";
 import {
   draftFromKind,
@@ -27,11 +28,12 @@ export type BuildProductInput = {
 
 /**
  * Cria o produto reaproveitando a biblioteca da empresa.
- * Nunca clona "Tamanho"/"Borda" se a casa já tem — só vincula.
+ * Identidade na base; preços em option_prices do produto.
  */
 export async function createProductFromWizard(input: BuildProductInput) {
   const library = await catalogAdminApi.listOptionGroups();
   const linkedIds: string[] = [];
+  const optionPrices: { option_id: string; price: number }[] = [];
   let workingLibrary = library;
 
   for (const group of input.groups) {
@@ -66,6 +68,7 @@ export async function createProductFromWizard(input: BuildProductInput) {
 
     const { group: saved } = await saveCanonicalFromDraft(draft, workingLibrary);
     if (!linkedIds.includes(saved.id)) linkedIds.push(saved.id);
+    optionPrices.push(...buildOptionPricesFromDraft(saved, draft.choices));
 
     // atualiza cache local pra próximo grupo no mesmo save
     workingLibrary = upsertLocal(workingLibrary, saved);
@@ -82,6 +85,7 @@ export async function createProductFromWizard(input: BuildProductInput) {
       option_group_id: id,
       sort_order: i,
     })),
+    ...(optionPrices.length ? { option_prices: optionPrices } : {}),
     ...(input.composition
       ? {
           composition: {

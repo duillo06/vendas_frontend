@@ -34,6 +34,9 @@ type CustomizationAssistantProps = {
   attachedIds?: Set<string>;
   /** categoria do produto — destaca cartões relevantes */
   categoryName?: string | null;
+  /** product = preço neste produto; catalog = só identidade na base */
+  priceContext?: "product" | "catalog";
+  productOptionPrices?: { option_id: string; price: number }[];
   onCancel: () => void;
   onSave: (draft: CustomizationDraft, existingGroup?: OptionGroupAdmin) => void | Promise<void>;
   onReuse?: (group: OptionGroupAdmin) => void | Promise<void>;
@@ -58,6 +61,8 @@ export function CustomizationAssistant({
   availableGroups = [],
   attachedIds = new Set(),
   categoryName,
+  priceContext = "product",
+  productOptionPrices = [],
   onCancel,
   onSave,
   onReuse,
@@ -66,8 +71,15 @@ export function CustomizationAssistant({
   confirmLabel,
 }: CustomizationAssistantProps) {
   const isEdit = mode === "edit" && !!initialGroup;
+  const showPrice = priceContext === "product";
   const saveLabel =
     confirmLabel ?? (isEdit ? "Salvar alterações" : "Adicionar ao produto");
+
+  const priceByOptionId = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const row of productOptionPrices) map.set(row.option_id, row.price);
+    return map;
+  }, [productOptionPrices]);
 
   const [kind, setKind] = useState<PersonalizationKind | null>(() => {
     if (!initialGroup) return null;
@@ -75,7 +87,11 @@ export function CustomizationAssistant({
     return inferred ?? kindById("other") ?? null;
   });
   const [draft, setDraft] = useState<CustomizationDraft>(() =>
-    initialGroup ? draftFromGroup(initialGroup) : emptyDraft(),
+    initialGroup
+      ? draftFromGroup(initialGroup, Object.fromEntries(
+          productOptionPrices.map((r) => [r.option_id, r.price]),
+        ))
+      : emptyDraft(),
   );
   const [step, setStep] = useState<Step>(isEdit ? "library" : "hub");
   const [error, setError] = useState<string | null>(null);
@@ -147,9 +163,10 @@ export function CustomizationAssistant({
       if (exists) {
         return { ...d, choices: d.choices.filter((c) => c.name.trim().toLowerCase() !== needle) };
       }
+      const price = (item.optionId && priceByOptionId.get(item.optionId)) ?? 0;
       return {
         ...d,
-        choices: [...d.choices, newChoice(item.name, item.price, item.description ?? "")],
+        choices: [...d.choices, newChoice(item.name, price, item.description ?? "")],
       };
     });
   };
@@ -355,13 +372,17 @@ export function CustomizationAssistant({
               title={kind.libraryQuestion || "Quais opções deseja oferecer?"}
               description={
                 isEdit
-                  ? "Atenção: preço e nome valem para todos os produtos que usam este item."
+                  ? showPrice
+                    ? "Nome na biblioteca; preço só neste produto."
+                    : "Só identidade — sem preço na base do cardápio."
                   : kind.libraryHint
               }
             >
               <ul className="space-y-1.5">
                 {libraryItems.map((item) => {
                   const checked = selectedNames.has(item.name.toLowerCase());
+                  const hintPrice =
+                    (item.optionId && priceByOptionId.get(item.optionId)) ?? null;
                   return (
                     <li key={item.key}>
                       <button
@@ -384,9 +405,10 @@ export function CustomizationAssistant({
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block text-sm font-medium">{item.name}</span>
-                          {item.fromLibrary && item.price > 0 ? (
+                          {showPrice && hintPrice != null && hintPrice > 0 ? (
                             <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                              +{item.price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                              +{hintPrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}{" "}
+                              neste produto
                             </span>
                           ) : null}
                         </span>
@@ -400,6 +422,35 @@ export function CustomizationAssistant({
                   );
                 })}
               </ul>
+
+              {showPrice && draft.choices.some((c) => c.name.trim()) ? (
+                <div className="mt-4 space-y-2 rounded-xl border border-[hsl(var(--border))] bg-white p-3">
+                  <p className="text-sm font-medium">Preços neste produto</p>
+                  <ul className="space-y-2">
+                    {draft.choices
+                      .filter((c) => c.name.trim())
+                      .map((choice) => (
+                        <li
+                          key={choice.key}
+                          className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                          <span className="text-sm">{choice.name}</span>
+                          <CurrencyInput
+                            value={choice.price}
+                            onChange={(price) =>
+                              setDraft((d) => ({
+                                ...d,
+                                choices: d.choices.map((c) =>
+                                  c.key === choice.key ? { ...c, price } : c,
+                                ),
+                              }))
+                            }
+                          />
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              ) : null}
 
               <Button
                 type="button"
@@ -424,7 +475,11 @@ export function CustomizationAssistant({
           <motion.div key="create-item" className="space-y-4" {...stepMotion}>
             <QuestionBlock
               title={kind.createLabel || "Nova opção"}
-              description="Só o essencial — entra na biblioteca da empresa e serve nos próximos produtos."
+              description={
+                showPrice
+                  ? "Nome na biblioteca; o preço vale só neste produto."
+                  : "Só o nome — preço você define depois em cada produto."
+              }
             >
               <label className="block space-y-1.5">
                 <span className="text-sm font-medium">Nome</span>
@@ -436,13 +491,15 @@ export function CustomizationAssistant({
                   onChange={(e) => setNewName(e.target.value)}
                 />
               </label>
-              <label className="mt-3 block space-y-1.5">
-                <span className="text-sm font-medium">Preço</span>
-                <CurrencyInput value={newPrice} onChange={setNewPrice} />
-                <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                  Zero se não altera o valor do produto.
-                </span>
-              </label>
+              {showPrice ? (
+                <label className="mt-3 block space-y-1.5">
+                  <span className="text-sm font-medium">Preço neste produto</span>
+                  <CurrencyInput value={newPrice} onChange={setNewPrice} />
+                  <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                    Zero se não altera o valor do produto.
+                  </span>
+                </label>
+              ) : null}
               <label className="mt-3 block space-y-1.5">
                 <span className="text-sm font-medium">Descrição (opcional)</span>
                 <Input

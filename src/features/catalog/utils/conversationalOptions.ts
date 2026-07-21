@@ -264,7 +264,10 @@ export function draftFromTemplate(template: CustomizationTemplate): Customizatio
   };
 }
 
-export function draftFromGroup(group: OptionGroupAdmin): CustomizationDraft {
+export function draftFromGroup(
+  group: OptionGroupAdmin,
+  productPrices?: Record<string, number>,
+): CustomizationDraft {
   const selection_type = (group.selection_type === "multiple" ? "multiple" : "single") as OptionSelectionType;
   const kind = inferKindFromGroup(group);
   return {
@@ -278,7 +281,10 @@ export function draftFromGroup(group: OptionGroupAdmin): CustomizationDraft {
       key: option.id,
       id: option.id,
       name: option.name,
-      price: option.price_modifier,
+      // preço do produto se existir; senão legado; senão 0
+      price:
+        productPrices?.[option.id] ??
+        (productPrices ? 0 : option.price_modifier),
       description: option.description ?? "",
     })),
     kindId: kind?.id,

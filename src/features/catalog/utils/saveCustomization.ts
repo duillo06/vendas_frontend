@@ -29,9 +29,10 @@ export async function createCustomizationFromDraft(
 
   const named = draft.choices.filter((c) => c.name.trim());
   for (const [index, choice] of named.entries()) {
+    // identidade na base — preço fica no produto
     await catalogAdminApi.createOption(created.id, {
       name: choice.name.trim(),
-      price_modifier: choice.price,
+      price_modifier: 0,
       description: choice.description?.trim() || null,
       is_active: true,
       is_available: true,
@@ -79,12 +80,12 @@ async function syncChoices(group: OptionGroupAdmin, choices: ChoiceDraft[]) {
       keptIds.add(choice.id);
       const original = existingById.get(choice.id)!;
       const nameChanged = original.name !== choice.name.trim();
-      const priceChanged = original.price_modifier !== choice.price;
       const orderChanged = original.sort_order !== index;
-      if (nameChanged || priceChanged || orderChanged) {
+      const descChanged =
+        (original.description ?? "") !== (choice.description?.trim() ?? "");
+      if (nameChanged || orderChanged || descChanged) {
         await catalogAdminApi.updateOption(group.id, choice.id, {
           name: choice.name.trim(),
-          price_modifier: choice.price,
           description: choice.description?.trim() || null,
           sort_order: index,
         });
@@ -94,7 +95,7 @@ async function syncChoices(group: OptionGroupAdmin, choices: ChoiceDraft[]) {
 
     const created = (await catalogAdminApi.createOption(group.id, {
       name: choice.name.trim(),
-      price_modifier: choice.price,
+      price_modifier: 0,
       description: choice.description?.trim() || null,
       is_active: true,
       is_available: true,

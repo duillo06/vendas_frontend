@@ -1166,9 +1166,14 @@ Cria produto.
   "option_group_ids": [
     "aa0e8400-e29b-41d4-a716-446655440006",
     "aa0e8400-e29b-41d4-a716-446655440010"
+  ],
+  "option_prices": [
+    { "option_id": "bb0e8400-e29b-41d4-a716-446655440001", "price": 12.0 }
   ]
 }
 ```
+
+> **Fase 1:** `option_prices` é a fonte da verdade do preço da opção **neste** produto. Opções na base do cardápio ficam com `price_modifier = 0` na autoria nova. Detalhe admin e público resolvem dual-read (`product_option_prices` → fallback legado).
 
 **Response `201`:** Product detail
 

@@ -15,7 +15,7 @@ import {
   type CompositionForm,
 } from "@/features/catalog/components/ProductCompositionEditor";
 import { catalogAdminKeys } from "@/features/catalog/constants/catalog-admin-keys";
-import { saveCanonicalFromDraft } from "@/features/catalog/utils/canonicalLibrary";
+import { saveCanonicalFromDraft, buildOptionPricesFromDraft, syncProductOptionPrices } from "@/features/catalog/utils/canonicalLibrary";
 import {
   summarizeGroup,
   type CustomizationDraft,
@@ -37,6 +37,10 @@ type ProductCustomizationsPanelProps = {
   categoryName?: string | null;
   categories?: CategoryAdmin[];
   currentProductId?: string;
+  /** preços já salvos neste produto — alimenta o assistente */
+  productOptionPrices?: { option_id: string; price: number }[];
+  /** acumula preços no form (create) ou atualiza após sync */
+  onOptionPricesChange?: (prices: { option_id: string; price: number }[]) => void;
   composition?: CompositionForm;
   onCompositionChange?: (next: CompositionForm) => void;
 };
@@ -50,6 +54,8 @@ export function ProductCustomizationsPanel({
   categoryName,
   categories,
   currentProductId,
+  productOptionPrices = [],
+  onOptionPricesChange,
   composition,
   onCompositionChange,
 }: ProductCustomizationsPanelProps) {
@@ -96,12 +102,18 @@ export function ProductCustomizationsPanel({
       const library = existing
         ? mergedGroups.map((g) => (g.id === existing.id ? existing : g))
         : mergedGroups;
-      return saveCanonicalFromDraft(
+      const result = await saveCanonicalFromDraft(
         existing ? { ...draft, name: existing.name || draft.name } : draft,
         library,
       );
+      const prices = buildOptionPricesFromDraft(result.group, draft.choices);
+      // produto existente: grava preços já; create espera o submit do form
+      if (currentProductId && prices.length) {
+        await syncProductOptionPrices(currentProductId, prices);
+      }
+      return { ...result, prices, draft };
     },
-    onSuccess: ({ group, reused }, variables) => {
+    onSuccess: ({ group, reused, prices }, variables) => {
       invalidateGroups();
       setLocalGroups((current) => {
         const without = current.filter((item) => item.id !== group.id);
@@ -110,8 +122,15 @@ export function ProductCustomizationsPanel({
       if (!attachedIds.has(group.id)) {
         onChange([...links, emptyProductLink(group.id, links.length)]);
       }
+      if (prices.length) {
+        onOptionPricesChange?.(mergeOptionPrices(productOptionPrices, prices));
+      }
       if (variables.existing) {
-        toast.success("Atualizado na biblioteca — vale pra todos os produtos que usam");
+        toast.success(
+          currentProductId
+            ? "Atualizado — preços deste produto e itens da biblioteca"
+            : "Atualizado na biblioteca",
+        );
       } else if (reused) {
         toast.success("Usando a biblioteca da casa neste produto");
       } else {
@@ -321,8 +340,8 @@ export function ProductCustomizationsPanel({
               {dialog === "half"
                 ? "Perguntas simples — o cliente combina sabores no cardápio."
                 : dialog === "edit"
-                  ? "Mudanças de preço e nome valem para todos os produtos que usam este item na biblioteca."
-                  : "Uma pergunta por vez. O que você criar fica na biblioteca da empresa."}
+                  ? "Nome e descrição na biblioteca; o preço vale só neste produto."
+                  : "Uma pergunta por vez. Itens entram na biblioteca; preços ficam neste produto."}
             </DialogDescription>
           </DialogHeader>
 
@@ -333,8 +352,10 @@ export function ProductCustomizationsPanel({
               availableGroups={mergedGroups}
               attachedIds={attachedIds}
               categoryName={categoryName}
+              priceContext="product"
+              productOptionPrices={productOptionPrices}
               pending={saveMutation.isPending}
-              confirmLabel={dialog === "edit" ? "Salvar na biblioteca" : "Salvar e usar neste produto"}
+              confirmLabel={dialog === "edit" ? "Salvar" : "Salvar e usar neste produto"}
               onCancel={closeDialog}
               onOpenHalfAndHalf={
                 canHalf
@@ -383,4 +404,13 @@ export function ProductCustomizationsPanel({
       </Dialog>
     </div>
   );
+}
+
+function mergeOptionPrices(
+  current: { option_id: string; price: number }[],
+  next: { option_id: string; price: number }[],
+) {
+  const map = new Map(current.map((row) => [row.option_id, row.price]));
+  for (const row of next) map.set(row.option_id, row.price);
+  return [...map.entries()].map(([option_id, price]) => ({ option_id, price }));
 }

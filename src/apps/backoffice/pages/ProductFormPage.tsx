@@ -69,6 +69,7 @@ export function ProductFormPage() {
     is_available: true,
     product_option_groups: [] as ProductOptionGroupLink[],
     composition: DEFAULT_COMPOSITION as CompositionForm,
+    option_prices: [] as { option_id: string; price: number }[],
   });
   const [previewMode, setPreviewMode] = useState<"storefront" | "builder">("storefront");
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
@@ -86,6 +87,7 @@ export function ProductFormPage() {
         composition: product.composition
           ? { ...DEFAULT_COMPOSITION, ...product.composition }
           : DEFAULT_COMPOSITION,
+        option_prices: product.option_prices ?? [],
       });
       setPendingImages([]);
     } else if (isNew && categories?.length) {
@@ -190,6 +192,7 @@ export function ProductFormPage() {
         is_active: form.is_active,
         is_available: form.is_available,
         product_option_groups: serializeProductLinks(form.product_option_groups),
+        ...(form.option_prices.length ? { option_prices: form.option_prices } : {}),
         composition: {
           enabled: form.composition.enabled,
           source_type: form.composition.source_type,
@@ -398,6 +401,10 @@ export function ProductFormPage() {
             categoryName={categories?.find((c) => c.id === form.category_id)?.name}
             categories={categories}
             currentProductId={product?.id}
+            productOptionPrices={form.option_prices}
+            onOptionPricesChange={(option_prices) =>
+              setForm((current) => ({ ...current, option_prices }))
+            }
             composition={form.composition}
             onCompositionChange={(composition) =>
               setForm((current) => ({ ...current, composition }))

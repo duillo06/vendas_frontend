@@ -59,8 +59,39 @@ export function resolveKindFromDraft(draft: CustomizationDraft): Personalization
   return inferKindFromGroup(fake) ?? null;
 }
 
+export type ProductOptionPriceEntry = { option_id: string; price: number };
+
+/** monta preços do produto a partir das escolhas (nome → option id) */
+export function buildOptionPricesFromDraft(
+  group: OptionGroupAdmin,
+  choices: ChoiceDraft[],
+): ProductOptionPriceEntry[] {
+  const byName = new Map(
+    group.options.map((option) => [option.name.trim().toLowerCase(), option]),
+  );
+  const out: ProductOptionPriceEntry[] = [];
+  for (const choice of choices) {
+    const name = choice.name.trim();
+    if (!name) continue;
+    const option = byName.get(name.toLowerCase());
+    if (!option) continue;
+    out.push({ option_id: option.id, price: Number(choice.price) || 0 });
+  }
+  return out;
+}
+
+/** grava preços neste produto (fonte da verdade na autoria nova) */
+export async function syncProductOptionPrices(
+  productId: string,
+  prices: ProductOptionPriceEntry[],
+): Promise<void> {
+  if (!prices.length) return;
+  await catalogAdminApi.updateProduct(productId, { option_prices: prices });
+}
+
 /**
  * Garante o grupo da casa + upsert das opções por NOME.
+ * Identidade só — price_modifier fica 0; preço vai em product_option_prices.
  * Nunca apaga opções da biblioteca (outros produtos podem usar).
  * Nunca cria um segundo "Tamanho"/"Borda" se já existir.
  */
@@ -97,7 +128,7 @@ export async function saveCanonicalFromDraft(
   return { group: synced, reused, createdCount };
 }
 
-/** atualiza existente ou cria — nunca deleta da biblioteca */
+/** atualiza existente ou cria — nunca deleta; nunca grava preço na base */
 async function upsertChoicesByName(
   group: OptionGroupAdmin,
   choices: ChoiceDraft[],
@@ -114,13 +145,12 @@ async function upsertChoicesByName(
     const existing = byName.get(needle);
 
     if (existing) {
-      const priceChanged = existing.price_modifier !== choice.price;
       const descChanged =
         (existing.description ?? "") !== (choice.description?.trim() ?? "");
-      if (priceChanged || descChanged) {
+      // só identidade — não mexe no price_modifier legado
+      if (existing.name !== name || descChanged) {
         await catalogAdminApi.updateOption(group.id, existing.id, {
           name,
-          price_modifier: choice.price,
           description: choice.description?.trim() || null,
         });
       }
@@ -130,7 +160,7 @@ async function upsertChoicesByName(
     sortBase += 1;
     await catalogAdminApi.createOption(group.id, {
       name,
-      price_modifier: choice.price,
+      price_modifier: 0,
       description: choice.description?.trim() || null,
       is_active: true,
       is_available: true,
@@ -170,12 +200,11 @@ export async function replaceCanonicalChoices(
       const original = existingById.get(choice.id)!;
       if (
         original.name !== choice.name.trim() ||
-        original.price_modifier !== choice.price ||
-        original.sort_order !== index
+        original.sort_order !== index ||
+        (original.description ?? "") !== (choice.description?.trim() ?? "")
       ) {
         await catalogAdminApi.updateOption(group.id, choice.id, {
           name: choice.name.trim(),
-          price_modifier: choice.price,
           description: choice.description?.trim() || null,
           sort_order: index,
         });
@@ -188,7 +217,6 @@ export async function replaceCanonicalChoices(
       keptIds.add(sameName.id);
       await catalogAdminApi.updateOption(group.id, sameName.id, {
         name: choice.name.trim(),
-        price_modifier: choice.price,
         description: choice.description?.trim() || null,
         sort_order: index,
       });
@@ -197,7 +225,7 @@ export async function replaceCanonicalChoices(
 
     const created = (await catalogAdminApi.createOption(group.id, {
       name: choice.name.trim(),
-      price_modifier: choice.price,
+      price_modifier: 0,
       description: choice.description?.trim() || null,
       is_active: true,
       is_available: true,
@@ -247,7 +275,8 @@ export function librarySuggestionsForGroupName(
   if (!kind) return [];
   const canonical = findCanonicalGroup(groups, kind);
   if (!canonical) return [];
+  // base sem preço — sugestão só com nome; preço entra no produto
   return canonical.options
     .filter((o) => o.is_active !== false)
-    .map((o) => ({ name: o.name, price: o.price_modifier }));
+    .map((o) => ({ name: o.name, price: 0 }));
 }

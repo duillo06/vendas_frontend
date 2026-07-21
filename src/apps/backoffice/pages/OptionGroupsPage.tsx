@@ -263,8 +263,8 @@ export function OptionGroupsPage() {
             </DialogTitle>
             <DialogDescription>
               {dialog === "edit"
-                ? "Preço e nome valem para todos os produtos que usam este item."
-                : "Depois é só marcar no cadastro do produto — sem recriar."}
+                ? "Só nome e opções — preço fica em cada produto."
+                : "Sem preço aqui. No produto você define quanto cobra."}
             </DialogDescription>
           </DialogHeader>
           {dialog !== "closed" ? (
@@ -272,6 +272,7 @@ export function OptionGroupsPage() {
               mode={dialog === "edit" ? "edit" : "create"}
               initialGroup={editing}
               availableGroups={groups}
+              priceContext="catalog"
               pending={saveMutation.isPending}
               confirmLabel={dialog === "edit" ? "Salvar na biblioteca" : "Salvar na biblioteca"}
               onCancel={() => {

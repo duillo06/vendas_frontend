@@ -81,6 +81,7 @@ export interface ProductAdminDetail {
   option_group_ids: string[];
   product_option_groups: ProductOptionGroupLink[];
   composition?: ProductCompositionAdmin | null;
+  option_prices?: { option_id: string; price: number }[];
   images: ProductImageAdmin[];
   created_at?: string;
   updated_at?: string;

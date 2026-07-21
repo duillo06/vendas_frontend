@@ -307,7 +307,7 @@ Ver também `15-futuras-funcionalidades.md`.
 | Fase | Entrega | Quebra runtime? |
 |------|---------|-----------------|
 | **0** | Migrations + dual-read de preço + MaterializeService esqueleto + backfill | Não |
-| **1** | Catálogo sem preço na autoria + preços no produto | Não |
+| **1** | Catálogo sem preço na autoria + preços no produto (`option_prices` no admin; dual-read público) | Não |
 | **2** | Assistente da categoria + resumo + fluxograma + receita normalizada | Não |
 | **3** | Produto mágico + exceções + copiar preços + prompt de aplicação | Não |
 | **4** | Assistente de 1ª configuração + hooks de IA (opcional) | Não |
@@ -347,6 +347,7 @@ Quando iniciar a Fase 0 (após aprovação):
 | Versão | Data | Descrição |
 |--------|------|-----------|
 | 1.1 | Jul/2026 | **Aprovado** — Architecture Freeze; Fase 0 liberada |
+| 1.2 | Jul/2026 | Fase 1 em código — catálogo sem preço na autoria; `option_prices` no produto |
 | 1.0 | Jul/2026 | Receita normalizada, assistentes, materialização, fases 0–4 |
 
 ---

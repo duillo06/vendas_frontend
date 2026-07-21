@@ -18,6 +18,9 @@ import type { IntentFlowProps } from "../types";
 export function OptionsIntentFlow({ product, onClose, onSuccess }: IntentFlowProps) {
   const queryClient = useQueryClient();
   const [links, setLinks] = useState<ProductOptionGroupLink[]>(() => linksFromProduct(product));
+  const [optionPrices, setOptionPrices] = useState(
+    () => product.option_prices ?? [],
+  );
   const [composition, setComposition] = useState<CompositionForm>(() =>
     product.composition
       ? { ...DEFAULT_COMPOSITION, ...product.composition }
@@ -39,6 +42,7 @@ export function OptionsIntentFlow({ product, onClose, onSuccess }: IntentFlowPro
       catalogAdminApi.updateProduct(product.id, {
         product_option_groups: serializeProductLinks(links),
         composition,
+        ...(optionPrices.length ? { option_prices: optionPrices } : {}),
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: catalogAdminKeys.product(product.id) });
@@ -68,6 +72,8 @@ export function OptionsIntentFlow({ product, onClose, onSuccess }: IntentFlowPro
         categoryName={product.category?.name}
         categories={categories}
         currentProductId={product.id}
+        productOptionPrices={optionPrices}
+        onOptionPricesChange={setOptionPrices}
         composition={composition}
         onCompositionChange={setComposition}
       />
