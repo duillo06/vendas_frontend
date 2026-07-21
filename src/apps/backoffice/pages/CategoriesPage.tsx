@@ -1,22 +1,39 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FolderOpen, Layers, Link2, Pencil, Plus, Sparkles, X } from "lucide-react";
+import { FolderOpen, Layers, Link2, Pencil, Plus, Sparkles, Wand2, X } from "lucide-react";
 import { Link } from "react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { catalogAdminApi, type CategoryAdmin } from "@/features/catalog/api/catalogAdminApi";
+import {
+  catalogAdminApi,
+  type CategoryAdmin,
+  type CategoryRecipe,
+} from "@/features/catalog/api/catalogAdminApi";
+import { CategoryRecipeAssistant } from "@/features/catalog/components/CategoryRecipeAssistant";
+import { CategoryRecipeTree } from "@/features/catalog/components/CategoryRecipeTree";
 import { catalogAdminKeys } from "@/features/catalog/constants/catalog-admin-keys";
 import { formatCategoryLabel } from "@/features/catalog/utils/categoryLabel";
 import { UiHint } from "@/shared/components/UiHint";
 import { BackLink, PageHeader } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { adminCopy } from "@/shared/copy/admin";
 import { cn } from "@/shared/lib/utils";
 import { useConfirm } from "@/shared/hooks/useConfirm";
+
+type RecipeDialog =
+  | { mode: "closed" }
+  | { mode: "view" | "edit"; category: CategoryAdmin; recipe: CategoryRecipe | null };
 
 export function CategoriesPage() {
   const queryClient = useQueryClient();
@@ -26,6 +43,8 @@ export function CategoriesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editEmoji, setEditEmoji] = useState("");
+  const [recipeDialog, setRecipeDialog] = useState<RecipeDialog>({ mode: "closed" });
+  const [recipeLoading, setRecipeLoading] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: catalogAdminKeys.categories(),
@@ -122,6 +141,25 @@ export function CategoriesPage() {
     });
   };
 
+  const openRecipe = async (category: CategoryAdmin, mode: "view" | "edit") => {
+    setRecipeLoading(true);
+    try {
+      const recipe = await catalogAdminApi.getCategoryRecipe(category.id);
+      const hasContent = recipe.capabilities.some((c) => c.enabled);
+      setRecipeDialog({
+        mode: mode === "view" && !hasContent ? "edit" : mode,
+        category,
+        recipe,
+      });
+    } catch {
+      toast.error("Não deu pra abrir como esta categoria funciona.");
+    } finally {
+      setRecipeLoading(false);
+    }
+  };
+
+  const closeRecipe = () => setRecipeDialog({ mode: "closed" });
+
   return (
     <div className="space-y-6">
       <BackLink to="/" label="Dashboard" />
@@ -133,7 +171,7 @@ export function CategoriesPage() {
       />
 
       <UiHint icon={Sparkles} tone="warm">
-        {adminCopy.categories.guidance}
+        {adminCopy.categories.guidance} Depois, diga como a categoria funciona (tamanhos, bordas…).
       </UiHint>
 
       <Card className="border-[hsl(var(--border))] bg-white">
@@ -328,14 +366,27 @@ export function CategoriesPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="font-medium">{formatCategoryLabel(category)}</p>
                       <p className="text-xs text-[hsl(var(--muted-foreground))]">
                         {category.product_count} produto{category.product_count === 1 ? "" : "s"}
+                        {category.has_recipe ? " · como funciona configurado" : ""}
                       </p>
                     </div>
-                    <div className="flex shrink-0 gap-2">
+                    <div className="flex flex-wrap shrink-0 gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="gap-1 bg-brand hover:brightness-95"
+                        disabled={recipeLoading}
+                        onClick={() =>
+                          void openRecipe(category, category.has_recipe ? "view" : "edit")
+                        }
+                      >
+                        <Wand2 className="h-3.5 w-3.5" />
+                        {category.has_recipe ? "Como funciona" : "Configurar"}
+                      </Button>
                       <Button
                         type="button"
                         size="sm"
@@ -344,7 +395,7 @@ export function CategoriesPage() {
                         onClick={() => startEditing(category)}
                       >
                         <Pencil className="h-3.5 w-3.5" />
-                        Editar
+                        Nome
                       </Button>
                       <Button
                         type="button"
@@ -363,6 +414,77 @@ export function CategoriesPage() {
           </ul>
         </>
       )}
+
+      <Dialog
+        open={recipeDialog.mode !== "closed"}
+        onOpenChange={(open) => {
+          if (!open) closeRecipe();
+        }}
+        className="max-w-2xl"
+      >
+        {recipeDialog.mode !== "closed" ? (
+          <DialogContent onClose={closeRecipe} className="max-h-[min(90vh,760px)] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {recipeDialog.mode === "edit"
+                  ? `Como funciona ${recipeDialog.category.name}?`
+                  : `${recipeDialog.category.name} — como funciona`}
+              </DialogTitle>
+              <DialogDescription>
+                {recipeDialog.mode === "edit"
+                  ? "Uma pergunta por vez. Preços ficam nos produtos."
+                  : "Só leitura. Para mudar, reabra a conversa."}
+              </DialogDescription>
+            </DialogHeader>
+
+            {recipeDialog.mode === "view" && recipeDialog.recipe ? (
+              <div className="space-y-4">
+                <CategoryRecipeTree recipe={recipeDialog.recipe} />
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                  <Button type="button" variant="outline" onClick={closeRecipe}>
+                    Fechar
+                  </Button>
+                  <Button
+                    type="button"
+                    className="bg-brand hover:brightness-95"
+                    onClick={() =>
+                      setRecipeDialog({
+                        mode: "edit",
+                        category: recipeDialog.category,
+                        recipe: recipeDialog.recipe,
+                      })
+                    }
+                  >
+                    Editar
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+
+            {recipeDialog.mode === "edit" ? (
+              <CategoryRecipeAssistant
+                categoryId={recipeDialog.category.id}
+                categoryName={recipeDialog.category.name}
+                initialRecipe={recipeDialog.recipe}
+                onCancel={closeRecipe}
+                onSaved={(recipe) => {
+                  toast.success("Pronto — assim funciona esta categoria");
+                  void queryClient.invalidateQueries({ queryKey: catalogAdminKeys.categories() });
+                  void queryClient.invalidateQueries({
+                    queryKey: catalogAdminKeys.categoryRecipe(recipeDialog.category.id),
+                  });
+                  void queryClient.invalidateQueries({ queryKey: catalogAdminKeys.optionGroups() });
+                  setRecipeDialog({
+                    mode: "view",
+                    category: recipeDialog.category,
+                    recipe,
+                  });
+                }}
+              />
+            ) : null}
+          </DialogContent>
+        ) : null}
+      </Dialog>
     </div>
   );
 }

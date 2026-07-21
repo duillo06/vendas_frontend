@@ -1294,6 +1294,42 @@ Soft delete. **Erro 422** se categoria tem produtos ativos.
 
 ---
 
+### 15.5 Receita da categoria (Fase 2)
+
+#### `GET /api/v1/admin/categories/{id}/recipe/`
+
+Retorna capabilities + libraries da receita.
+
+**Permissão:** `catalog.view`
+
+#### `PUT /api/v1/admin/categories/{id}/recipe/`
+
+Substitui a receita completa (após resumo no assistente).
+
+**Permissão:** `catalog.manage`
+
+```json
+{
+  "template_key": "pizza",
+  "capabilities": [
+    { "kind": "size", "enabled": true, "is_required": true, "sort_order": 0, "settings": {} },
+    { "kind": "half", "enabled": true, "is_required": false, "sort_order": 1, "settings": { "max_parts": 2, "pricing_rule": "highest" } }
+  ],
+  "libraries": [
+    {
+      "kind": "size",
+      "option_group_id": "aa0e8400-e29b-41d4-a716-446655440006",
+      "sort_order": 0,
+      "option_ids": ["bb0e8400-e29b-41d4-a716-446655440001"]
+    }
+  ]
+}
+```
+
+> Não rematerializa produtos existentes — prompt de aplicação entra na Fase 3.
+
+---
+
 ## 16. API Admin — Grupos de Opções
 
 ### 16.1 `GET /api/v1/admin/option-groups/`
@@ -1651,6 +1687,8 @@ GET /api/v1/redoc/           # ReDoc
 | 24 | POST | `/admin/categories/` | JWT | `catalog.manage` |
 | 25 | PATCH | `/admin/categories/{id}/` | JWT | `catalog.manage` |
 | 26 | DELETE | `/admin/categories/{id}/` | JWT | `catalog.manage` |
+| 26a | GET | `/admin/categories/{id}/recipe/` | JWT | `catalog.view` |
+| 26b | PUT | `/admin/categories/{id}/recipe/` | JWT | `catalog.manage` |
 | 27 | GET | `/admin/option-groups/` | JWT | `catalog.view` |
 | 28 | POST | `/admin/option-groups/` | JWT | `catalog.manage` |
 | 29 | GET | `/admin/option-groups/{id}/` | JWT | `catalog.view` |

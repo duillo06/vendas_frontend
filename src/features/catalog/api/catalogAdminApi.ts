@@ -16,7 +16,44 @@ export interface CategoryAdmin {
   is_active: boolean;
   sort_order: number;
   product_count: number;
+  has_recipe?: boolean;
 }
+
+export type CategoryRecipeCapability = {
+  kind: string;
+  enabled: boolean;
+  is_required: boolean;
+  sort_order: number;
+  settings: Record<string, unknown>;
+};
+
+export type CategoryRecipeLibrary = {
+  kind: string;
+  option_group_id: string;
+  option_group_name?: string;
+  sort_order: number;
+  option_ids: string[];
+  options?: { id: string; name: string }[];
+};
+
+export type CategoryRecipe = {
+  category_id: string;
+  category_name: string;
+  template_key: string;
+  capabilities: CategoryRecipeCapability[];
+  libraries: CategoryRecipeLibrary[];
+};
+
+export type CategoryRecipeWrite = {
+  capabilities: CategoryRecipeCapability[];
+  libraries: {
+    kind: string;
+    option_group_id: string;
+    sort_order?: number;
+    option_ids: string[];
+  }[];
+  template_key?: string;
+};
 
 export interface ProductAdminListItem {
   id: string;
@@ -120,6 +157,7 @@ export interface OptionGroupAdmin {
   pricing_config?: PricingConfig | null;
   ui_config?: Record<string, string> | null;
   default_option_ids?: string[];
+  kind?: string | null;
   options: OptionAdmin[];
   options_count: number;
 }
@@ -177,6 +215,16 @@ export const catalogAdminApi = {
     apiClient.patch<CategoryAdmin>(`/admin/categories/${id}/`, data).then((response) => response.data),
 
   deleteCategory: (id: string) => apiClient.delete(`/admin/categories/${id}/`),
+
+  getCategoryRecipe: (id: string) =>
+    apiClient
+      .get<CategoryRecipe>(`/admin/categories/${id}/recipe/`)
+      .then((response) => response.data),
+
+  putCategoryRecipe: (id: string, data: CategoryRecipeWrite) =>
+    apiClient
+      .put<CategoryRecipe>(`/admin/categories/${id}/recipe/`, data)
+      .then((response) => response.data),
 
   listOptionGroups: () =>
     apiClient.get<OptionGroupAdmin[]>("/admin/option-groups/").then((response) => response.data),
