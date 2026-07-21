@@ -9,9 +9,9 @@ import { CustomizationAssistant } from "@/features/catalog/components/Customizat
 import { catalogAdminKeys } from "@/features/catalog/constants/catalog-admin-keys";
 import { summarizeGroup } from "@/features/catalog/utils/conversationalOptions";
 import {
-  createCustomizationFromDraft,
-  updateCustomizationFromDraft,
-} from "@/features/catalog/utils/saveCustomization";
+  replaceCanonicalChoices,
+  saveCanonicalFromDraft,
+} from "@/features/catalog/utils/canonicalLibrary";
 import type { CustomizationDraft } from "@/features/catalog/utils/conversationalOptions";
 import { UiHint } from "@/shared/components/UiHint";
 import { BackLink, PageHeader } from "@/shared/components/visual";
@@ -28,6 +28,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { useConfirm } from "@/shared/hooks/useConfirm";
 import { adminCopy } from "@/shared/copy/admin";
+import { catalogLabels } from "@/shared/copy/catalogLabels";
 import { cn } from "@/shared/lib/utils";
 
 type DialogMode = "closed" | "create" | "edit";
@@ -64,13 +65,14 @@ export function OptionGroupsPage() {
       draft: CustomizationDraft;
       existing?: OptionGroupAdmin;
     }) => {
-      if (existing) return updateCustomizationFromDraft(existing, draft);
-      return createCustomizationFromDraft(draft, groups.length);
+      // na biblioteca: edição pode remover opções; criação usa canônico
+      if (existing) return replaceCanonicalChoices(existing, draft);
+      return saveCanonicalFromDraft(draft, groups);
     },
     onSuccess: (_result, variables) => {
       invalidate();
       toast.success(
-        variables.existing ? adminCopy.optionGroups.editor.saved : "Personalização criada",
+        variables.existing ? adminCopy.optionGroups.editor.saved : adminCopy.optionGroups.editor.created,
       );
       setDialog("closed");
       setEditing(null);
@@ -91,7 +93,7 @@ export function OptionGroupsPage() {
     mutationFn: (id: string) => catalogAdminApi.deleteOptionGroup(id),
     onSuccess: () => {
       invalidate();
-      toast.success("Personalização removida");
+      toast.success("Item removido da biblioteca");
     },
     onError: () => toast.error("Não deu pra excluir. Ela pode estar em uso em produtos."),
   });
@@ -101,8 +103,8 @@ export function OptionGroupsPage() {
       <BackLink to="/" label="Dashboard" />
 
       <PageHeader
-        title="Personalizações salvas"
-        subtitle={adminCopy.optionGroups.subtitle}
+        title={catalogLabels.reusableCatalog}
+        subtitle={catalogLabels.reusableCatalogHint}
         icon={Layers}
       />
 
@@ -257,10 +259,12 @@ export function OptionGroupsPage() {
         >
           <DialogHeader>
             <DialogTitle>
-              {dialog === "edit" ? "Editar personalização" : "Nova personalização"}
+              {dialog === "edit" ? "Editar na biblioteca" : "Novo item na biblioteca"}
             </DialogTitle>
             <DialogDescription>
-              Depois é só vincular nos produtos — ou criar direto lá.
+              {dialog === "edit"
+                ? "Preço e nome valem para todos os produtos que usam este item."
+                : "Depois é só marcar no cadastro do produto — sem recriar."}
             </DialogDescription>
           </DialogHeader>
           {dialog !== "closed" ? (
@@ -269,7 +273,7 @@ export function OptionGroupsPage() {
               initialGroup={editing}
               availableGroups={groups}
               pending={saveMutation.isPending}
-              confirmLabel={dialog === "edit" ? "Salvar alterações" : "Salvar personalização"}
+              confirmLabel={dialog === "edit" ? "Salvar na biblioteca" : "Salvar na biblioteca"}
               onCancel={() => {
                 setDialog("closed");
                 setEditing(null);
