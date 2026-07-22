@@ -10,6 +10,9 @@ export interface CheckoutAddress {
   state: string;
   zipCode: string;
   reference?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  fromGeo?: boolean;
 }
 
 export interface CheckoutFormData {
@@ -49,6 +52,8 @@ export interface CheckoutPayload {
     state: string;
     zip_code: string;
     reference?: string;
+    latitude?: number | null;
+    longitude?: number | null;
   };
   items: CheckoutItemPayload[];
 }

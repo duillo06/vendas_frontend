@@ -54,6 +54,8 @@ export type CustomerAddress = {
   state: string;
   zip_code: string;
   reference: string;
+  latitude?: number | null;
+  longitude?: number | null;
   is_default: boolean;
   created_at: string;
   updated_at: string;
@@ -67,8 +69,10 @@ export type CustomerAddressPayload = {
   neighborhood: string;
   city: string;
   state: string;
-  zip_code: string;
+  zip_code?: string;
   reference?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   is_default?: boolean;
 };
 

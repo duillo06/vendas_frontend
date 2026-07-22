@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Banknote, CreditCard, MapPin, ShieldCheck, Smartphone, Store, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useForm, type FieldPath } from "react-hook-form";
+import { useForm, Controller, type FieldPath } from "react-hook-form";
 import { Link } from "react-router";
 import type { ZodIssue } from "zod";
 
@@ -13,11 +13,13 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
+import { PhoneInput } from "@/shared/components/PhoneInput";
 import { cn } from "@/shared/lib/utils";
 import { storefrontCopy } from "@/shared/copy/storefront";
 
 import { CHECKOUT_STEPS, CheckoutStepper } from "./CheckoutStepper";
 import { CheckoutOrderSummary } from "./CheckoutOrderSummary";
+import { AddressFields, type AddressFieldsValue } from "./AddressFields";
 import { useCheckoutPrefill } from "../hooks/useCheckoutPrefill";
 import { useCreateOrder } from "../hooks/useCreateOrder";
 import {
@@ -27,6 +29,7 @@ import {
   checkoutStep3Schema,
   type CheckoutFormValues,
 } from "../schemas/checkout.schema";
+import { isInDeliveryArea } from "@/shared/lib/geo";
 
 const PAYMENT_LABELS: Record<string, string> = {
   cash: "Dinheiro",
@@ -54,6 +57,7 @@ export function CheckoutForm() {
     reset,
     setError,
     clearErrors,
+    control,
     formState: { errors },
   } = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -124,6 +128,21 @@ export function CheckoutForm() {
       const result = checkoutStep2Schema.safeParse(step2Data);
       if (!result.success) {
         applyZodErrors(result.error.issues);
+        return;
+      }
+      if (
+        values.deliveryType === "delivery" &&
+        values.address &&
+        !isInDeliveryArea({
+          city: values.address.city,
+          state: values.address.state,
+          deliveryCity: company?.settings.delivery_city,
+          deliveryState: company?.settings.delivery_state,
+        })
+      ) {
+        setError("address.city", {
+          message: `Não entregamos em ${values.address.city}. Nossa entrega é só em ${company?.settings.delivery_city}.`,
+        });
         return;
       }
       clearErrors("address");
@@ -208,13 +227,21 @@ export function CheckoutForm() {
               ) : null}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="customerPhone">Telefone (WhatsApp)</Label>
-              <Input
-                id="customerPhone"
-                type="tel"
-                placeholder="(11) 98765-4321"
-                autoComplete="tel"
-                {...register("customerPhone")}
+              <Label htmlFor="customerPhone">Celular (WhatsApp)</Label>
+              <Controller
+                name="customerPhone"
+                control={control}
+                render={({ field }) => (
+                  <PhoneInput
+                    id="customerPhone"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                    aria-invalid={Boolean(errors.customerPhone)}
+                  />
+                )}
               />
               {errors.customerPhone ? (
                 <p className="text-xs text-red-600">{errors.customerPhone.message}</p>
@@ -283,6 +310,7 @@ export function CheckoutForm() {
                       state: "",
                       zipCode: "",
                       reference: "",
+                      fromGeo: false,
                     });
                   }}
                 >
@@ -300,63 +328,26 @@ export function CheckoutForm() {
             </div>
 
             {deliveryType === "delivery" ? (
-              <div className="space-y-3">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="street">Rua</Label>
-                    <Input id="street" {...register("address.street")} />
-                    {errors.address?.street ? (
-                      <p className="text-xs text-red-600">{errors.address.street.message}</p>
-                    ) : null}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="number">Número</Label>
-                    <Input id="number" {...register("address.number")} />
-                    {errors.address?.number ? (
-                      <p className="text-xs text-red-600">{errors.address.number.message}</p>
-                    ) : null}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="complement">Complemento</Label>
-                    <Input id="complement" {...register("address.complement")} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="neighborhood">Bairro</Label>
-                    <Input id="neighborhood" {...register("address.neighborhood")} />
-                    {errors.address?.neighborhood ? (
-                      <p className="text-xs text-red-600">{errors.address.neighborhood.message}</p>
-                    ) : null}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="zipCode">CEP</Label>
-                    <Input id="zipCode" placeholder="01310-100" {...register("address.zipCode")} />
-                    {errors.address?.zipCode ? (
-                      <p className="text-xs text-red-600">{errors.address.zipCode.message}</p>
-                    ) : null}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="city">Cidade</Label>
-                    <Input id="city" {...register("address.city")} />
-                    {errors.address?.city ? (
-                      <p className="text-xs text-red-600">{errors.address.city.message}</p>
-                    ) : null}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="state">UF</Label>
-                    <Input id="state" maxLength={2} {...register("address.state")} />
-                    {errors.address?.state ? (
-                      <p className="text-xs text-red-600">{errors.address.state.message}</p>
-                    ) : null}
-                  </div>
-                  <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="reference">Referência</Label>
-                    <Input id="reference" {...register("address.reference")} />
-                  </div>
-                </div>
-                {errors.address?.message ? (
-                  <p className="text-xs text-red-600">{errors.address.message}</p>
-                ) : null}
-              </div>
+              <AddressFields
+                value={
+                  (formValues.address as AddressFieldsValue | undefined) ?? {
+                    street: "",
+                    number: "",
+                    complement: "",
+                    neighborhood: "",
+                    city: "",
+                    state: "",
+                    zipCode: "",
+                    reference: "",
+                    fromGeo: false,
+                  }
+                }
+                onChange={(next) => setValue("address", next, { shouldValidate: true })}
+                errors={errors.address}
+                deliveryCity={company?.settings.delivery_city}
+                deliveryState={company?.settings.delivery_state}
+                showLabel={false}
+              />
             ) : null}
           </CardContent>
         </Card>

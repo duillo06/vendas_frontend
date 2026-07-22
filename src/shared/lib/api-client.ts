@@ -15,10 +15,91 @@ function processQueue(token: string | null): void {
   refreshQueue = [];
 }
 
+const FIELD_LABELS: Record<string, string> = {
+  address: "Endereço",
+  latitude: "Localização",
+  longitude: "Localização",
+  customer_name: "Nome",
+  customer_phone: "Celular",
+  customer_email: "E-mail",
+  delivery_type: "Tipo de entrega",
+  payment_method: "Pagamento",
+  change_for: "Troco",
+  items: "Itens",
+  street: "Rua",
+  number: "Número",
+  neighborhood: "Bairro",
+  city: "Cidade",
+  state: "Estado",
+  zip_code: "CEP",
+  phone: "Celular",
+  password: "Senha",
+  email: "E-mail",
+  first_name: "Nome",
+  non_field_errors: "",
+  detail: "",
+};
+
+function labelFor(path: string): string {
+  const parts = path.split(".").filter((part) => part && !/^\d+$/.test(part));
+  const key = parts[parts.length - 1] ?? "";
+  if (!key) return "";
+  return FIELD_LABELS[key] ?? key.replaceAll("_", " ");
+}
+
+function flattenDetails(detail: unknown, prefix = ""): string[] {
+  if (detail == null) return [];
+
+  if (typeof detail === "string") {
+    const label = labelFor(prefix);
+    return [label ? `${label}: ${detail}` : detail];
+  }
+
+  if (Array.isArray(detail)) {
+    return detail.flatMap((item, index) => {
+      if (typeof item === "string" || typeof item === "number") {
+        const label = labelFor(prefix);
+        const text = String(item);
+        return [label ? `${label}: ${text}` : text];
+      }
+      return flattenDetails(item, prefix ? `${prefix}.${index}` : String(index));
+    });
+  }
+
+  if (typeof detail === "object") {
+    return Object.entries(detail as Record<string, unknown>).flatMap(([key, value]) =>
+      flattenDetails(value, prefix ? `${prefix}.${key}` : key),
+    );
+  }
+
+  return [String(detail)];
+}
+
+function looksLikeRawDict(message: string): boolean {
+  const trimmed = message.trim();
+  return trimmed.startsWith("{") || trimmed.startsWith("[") || trimmed.includes("ErrorDetail");
+}
+
 export function normalizeApiError(error: AxiosError<ApiErrorBody>): Error {
-  const data = error.response?.data;
-  const message =
-    data?.error?.message ?? data?.detail ?? error.message ?? "Erro inesperado";
+  if (!error.response) {
+    return new Error("Erro de conexão. Verifique sua internet.");
+  }
+
+  const data = error.response.data;
+  const details = data?.error?.details ?? data?.fields;
+  const fromDetails = [...new Set(flattenDetails(details).map((item) => item.trim()).filter(Boolean))];
+
+  let message =
+    (typeof data?.error?.message === "string" && data.error.message.trim()) ||
+    (typeof data?.detail === "string" && data.detail.trim()) ||
+    error.message ||
+    "Erro inesperado";
+
+  // dict cru do DRF → usa lista legível
+  if (fromDetails.length > 0 && looksLikeRawDict(message)) {
+    message = fromDetails.join(" · ");
+  }
+
   return new Error(message);
 }
 

@@ -116,7 +116,7 @@ export const storefrontCopy = {
   },
   account: {
     loginTitle: "Bem-vindo de volta",
-    loginSubtitle: "Entre com seu telefone para ver pedidos e endereços salvos.",
+    loginSubtitle: "Entre com seu celular para ver pedidos e endereços salvos.",
     registerTitle: "Criar conta",
     registerSubtitle: "Salve seus dados e acompanhe pedidos com mais facilidade.",
     hubTitle: "Minha conta",

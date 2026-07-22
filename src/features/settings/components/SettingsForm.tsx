@@ -15,6 +15,7 @@ import {
 } from "@/features/settings";
 import type { BusinessHoursAdmin, TenantTheme } from "@/features/settings/types/settings.types";
 import { UiHint } from "@/shared/components/UiHint";
+import { PhoneInput } from "@/shared/components/PhoneInput";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
@@ -22,7 +23,9 @@ import { Label } from "@/shared/components/ui/label";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { adminCopy } from "@/shared/copy/admin";
 import { resolveMediaUrl } from "@/shared/lib/media";
+import { formatPhoneMask, isBrazilianMobile } from "@/shared/lib/phone";
 import { cn } from "@/shared/lib/utils";
+import { toast } from "sonner";
 
 function ToggleRow({
   label,
@@ -176,13 +179,19 @@ export function SettingsForm() {
   };
 
   const handleSave = () => {
+    const phone = (form.company.phone ?? "").trim();
+    if (phone && !isBrazilianMobile(phone)) {
+      toast.error("Informe um celular válido com DDD");
+      return;
+    }
+
     saveSettings({
       company: {
         legal_name: form.company.legal_name,
         trade_name: form.company.trade_name,
         document: form.company.document,
         email: form.company.email,
-        phone: form.company.phone,
+        phone: phone ? formatPhoneMask(phone) : null,
         description: form.company.description,
       },
       settings: {
@@ -195,6 +204,8 @@ export function SettingsForm() {
         estimated_delivery_time: Number(form.settings.estimated_delivery_time),
         accepts_delivery: form.settings.accepts_delivery,
         accepts_pickup: form.settings.accepts_pickup,
+        delivery_city: (form.settings.delivery_city ?? "").trim(),
+        delivery_state: (form.settings.delivery_state ?? "").trim().toUpperCase(),
         is_open: form.settings.is_open,
         auto_close_outside_hours: form.settings.auto_close_outside_hours,
         theme: form.settings.theme,
@@ -305,12 +316,15 @@ export function SettingsForm() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
-              <Input
+              <Label htmlFor="phone">Celular</Label>
+              <PhoneInput
                 id="phone"
                 value={form.company.phone ?? ""}
-                onChange={(event) => updateCompany("phone", event.target.value)}
+                onChange={(value) => updateCompany("phone", value)}
               />
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                WhatsApp da loja — com DDD.
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">E-mail</Label>
@@ -390,6 +404,30 @@ export function SettingsForm() {
                     "free_delivery_above",
                     event.target.value ? event.target.value : null,
                   )
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="delivery_city">Cidade onde entregam</Label>
+              <Input
+                id="delivery_city"
+                placeholder="Ex.: São Paulo"
+                value={form.settings.delivery_city ?? ""}
+                onChange={(event) => updateSettings("delivery_city", event.target.value)}
+              />
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                Pedidos de entrega de outras cidades serão recusados.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="delivery_state">Estado (UF)</Label>
+              <Input
+                id="delivery_state"
+                maxLength={2}
+                placeholder="SP"
+                value={form.settings.delivery_state ?? ""}
+                onChange={(event) =>
+                  updateSettings("delivery_state", event.target.value.toUpperCase())
                 }
               />
             </div>

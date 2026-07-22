@@ -1,11 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Link, useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { useCustomerAuth } from "@/features/customer-auth";
+import { PhoneInput } from "@/shared/components/PhoneInput";
 import { UiHint } from "@/shared/components/UiHint";
 import { BackLink } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
@@ -13,9 +14,10 @@ import { Card, CardContent } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { storefrontCopy } from "@/shared/copy/storefront";
+import { mobilePhoneSchema } from "@/shared/lib/phone.schema";
 
 const loginSchema = z.object({
-  phone: z.string().min(8, "Telefone obrigatório"),
+  phone: mobilePhoneSchema,
   password: z.string().min(1, "Senha obrigatória"),
 });
 
@@ -32,9 +34,11 @@ export function CustomerLoginPage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
+    defaultValues: { phone: "", password: "" },
   });
 
   const onSubmit = handleSubmit(async (data) => {
@@ -65,8 +69,22 @@ export function CustomerLoginPage() {
         <CardContent className="space-y-4 pt-6">
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
-              <Input id="phone" placeholder="(11) 98765-4321" {...register("phone")} />
+              <Label htmlFor="phone">Celular</Label>
+              <Controller
+                name="phone"
+                control={control}
+                render={({ field }) => (
+                  <PhoneInput
+                    id="phone"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                    aria-invalid={Boolean(errors.phone)}
+                  />
+                )}
+              />
               {errors.phone ? <p className="text-xs text-red-600">{errors.phone.message}</p> : null}
             </div>
 

@@ -1,12 +1,16 @@
-import type { InputHTMLAttributes } from "react";
+import { forwardRef, type InputHTMLAttributes } from "react";
 
 import { cn } from "@/shared/lib/utils";
 
 export type InputProps = InputHTMLAttributes<HTMLInputElement>;
 
-export function Input({ className, type = "text", ...props }: InputProps) {
+export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
+  { className, type = "text", ...props },
+  ref,
+) {
   return (
     <input
+      ref={ref}
       type={type}
       className={cn(
         "flex h-11 w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3.5 py-2 text-base sm:text-sm",
@@ -20,4 +24,4 @@ export function Input({ className, type = "text", ...props }: InputProps) {
       {...props}
     />
   );
-}
+});

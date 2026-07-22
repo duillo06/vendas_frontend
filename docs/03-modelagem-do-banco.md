@@ -364,6 +364,8 @@ Configurações operacionais do estabelecimento. Relação 1:1 com `companies`.
 | `auto_close_outside_hours` | `BOOLEAN` | NO | `true` | Fechar fora do horário |
 | `payment_methods` | `JSONB` | NO | `'["cash","pix","card_on_delivery"]'` | Formas aceitas |
 | `delivery_areas` | `JSONB` | YES | — | Áreas/bairros atendidos (futuro) |
+| `delivery_city` | `VARCHAR(100)` | NO | `''` | Cidade onde a loja entrega (vazio = sem restrição) |
+| `delivery_state` | `VARCHAR(2)` | NO | `''` | UF da área de entrega |
 | `theme` | `JSONB` | YES | — | Cores, fontes (white-label futuro) |
 | `setup` | `JSONB` | YES | `'{}'` | Estado do assistente de 1ª configuração (`status`, `segment`, `steps`) |
 | `notification_settings` | `JSONB` | YES | — | Preferências de notificação |
@@ -594,7 +596,7 @@ Consumidores finais que pedem pelo **Storefront**.
 | `neighborhood` | `VARCHAR(100)` | NO | — | Bairro |
 | `city` | `VARCHAR(100)` | NO | — | Cidade |
 | `state` | `VARCHAR(2)` | NO | — | UF |
-| `zip_code` | `VARCHAR(9)` | NO | — | CEP |
+| `zip_code` | `VARCHAR(9)` | YES | `''` | CEP (opcional se veio da localização) |
 | `reference` | `VARCHAR(255)` | YES | — | Ponto de referência |
 | `latitude` | `NUMERIC(10,7)` | YES | — | Futuro: mapas |
 | `longitude` | `NUMERIC(10,7)` | YES | — | Futuro: mapas |

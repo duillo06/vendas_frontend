@@ -6,6 +6,8 @@ export interface CompanySettingsPublic {
   estimated_delivery_time: number;
   accepts_delivery: boolean;
   accepts_pickup: boolean;
+  delivery_city?: string;
+  delivery_state?: string;
   payment_methods: string[];
 }
 

@@ -2,6 +2,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import {
+  AddressFields,
+  type AddressFieldsValue,
+} from "@/features/checkout/components/AddressFields";
+import { useCompanyPublic } from "@/features/company";
 import { customerAuthApi, type CustomerAddressPayload } from "@/features/customer-auth";
 import { useConfirm } from "@/shared/hooks/useConfirm";
 import { BackLink } from "@/shared/components/visual";
@@ -11,24 +16,26 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { storefrontCopy } from "@/shared/copy/storefront";
+import { roundGeoCoordinate } from "@/shared/lib/geo";
 
-const emptyForm: CustomerAddressPayload = {
-  label: "",
+const emptyAddress: AddressFieldsValue = {
   street: "",
   number: "",
   complement: "",
   neighborhood: "",
   city: "",
   state: "",
-  zip_code: "",
+  zipCode: "",
   reference: "",
-  is_default: false,
+  fromGeo: false,
 };
 
 export function AccountAddressesPage() {
   const queryClient = useQueryClient();
   const { confirm } = useConfirm();
-  const [form, setForm] = useState<CustomerAddressPayload>(emptyForm);
+  const { data: company } = useCompanyPublic();
+  const [label, setLabel] = useState("");
+  const [address, setAddress] = useState<AddressFieldsValue>(emptyAddress);
   const [showForm, setShowForm] = useState(false);
 
   const { data: addresses, isLoading } = useQuery({
@@ -37,10 +44,29 @@ export function AccountAddressesPage() {
   });
 
   const createAddress = useMutation({
-    mutationFn: () => customerAuthApi.createAddress(form),
+    mutationFn: () => {
+      const payload: CustomerAddressPayload = {
+        label,
+        street: address.street,
+        number: address.number,
+        complement: address.complement,
+        neighborhood: address.neighborhood,
+        city: address.city,
+        state: address.state.toUpperCase(),
+        zip_code: address.fromGeo ? "" : address.zipCode,
+        reference: address.reference,
+        latitude:
+          address.latitude != null ? roundGeoCoordinate(address.latitude) : null,
+        longitude:
+          address.longitude != null ? roundGeoCoordinate(address.longitude) : null,
+        is_default: false,
+      };
+      return customerAuthApi.createAddress(payload);
+    },
     onSuccess: () => {
       toast.success("Endereço salvo");
-      setForm(emptyForm);
+      setLabel("");
+      setAddress(emptyAddress);
       setShowForm(false);
       void queryClient.invalidateQueries({ queryKey: ["account", "addresses"] });
     },
@@ -63,15 +89,23 @@ export function AccountAddressesPage() {
     },
   });
 
-  const handleDelete = async (id: string, label: string) => {
+  const handleDelete = async (id: string, addressLabel: string) => {
     const confirmed = await confirm({
       title: "Remover endereço",
-      description: `Remover "${label || "este endereço"}"?`,
+      description: `Remover "${addressLabel || "este endereço"}"?`,
       confirmLabel: "Remover",
       destructive: true,
     });
     if (confirmed) removeAddress.mutate(id);
   };
+
+  const canSave =
+    address.street.trim() &&
+    address.number.trim() &&
+    address.neighborhood.trim() &&
+    address.city.trim() &&
+    address.state.trim().length === 2 &&
+    (address.fromGeo || /^\d{5}-?\d{3}$/.test(address.zipCode));
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
@@ -80,47 +114,42 @@ export function AccountAddressesPage() {
           <BackLink to="/conta" label="Minha conta" />
           <h1 className="text-2xl font-bold">{storefrontCopy.account.addressesTitle}</h1>
         </div>
-        <Button type="button" onClick={() => setShowForm((value) => !value)}>
+        <Button
+          type="button"
+          onClick={() => {
+            setShowForm((value) => !value);
+            if (showForm) {
+              setLabel("");
+              setAddress(emptyAddress);
+            }
+          }}
+        >
           {showForm ? "Cancelar" : "Novo endereço"}
         </Button>
       </div>
 
       {showForm ? (
         <Card>
-          <CardContent className="grid gap-3 pt-6 sm:grid-cols-2">
-            {(
-              [
-                ["label", "Apelido (Casa, Trabalho...)", false],
-                ["zip_code", "CEP", false],
-                ["street", "Rua", true],
-                ["number", "Número", true],
-                ["complement", "Complemento", false],
-                ["neighborhood", "Bairro", true],
-                ["city", "Cidade", true],
-                ["state", "UF", true],
-                ["reference", "Referência", false],
-              ] as const
-            ).map(([field, label, required]) => (
-              <div key={field} className={field === "street" || field === "reference" ? "sm:col-span-2" : ""}>
-                <Label htmlFor={field}>{label}</Label>
-                <Input
-                  id={field}
-                  value={form[field]}
-                  onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))}
-                  required={required}
-                />
-              </div>
-            ))}
-            <div className="sm:col-span-2">
-              <Button
-                type="button"
-                className="w-full"
-                disabled={createAddress.isPending}
-                onClick={() => createAddress.mutate()}
-              >
-                Salvar endereço
-              </Button>
+          <CardContent className="space-y-4 pt-6">
+            <div className="space-y-2">
+              <Label htmlFor="label">Apelido (Casa, Trabalho...)</Label>
+              <Input id="label" value={label} onChange={(e) => setLabel(e.target.value)} />
             </div>
+            <AddressFields
+              value={address}
+              onChange={setAddress}
+              deliveryCity={company?.settings.delivery_city}
+              deliveryState={company?.settings.delivery_state}
+              showLabel={false}
+            />
+            <Button
+              type="button"
+              className="w-full"
+              disabled={createAddress.isPending || !canSave}
+              onClick={() => createAddress.mutate()}
+            >
+              Salvar endereço
+            </Button>
           </CardContent>
         </Card>
       ) : null}
@@ -129,36 +158,37 @@ export function AccountAddressesPage() {
         <Skeleton className="h-24 w-full" />
       ) : addresses?.length ? (
         <ul className="space-y-3">
-          {addresses.map((address) => (
-            <li key={address.id}>
+          {addresses.map((row) => (
+            <li key={row.id}>
               <Card>
                 <CardContent className="space-y-3 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-medium">
-                        {address.label || "Endereço"}
-                        {address.is_default ? (
+                        {row.label || "Endereço"}
+                        {row.is_default ? (
                           <span className="ml-2 rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand">
                             Padrão
                           </span>
                         ) : null}
                       </p>
                       <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                        {address.street}, {address.number}
-                        {address.complement ? ` — ${address.complement}` : ""}
+                        {row.street}, {row.number}
+                        {row.complement ? ` — ${row.complement}` : ""}
                       </p>
                       <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                        {address.neighborhood} · {address.city}/{address.state}
+                        {row.neighborhood} · {row.city}/{row.state}
+                        {row.zip_code ? ` · ${row.zip_code}` : ""}
                       </p>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {!address.is_default ? (
+                    {!row.is_default ? (
                       <Button
                         type="button"
                         size="sm"
                         variant="outline"
-                        onClick={() => setDefault.mutate(address.id)}
+                        onClick={() => setDefault.mutate(row.id)}
                       >
                         Tornar padrão
                       </Button>
@@ -167,7 +197,7 @@ export function AccountAddressesPage() {
                       type="button"
                       size="sm"
                       variant="outline"
-                      onClick={() => void handleDelete(address.id, address.label)}
+                      onClick={() => void handleDelete(row.id, row.label)}
                     >
                       Remover
                     </Button>

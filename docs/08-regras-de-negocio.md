@@ -162,6 +162,8 @@ flowchart TD
 | E-22 | `payment_methods` define formas aceitas no checkout | `["cash","pix","card_on_delivery"]` |
 | E-23 | `estimated_prep_time` em minutos, usado para previsão | 30 |
 | E-24 | `estimated_delivery_time` em minutos, somado ao prep para delivery | 45 |
+| E-25 | `delivery_city` + `delivery_state` preenchidos → entrega só nessa cidade/UF (comparação sem acento) | `''` |
+| E-26 | Sem `delivery_city`/`delivery_state` → não restringe área | — |
 
 ---
 
@@ -368,6 +370,9 @@ total = R$ 78,00
 | K-22 | Loja deve estar aberta |
 | K-23 | Subtotal ≥ pedido mínimo |
 | K-24 | Endereço é snapshot no pedido (JSONB) |
+| K-25 | Delivery com área configurada: cidade/UF do endereço devem bater com a loja (`OUT_OF_DELIVERY_AREA`) |
+| K-26 | CEP opcional quando o endereço veio da geolocalização; obrigatório no preenchimento manual |
+| K-27 | `pickup` ignora restrição de cidade |
 
 ### 8.3 Fluxo de Checkout
 

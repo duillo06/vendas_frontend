@@ -35,6 +35,8 @@ export interface CompanySettingsAdmin {
   estimated_delivery_time: number;
   accepts_delivery: boolean;
   accepts_pickup: boolean;
+  delivery_city?: string;
+  delivery_state?: string;
   is_open: boolean;
   auto_close_outside_hours: boolean;
   payment_methods: string[];

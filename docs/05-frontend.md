@@ -1226,7 +1226,7 @@ Máscaras aplicadas via `onChange` transform ou componentes dedicados:
 
 | Campo | Máscara | Biblioteca |
 |-------|---------|------------|
-| Telefone | `(00) 00000-0000` | Custom ou `react-input-mask` |
+| Celular | `(00) 00000-0000` | `PhoneInput` + `formatPhoneMask` |
 | CEP | `00000-000` | Custom |
 | CPF/CNPJ | Futuro | — |
 | Preço | `R$ 0,00` | `formatPrice` no blur |
