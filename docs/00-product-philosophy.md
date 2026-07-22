@@ -6,7 +6,7 @@
 > **Status:** Aprovado  
 > **Última atualização:** Julho/2026  
 > **Depende de:** — (documento fundador; todos os demais devem respeitá-lo)  
-> **Relacionados:** `01-visao-do-produto.md`, `02-arquitetura.md`, `11-guia-ui-ux.md`, `17-modelo-categoria-produto.md`, `18-domain-rules.md`, `19-future-ideas.md`, `20-promotions-philosophy.md`, `21-marketing-engine.md`, `24-home-vitrine-inteligente.md`
+> **Relacionados:** `01-visao-do-produto.md`, `02-arquitetura.md`, `11-guia-ui-ux.md`, `17-modelo-categoria-produto.md`, `18-domain-rules.md`, `19-future-ideas.md`, `20-promotions-philosophy.md`, `21-marketing-engine.md`, `24-home-vitrine-inteligente.md`, `25-conexoes-philosophy.md`
 
 ---
 

@@ -2,6 +2,9 @@ import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
 
 import { BackofficeLayout } from "@/apps/backoffice/layouts/BackofficeLayout";
 import { CategoriesPage } from "@/apps/backoffice/pages/CategoriesPage";
+import { ConexoesPage } from "@/apps/backoffice/pages/ConexoesPage";
+import { ConexoesTemplatesPage } from "@/apps/backoffice/pages/ConexoesTemplatesPage";
+import { ConexoesWhatsAppPage } from "@/apps/backoffice/pages/ConexoesWhatsAppPage";
 import { CustomerDetailPage } from "@/apps/backoffice/pages/CustomerDetailPage";
 import { CustomersPage } from "@/apps/backoffice/pages/CustomersPage";
 import { DashboardPage } from "@/apps/backoffice/pages/DashboardPage";
@@ -43,6 +46,9 @@ export const backofficeRouter = createBrowserRouter([
       // Base do cardápio saiu do menu — cria na conversa da categoria
       { path: "opcoes", element: <Navigate to="/categorias" replace /> },
       { path: "promocoes", element: <PromotionsPage /> },
+      { path: "conexoes", element: <ConexoesPage /> },
+      { path: "conexoes/whatsapp", element: <ConexoesWhatsAppPage /> },
+      { path: "conexoes/whatsapp/templates", element: <ConexoesTemplatesPage /> },
       { path: "configuracoes", element: <SettingsPage /> },
     ],
   },
