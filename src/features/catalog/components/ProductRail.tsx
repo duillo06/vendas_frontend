@@ -10,7 +10,7 @@ import { resolveMediaUrl } from "@/shared/lib/media";
 import { cn } from "@/shared/lib/utils";
 
 type ProductRailProps = {
-  title: string;
+  title?: string;
   subtitle?: string;
   products: ProductListItem[];
 };
@@ -22,12 +22,14 @@ export function ProductRail({ title, subtitle, products }: ProductRailProps) {
 
   return (
     <section className="space-y-2.5 py-2">
-      <div className="px-0.5">
-        <h3 className="text-sm font-semibold tracking-tight text-[hsl(var(--foreground))]">{title}</h3>
-        {subtitle ? (
-          <p className="text-xs text-[hsl(var(--muted-foreground))]">{subtitle}</p>
-        ) : null}
-      </div>
+      {title ? (
+        <div className="px-0.5">
+          <h3 className="text-sm font-semibold tracking-tight text-[hsl(var(--foreground))]">{title}</h3>
+          {subtitle ? (
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">{subtitle}</p>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 scroll-smooth [-webkit-overflow-scrolling:touch]">
         {products.map((product) => {

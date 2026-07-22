@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router";
+import { LayoutGrid } from "lucide-react";
 
 import type { Category } from "../types/catalog.types";
 
-import { Badge } from "@/shared/components/ui/badge";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
 
@@ -11,9 +11,17 @@ type CategoryNavProps = {
   categories: Category[];
   activeSlug?: string;
   className?: string;
+  /** Home da vitrine: sem atalho “Todos” */
+  showAllOption?: boolean;
 };
 
-export function CategoryNav({ categories, activeSlug, className }: CategoryNavProps) {
+/** atalho de categorias — faixa de ícones, sem barra de rolagem aparente */
+export function CategoryNav({
+  categories,
+  activeSlug,
+  className,
+  showAllOption = true,
+}: CategoryNavProps) {
   const scrollerRef = useRef<HTMLElement>(null);
   const activeRef = useRef<HTMLAnchorElement>(null);
 
@@ -28,21 +36,28 @@ export function CategoryNav({ categories, activeSlug, className }: CategoryNavPr
   return (
     <nav
       ref={scrollerRef}
+      aria-label="Categorias"
       className={cn(
-        "flex gap-2 overflow-x-auto pb-1 scroll-smooth [-webkit-overflow-scrolling:touch]",
+        "category-icon-rail -mx-1 flex gap-1 overflow-x-auto px-1 pb-0.5 scroll-smooth",
         className,
       )}
     >
-      <Link
-        to="/cardapio"
-        ref={!activeSlug ? activeRef : undefined}
-        className={cn(
-          "nav-pill shrink-0",
-          !activeSlug && "nav-pill-active scale-[1.03] shadow-[var(--shadow-sm)]",
-        )}
-      >
-        Todos
-      </Link>
+      {showAllOption ? (
+        <Link
+          to="/cardapio"
+          ref={!activeSlug ? activeRef : undefined}
+          className={cn(
+            "category-icon-item group",
+            !activeSlug && "category-icon-item-active",
+          )}
+        >
+          <span className="category-icon-bubble" aria-hidden>
+            <LayoutGrid className="h-5 w-5" />
+          </span>
+          <span className="category-icon-label">Todos</span>
+        </Link>
+      ) : null}
+
       {categories.map((category) => {
         const isActive = activeSlug === category.slug;
         const emoji = category.emoji?.trim();
@@ -52,28 +67,21 @@ export function CategoryNav({ categories, activeSlug, className }: CategoryNavPr
             key={category.id}
             to={`/categoria/${category.slug}`}
             ref={isActive ? activeRef : undefined}
-            className={cn(
-              "nav-pill flex shrink-0 items-center gap-2",
-              isActive && "nav-pill-active scale-[1.04] shadow-[var(--shadow-sm)]",
-            )}
+            className={cn("category-icon-item group", isActive && "category-icon-item-active")}
           >
-            {emoji ? (
-              <span className="text-base leading-none" aria-hidden>
-                {emoji}
-              </span>
-            ) : null}
-            <span>{category.name}</span>
-            <Badge
-              variant="secondary"
-              className={cn(
-                "border-0 text-[10px]",
-                isActive
-                  ? "bg-[hsl(var(--primary)/0.15)] text-brand"
-                  : "bg-[hsl(var(--muted))] text-[hsl(var(--foreground))]",
+            <span className="category-icon-bubble" aria-hidden>
+              {emoji ? (
+                <span className="text-[1.35rem] leading-none">{emoji}</span>
+              ) : (
+                <span className="text-sm font-bold text-brand">
+                  {category.name.charAt(0).toUpperCase()}
+                </span>
               )}
-            >
-              {category.product_count}
-            </Badge>
+            </span>
+            <span className="category-icon-label">{category.name}</span>
+            {category.product_count > 0 ? (
+              <span className="category-icon-count">{category.product_count}</span>
+            ) : null}
           </Link>
         );
       })}
@@ -83,9 +91,12 @@ export function CategoryNav({ categories, activeSlug, className }: CategoryNavPr
 
 export function CategoryNavSkeleton() {
   return (
-    <div className="flex gap-2 overflow-hidden">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <Skeleton key={i} className="h-10 w-28 shrink-0 rounded-full" />
+    <div className="-mx-1 flex gap-1 overflow-hidden px-1">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="flex w-[4.5rem] shrink-0 flex-col items-center gap-1.5 py-1">
+          <Skeleton className="h-12 w-12 rounded-2xl" />
+          <Skeleton className="h-3 w-12 rounded" />
+        </div>
       ))}
     </div>
   );

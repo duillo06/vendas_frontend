@@ -8,7 +8,6 @@ import {
 } from "@/features/company/utils/storefrontTheme";
 import type { CompanyPublic } from "@/features/company/types/company.types";
 import {
-  buildShopMetaLine,
   deliveryWindowLabel,
   getNextOpenLabel,
 } from "@/features/storefront/utils/shopHours";
@@ -85,30 +84,6 @@ export function StoreHero({ company, isLoading, compact = false, onSearchClick }
   const isOpen = Boolean(company?.is_open);
   const instagramUrl = marketing.instagram_url?.trim() || null;
 
-  const metaLine = useMemo(() => {
-    const time = deliveryWindowLabel(deliveryMinutes);
-    const mode = company?.settings.accepts_delivery
-      ? "Entrega"
-      : company?.settings.accepts_pickup
-        ? "Retirada"
-        : undefined;
-    const min = company?.settings.min_order_value
-      ? `Mín. ${formatCurrency(company.settings.min_order_value)}`
-      : undefined;
-    const fee =
-      company?.settings.accepts_delivery && company.settings.delivery_fee != null
-        ? Number(company.settings.delivery_fee) === 0
-          ? "Frete grátis"
-          : `Taxa ${formatCurrency(company.settings.delivery_fee)}`
-        : undefined;
-    const rating =
-      marketing.show_rating && marketing.rating
-        ? `★ ${marketing.rating.toFixed(1)}`
-        : undefined;
-
-    return buildShopMetaLine({ rating, time: time ?? undefined, mode, minOrder: min, fee });
-  }, [company, deliveryMinutes, marketing]);
-
   const nextOpen = !isOpen ? getNextOpenLabel(company) : null;
 
   const fulfillment = useMemo(() => {
@@ -136,7 +111,9 @@ export function StoreHero({ company, isLoading, compact = false, onSearchClick }
   if (isLoading) {
     return (
       <div className={cn("-mx-4", compact && "px-0")}>
-        <Skeleton className={cn("w-full rounded-none", compact ? "h-32 sm:h-36" : "h-[240px]")} />
+        <Skeleton
+          className={cn("w-full rounded-none", compact ? "h-32 sm:h-36" : "h-[192px] sm:h-[208px]")}
+        />
         <div className="space-y-2 px-4 pt-4">
           <Skeleton className="h-14 w-14 rounded-2xl" />
           <Skeleton className="h-6 w-48" />
@@ -194,34 +171,12 @@ export function StoreHero({ company, isLoading, compact = false, onSearchClick }
           </div>
 
           <ul className="flex flex-wrap gap-1.5">
-            {marketing.show_rating && marketing.rating ? (
-              <MetaChip>
-                <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                {marketing.rating.toFixed(1)}
-              </MetaChip>
-            ) : null}
-            {deliveryMinutes ? (
-              <MetaChip>
-                <Bike className="h-3 w-3 text-brand" />
-                {deliveryWindowLabel(deliveryMinutes) ?? `${deliveryMinutes} min`}
-              </MetaChip>
-            ) : company?.settings.estimated_prep_time ? (
-              <MetaChip>
-                <Clock className="h-3 w-3 text-brand" />
-                ~{company.settings.estimated_prep_time} min
-              </MetaChip>
-            ) : null}
-            {company?.settings.min_order_value ? (
-              <MetaChip>
-                Pedido mín. {formatCurrency(company.settings.min_order_value)}
-              </MetaChip>
-            ) : null}
-            {fulfillment ? (
-              <MetaChip>
-                <MapPin className="h-3 w-3 text-brand" />
-                {fulfillment}
-              </MetaChip>
-            ) : null}
+            <ShopMetaChips
+              company={company}
+              marketing={marketing}
+              deliveryMinutes={deliveryMinutes}
+              fulfillment={fulfillment}
+            />
           </ul>
         </div>
       </section>
@@ -230,12 +185,12 @@ export function StoreHero({ company, isLoading, compact = false, onSearchClick }
 
   return (
     <section className="-mx-4">
-      {/* banner vitrine — ~240–260px */}
-      <div className="relative h-[240px] overflow-hidden sm:h-[260px]">
+      {/* banner vitrine — ~−20% vs 240/260 */}
+      <div className="relative h-[192px] overflow-hidden sm:h-[208px]">
         <HeroBackdrop coverUrl={company?.cover_url} closed={!isOpen} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/25 to-black/55" />
 
-        {/* ações glass — carrinho fica só no header */}
+        {/* ações glass — busca some na Home (Fase B: /buscar) */}
         <div className="absolute top-3 right-3 z-20 flex gap-2">
           {instagramUrl ? (
             <GlassIconButton label="Instagram" href={instagramUrl}>
@@ -245,9 +200,11 @@ export function StoreHero({ company, isLoading, compact = false, onSearchClick }
           <GlassIconButton label="Compartilhar" onClick={() => void handleShare()}>
             <Share2 className="h-4 w-4" />
           </GlassIconButton>
-          <GlassIconButton label="Buscar" onClick={onSearchClick}>
-            <Search className="h-4 w-4" />
-          </GlassIconButton>
+          {onSearchClick ? (
+            <GlassIconButton label="Buscar" onClick={onSearchClick}>
+              <Search className="h-4 w-4" />
+            </GlassIconButton>
+          ) : null}
         </div>
 
         {isOpen ? (
@@ -270,23 +227,78 @@ export function StoreHero({ company, isLoading, compact = false, onSearchClick }
       </div>
 
       {/* identidade sob o banner */}
-      <div className="relative z-10 -mt-11 px-4 pb-1">
+      <div className="relative z-10 -mt-11 space-y-2.5 px-4 pb-1">
         <StoreLogo url={company?.logo_url} size="lg" />
 
-        <h1 className="mt-3 text-2xl font-bold tracking-tight text-[hsl(var(--foreground))] sm:text-[1.7rem]">
-          {company?.trade_name ?? "Cardápio digital"}
-        </h1>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-[hsl(var(--foreground))] sm:text-[1.7rem]">
+            {company?.trade_name ?? "Cardápio digital"}
+          </h1>
+          {!isOpen && nextOpen ? (
+            <p className="mt-0.5 text-xs text-[hsl(var(--muted-foreground))]">{nextOpen}</p>
+          ) : null}
+        </div>
 
-        {metaLine ? (
-          <p className="mt-1.5 flex flex-wrap items-center gap-x-1 text-sm text-[hsl(var(--muted-foreground))]">
-            {marketing.show_rating && marketing.rating ? (
-              <Star className="mr-0.5 inline h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-            ) : null}
-            {metaLine}
-          </p>
-        ) : null}
+        <ul className="flex flex-wrap gap-1.5">
+          <ShopMetaChips
+            company={company}
+            marketing={marketing}
+            deliveryMinutes={deliveryMinutes}
+            fulfillment={fulfillment}
+          />
+        </ul>
       </div>
     </section>
+  );
+}
+
+function ShopMetaChips({
+  company,
+  marketing,
+  deliveryMinutes,
+  fulfillment,
+}: {
+  company?: CompanyPublic | null;
+  marketing: ReturnType<typeof getStorefrontMarketing>;
+  deliveryMinutes: number | null;
+  fulfillment: string;
+}) {
+  return (
+    <>
+      {marketing.show_rating && marketing.rating ? (
+        <MetaChip>
+          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+          {marketing.rating.toFixed(1)}
+        </MetaChip>
+      ) : null}
+      {deliveryMinutes ? (
+        <MetaChip>
+          <Bike className="h-3 w-3 text-brand" />
+          {deliveryWindowLabel(deliveryMinutes) ?? `${deliveryMinutes} min`}
+        </MetaChip>
+      ) : company?.settings.estimated_prep_time ? (
+        <MetaChip>
+          <Clock className="h-3 w-3 text-brand" />
+          ~{company.settings.estimated_prep_time} min
+        </MetaChip>
+      ) : null}
+      {company?.settings.min_order_value != null && Number(company.settings.min_order_value) > 0 ? (
+        <MetaChip>Pedido mín. {formatCurrency(company.settings.min_order_value)}</MetaChip>
+      ) : null}
+      {company?.settings.accepts_delivery && company.settings.delivery_fee != null ? (
+        <MetaChip>
+          {Number(company.settings.delivery_fee) === 0
+            ? "Frete grátis"
+            : `Taxa ${formatCurrency(company.settings.delivery_fee)}`}
+        </MetaChip>
+      ) : null}
+      {fulfillment ? (
+        <MetaChip>
+          <MapPin className="h-3 w-3 text-brand" />
+          {fulfillment}
+        </MetaChip>
+      ) : null}
+    </>
   );
 }
 

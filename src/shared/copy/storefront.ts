@@ -130,6 +130,34 @@ export const storefrontCopy = {
       `Logado como ${name}. Seus dados e endereço padrão já foram preenchidos — você pode editar se quiser.`,
     checkoutLoginLink: "Entrar para agilizar",
   },
+  nav: {
+    home: "Início",
+    search: "Buscar",
+    orders: "Pedidos",
+    account: "Conta",
+    favorites: "Favoritos",
+    share: "Compartilhar",
+    linkCopied: "Link copiado",
+  },
+  search: {
+    title: "Buscar",
+    subtitle: "Ache o que está com vontade — ou explore por categoria.",
+    historyTitle: "Buscas recentes",
+    clearHistory: "Limpar",
+    categoriesTitle: "Categorias",
+    popularTitle: "Mais pedidos",
+    popularHint: "O que a galera mais pede por aqui.",
+    favoritesLink: "Seus favoritos",
+    favoritesHint: "Itens que você salvou com o coração.",
+    backToBrowse: "Voltar a explorar",
+  },
+  favorites: {
+    title: "Favoritos",
+    emptyTitle: "Nada salvo ainda",
+    emptyDescription: "Toque no coração nos produtos que você ama — eles aparecem aqui.",
+    browseCta: "Buscar no cardápio",
+    count: (n: number) => (n === 1 ? "1 item salvo" : `${n} itens salvos`),
+  },
 } as const;
 
 export function getFreeDeliveryHint(

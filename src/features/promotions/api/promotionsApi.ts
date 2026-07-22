@@ -31,6 +31,7 @@ export type CampaignAdmin = {
   show_on_product: boolean;
   link_only: boolean;
   show_as_banner: boolean;
+  weight: number;
   save_amount: number | null;
   discount_percent: number | null;
   badges: string[];
@@ -51,6 +52,8 @@ export type CampaignCreatePayload = {
   show_on_product?: boolean;
   link_only?: boolean;
   title?: string;
+  /** prioridade na vitrine — maior = mais destaque */
+  weight?: number;
 };
 
 export type PublicOffer = {
@@ -65,6 +68,7 @@ export type PublicOffer = {
   discount_percent: number;
   badges: string[];
   title: string;
+  weight: number;
   ends_at: string | null;
   is_available: boolean;
 };

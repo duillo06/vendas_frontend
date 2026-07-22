@@ -4,6 +4,7 @@ import { useParams, Link } from "react-router";
 import { useAddToCart } from "@/features/cart";
 import { ProductDetailSkeleton, ProductDetailView, useProduct, useProducts } from "@/features/catalog";
 import { pickComplementaryProducts } from "@/features/catalog/utils/relatedSuggestions";
+import { useRecordCategoryVisit } from "@/features/storefront/hooks/useCategoryAffinity";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { BackLink } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
@@ -13,6 +14,9 @@ export function ProductPage() {
   const { data: product, isLoading, isError } = useProduct(slug);
   const { data: catalogPage } = useProducts({ page_size: 48 });
   const addToCart = useAddToCart();
+
+  const listItem = catalogPage?.results.find((item) => item.slug === product?.slug);
+  useRecordCategoryVisit(listItem?.category?.id);
 
   const relatedProducts = useMemo(() => {
     if (!product || !catalogPage?.results) return [];

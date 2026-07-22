@@ -16,6 +16,7 @@ import { formatCurrency } from "@/shared/lib/format";
 
 export function PromotionsPage() {
   const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState<CampaignAdmin | null>(null);
   const queryClient = useQueryClient();
 
   const { data: campaigns, isLoading } = useQuery({
@@ -31,28 +32,36 @@ export function PromotionsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "campaigns"] }),
   });
 
-  if (creating) {
+  const closeForm = () => {
+    setCreating(false);
+    setEditing(null);
+  };
+
+  const handleSaved = () => {
+    void queryClient.invalidateQueries({ queryKey: ["admin", "campaigns"] });
+    closeForm();
+  };
+
+  if (creating || editing) {
     return (
       <div className="space-y-6">
         <button
           type="button"
-          onClick={() => setCreating(false)}
+          onClick={closeForm}
           className="text-sm font-medium text-brand hover:underline"
         >
           ← Voltar para promoções
         </button>
         <PageHeader
-          title="Vender mais"
-          subtitle="Responda algumas perguntas — em menos de um minuto sua oferta está no ar."
+          title={editing ? "Ajustar promoção" : "Vender mais"}
+          subtitle={
+            editing
+              ? "Mude preço, dias, destaque ou onde aparece — sem refazer do zero."
+              : "Responda algumas perguntas — em menos de um minuto sua oferta está no ar."
+          }
           icon={Sparkles}
         />
-        <CampaignAssistant
-          onCancel={() => setCreating(false)}
-          onCreated={() => {
-            void queryClient.invalidateQueries({ queryKey: ["admin", "campaigns"] });
-            setCreating(false);
-          }}
-        />
+        <CampaignAssistant campaign={editing ?? undefined} onCancel={closeForm} onSaved={handleSaved} />
       </div>
     );
   }
@@ -118,15 +127,25 @@ export function PromotionsPage() {
                     </p>
                   </div>
                   <Can permission="promotions.manage">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={pauseMutation.isPending}
-                      onClick={() => pauseMutation.mutate(campaign)}
-                    >
-                      {campaign.status === "active" ? "Pausar" : "Reativar"}
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditing(campaign)}
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={pauseMutation.isPending}
+                        onClick={() => pauseMutation.mutate(campaign)}
+                      >
+                        {campaign.status === "active" ? "Pausar" : "Reativar"}
+                      </Button>
+                    </div>
                   </Can>
                 </CardContent>
               </Card>

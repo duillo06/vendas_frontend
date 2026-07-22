@@ -12,6 +12,7 @@ import {
 import { CatalogSearchSection } from "@/features/storefront/components/CatalogSearchSection";
 import { formatCategoryLabel } from "@/features/catalog/utils/categoryLabel";
 import { useCatalogSearch } from "@/features/storefront/hooks/useCatalogSearch";
+import { useRecordCategoryVisit } from "@/features/storefront/hooks/useCategoryAffinity";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { BackLink, PageHeader } from "@/shared/components/visual";
 import { storefrontCopy } from "@/shared/copy/storefront";
@@ -27,6 +28,7 @@ export function CategoryPage() {
   });
 
   const category = categories?.find((c) => c.slug === slug);
+  useRecordCategoryVisit(category?.id);
   const products = productsPage?.results ?? [];
   const hasSearch = Boolean(debouncedSearch);
   const showEmpty = !loadingProducts && !isError && products.length === 0;

@@ -30,14 +30,16 @@ function loadStore(): FavoritesStore {
   }
 }
 
+function persist(next: string[]) {
+  const raw = JSON.stringify(next);
+  localStorage.setItem(STORAGE_KEY, raw);
+  store = { snapshot: next, raw };
+  listeners.forEach((listener) => listener());
+}
+
 function subscribe(listener: () => void) {
   listeners.add(listener);
   return () => listeners.delete(listener);
-}
-
-function emitChange() {
-  loadStore();
-  listeners.forEach((listener) => listener());
 }
 
 function getSnapshot() {
@@ -52,8 +54,17 @@ export function useFavorites() {
     const next = current.includes(productId)
       ? current.filter((id) => id !== productId)
       : [...current, productId];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    emitChange();
+    persist(next);
+  }, []);
+
+  // tira IDs que não existem mais no cardápio (ex.: após re-seed)
+  const prune = useCallback((validIds: Iterable<string>) => {
+    const valid = new Set(validIds);
+    const current = getSnapshot();
+    if (!current.length) return;
+    const next = current.filter((id) => valid.has(id));
+    if (next.length === current.length) return;
+    persist(next);
   }, []);
 
   const isFavorite = useCallback(
@@ -61,5 +72,5 @@ export function useFavorites() {
     [favorites],
   );
 
-  return { favorites, toggle, isFavorite };
+  return { favorites, toggle, prune, isFavorite };
 }

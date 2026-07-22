@@ -485,6 +485,97 @@ select:disabled {
   filter: none;
 }
 
+/* faixa de categorias — ícones, scroll sem barra feia */
+.category-icon-rail {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  mask-image: linear-gradient(90deg, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+}
+
+.category-icon-rail::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.category-icon-item {
+  display: flex;
+  width: 4.5rem;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.15rem;
+  text-align: center;
+  transition: transform 180ms var(--ease-out);
+}
+
+.category-icon-item:active {
+  transform: scale(0.96);
+}
+
+.category-icon-bubble {
+  display: flex;
+  height: 3rem;
+  width: 3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem;
+  border: 1px solid hsl(var(--border) / 0.9);
+  background: hsl(var(--card));
+  color: hsl(var(--muted-foreground));
+  box-shadow: var(--shadow-xs);
+  transition:
+    border-color 180ms var(--ease-out),
+    background-color 180ms var(--ease-out),
+    color 180ms var(--ease-out),
+    box-shadow 180ms var(--ease-out),
+    transform 180ms var(--ease-out);
+}
+
+.category-icon-item:hover .category-icon-bubble {
+  border-color: hsl(var(--primary) / 0.3);
+  background: hsl(var(--primary-soft));
+  color: hsl(var(--primary));
+}
+
+.category-icon-item-active .category-icon-bubble {
+  border-color: hsl(var(--primary) / 0.4);
+  background: hsl(var(--primary-soft));
+  color: hsl(var(--primary));
+  box-shadow:
+    0 0 0 3px hsl(var(--primary) / 0.12),
+    var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.category-icon-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: hsl(var(--foreground) / 0.78);
+}
+
+.category-icon-item-active .category-icon-label {
+  color: hsl(var(--primary));
+}
+
+.category-icon-count {
+  margin-top: -0.15rem;
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 1;
+  color: hsl(var(--muted-foreground));
+}
+
+.category-icon-item-active .category-icon-count {
+  color: hsl(var(--primary) / 0.75);
+}
+
 .product-card-premium {
   display: flex;
   flex-direction: column;

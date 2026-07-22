@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { LogOut, MapPin, Package, User } from "lucide-react";
+import { Heart, LogOut, MapPin, Package, User } from "lucide-react";
 
 import { useCustomerAuth } from "@/features/customer-auth";
 import { UiHint } from "@/shared/components/UiHint";
@@ -10,6 +10,7 @@ import { storefrontCopy } from "@/shared/copy/storefront";
 
 const links = [
   { to: "/conta/pedidos", label: "Meus pedidos", icon: Package },
+  { to: "/favoritos", label: "Favoritos", icon: Heart },
   { to: "/conta/enderecos", label: "Meus endereços", icon: MapPin },
 ] as const;
 

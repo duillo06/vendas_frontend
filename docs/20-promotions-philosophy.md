@@ -45,7 +45,8 @@ Este é a **referência oficial** de qualquer evolução relacionada a promoçõ
 
 Ele não descreve endpoints nem tabelas. Ele define **como pensamos promoções** — e como o comerciante as cria.
 
-Visão estratégica mais ampla (marketing, cross-sell, recuperação de clientes): `21-marketing-engine.md`.
+Visão estratégica mais ampla (marketing, cross-sell, recuperação de clientes): `21-marketing-engine.md`.  
+Home como Motor Inteligente de Vitrine: `24-home-vitrine-inteligente.md`.
 
 Se uma tela, um PR ou um doc técnico conflitar com este arquivo **na experiência do comerciante**, **este arquivo vence** (em conjunto com `00-product-philosophy.md`).
 

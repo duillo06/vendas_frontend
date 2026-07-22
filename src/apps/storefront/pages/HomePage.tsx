@@ -1,177 +1,145 @@
-import { useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { UtensilsCrossed } from "lucide-react";
 
 import {
   CategoryNav,
   CategoryNavSkeleton,
-  ProductListRow,
-  ProductListRowSkeleton,
+  ProductRail,
   useCategories,
   useProducts,
 } from "@/features/catalog";
-import { CatalogSearchSection } from "@/features/storefront/components/CatalogSearchSection";
-import { HomeWelcomeCard } from "@/features/storefront/components/HomeGreetingBanner";
-import {
-  buildHomeInsightChips,
-  HomeInsightRail,
-} from "@/features/storefront/components/HomeInsightRail";
+import { useFavorites } from "@/features/favorites";
+import { CategoryProductRail } from "@/features/storefront/components/CategoryProductRail";
+import { HomeMessageTicker } from "@/features/storefront/components/HomeMessageTicker";
 import { StoreHero } from "@/features/storefront/components/StoreHero";
-import {
-  buildHomeSections,
-  searchPlaceholders,
-} from "@/features/storefront/utils/homeSections";
+import { useCategoryAffinity } from "@/features/storefront/hooks/useCategoryAffinity";
+import { buildHomeVitrine } from "@/features/storefront/utils/buildHomeVitrine";
 import { HomeOffersCarousel } from "@/features/promotions/components/HomeOffersCarousel";
+import { promotionsPublicApi } from "@/features/promotions";
 import { useCompanyPublic } from "@/features/company";
 import { EmptyState } from "@/shared/components/EmptyState";
-import { SectionHeading } from "@/shared/components/visual";
 import { storefrontCopy } from "@/shared/copy/storefront";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 
 export function HomePage() {
-  const navigate = useNavigate();
-  const searchBlockRef = useRef<HTMLDivElement>(null);
-  const [search, setSearch] = useState("");
   const { data: company, isLoading: loadingCompany } = useCompanyPublic();
   const { data: categories, isLoading: loadingCategories, isError: categoriesError } = useCategories();
   const { data: productsPage, isLoading: loadingProducts, isError: productsError } = useProducts({
     page_size: 48,
   });
+  const { data: offers = [], isLoading: loadingOffers } = useQuery({
+    queryKey: ["public", "promotion-offers"],
+    queryFn: () => promotionsPublicApi.offers(),
+  });
+  const { preferredCategoryIds } = useCategoryAffinity();
+  const { favorites } = useFavorites();
 
   const products = productsPage?.results ?? [];
   const categoryList = categories ?? [];
 
-  const placeholders = useMemo(
-    () => searchPlaceholders(categoryList.map((c) => c.name)),
-    [categoryList],
+  // preferência: afinidade local + categorias dos favoritos salvos
+  const preferredIds = useMemo(() => {
+    const fromFavorites = products
+      .filter((p) => favorites.includes(p.id) && p.category?.id)
+      .map((p) => p.category.id);
+    const merged = [...preferredCategoryIds, ...fromFavorites];
+    return [...new Set(merged)];
+  }, [preferredCategoryIds, favorites, products]);
+
+  const vitrine = useMemo(
+    () =>
+      buildHomeVitrine({
+        products,
+        categories: categoryList,
+        offers,
+        preferredCategoryIds: preferredIds,
+      }),
+    [products, categoryList, offers, preferredIds],
   );
 
-  const suggestions = useMemo(() => {
-    const fromCats = categoryList.map((c) => ({
-      label: c.name,
-      kind: "category" as const,
-    }));
-    const fromProducts = products.slice(0, 40).map((p) => ({
-      label: p.name,
-      kind: "product" as const,
-    }));
-    return [...fromCats, ...fromProducts];
-  }, [categoryList, products]);
-
-  const sections = useMemo(
-    () => buildHomeSections(products, categoryList),
-    [products, categoryList],
-  );
-
-  const insightChips = useMemo(
-    () => buildHomeInsightChips(company, products),
-    [company, products],
-  );
-
-  const goToMenuSearch = (term = search) => {
-    const query = term.trim();
-    navigate(query ? `/cardapio?q=${encodeURIComponent(query)}` : "/cardapio");
-  };
-
-  const focusSearch = () => {
-    searchBlockRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    window.setTimeout(() => {
-      const input = searchBlockRef.current?.querySelector("input");
-      input?.focus();
-    }, 280);
-  };
+  const loadingFeed = loadingProducts || loadingOffers;
 
   return (
-    <div className="space-y-5 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:space-y-8">
-      <StoreHero
-        company={company}
-        isLoading={loadingCompany}
-        onSearchClick={focusSearch}
-      />
+    <div className="space-y-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:space-y-6">
+      <StoreHero company={company} isLoading={loadingCompany} />
 
-      <HomeWelcomeCard products={products} />
+      <HomeMessageTicker company={company} products={products} />
 
-      <HomeInsightRail chips={insightChips} />
-
-      <HomeOffersCarousel />
-
-      <div ref={searchBlockRef}>
-        <CatalogSearchSection
-          value={search}
-          onChange={setSearch}
-          onSubmit={() => goToMenuSearch()}
-          placeholders={placeholders}
-          suggestions={suggestions}
-          onPickSuggestion={(label) => goToMenuSearch(label)}
+      {loadingFeed ? (
+        <section className="space-y-2.5 py-2">
+          <Skeleton className="h-4 w-28" />
+          <div className="-mx-1 flex gap-3 overflow-hidden px-1">
+            <Skeleton className="aspect-square w-[132px] shrink-0 rounded-2xl" />
+            <Skeleton className="aspect-square w-[132px] shrink-0 rounded-2xl" />
+            <Skeleton className="aspect-square w-[132px] shrink-0 rounded-2xl" />
+          </div>
+        </section>
+      ) : vitrine.highlight?.kind === "promos" ? (
+        <HomeOffersCarousel offers={vitrine.highlight.offers} />
+      ) : vitrine.highlight ? (
+        <ProductRail
+          title={vitrine.highlight.title}
+          subtitle={vitrine.highlight.description}
+          products={vitrine.highlight.products}
         />
-      </div>
+      ) : null}
 
-      <section className="space-y-3">
-        <SectionHeading title="Categorias" icon={UtensilsCrossed} accent="chart-2" />
-        {loadingCategories ? (
-          <CategoryNavSkeleton />
-        ) : categoriesError ? (
-          <EmptyState
-            title="Não foi possível carregar categorias"
-            description="Verifique se o backend está rodando e o tenant demo está ativo."
-            accent="chart-2"
-          />
-        ) : categoryList.length > 0 ? (
-          <CategoryNav categories={categoryList} />
-        ) : (
-          <EmptyState icon={UtensilsCrossed} title="Nenhuma categoria cadastrada" accent="chart-2" />
-        )}
-      </section>
+      {/* lançamentos + combos — mesmo motor, após o topo */}
+      {!loadingFeed
+        ? vitrine.secondaryBlocks.map((block) => (
+            <ProductRail
+              key={block.kind}
+              title={block.title}
+              subtitle={block.description}
+              products={block.products}
+            />
+          ))
+        : null}
+
+      {loadingCategories ? (
+        <CategoryNavSkeleton />
+      ) : categoriesError ? (
+        <EmptyState
+          title="Não foi possível carregar categorias"
+          description="Verifique se o backend está rodando e o tenant demo está ativo."
+          accent="chart-2"
+        />
+      ) : vitrine.categoryChips.length > 0 ? (
+        <CategoryNav categories={vitrine.categoryChips} showAllOption={false} />
+      ) : null}
 
       {loadingProducts ? (
-        <section className="space-y-3">
-          <SectionHeading
-            title="Favoritos da galera"
-            description={storefrontCopy.home.highlights}
-            accent="chart-4"
-          />
-          <ProductListRowSkeleton count={6} />
-        </section>
+        <div className="space-y-6">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="space-y-3">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-12 w-12 rounded-xl" />
+                <Skeleton className="h-5 w-40" />
+              </div>
+              <div className="flex gap-3 overflow-hidden">
+                <Skeleton className="h-36 w-[132px] shrink-0 rounded-2xl" />
+                <Skeleton className="h-36 w-[132px] shrink-0 rounded-2xl" />
+                <Skeleton className="h-36 w-[132px] shrink-0 rounded-2xl" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : productsError ? (
         <EmptyState title="Erro ao carregar produtos" accent="chart-4" />
-      ) : sections.length === 0 ? (
+      ) : vitrine.categoryRails.length === 0 && !vitrine.highlight ? (
         <EmptyState
+          icon={UtensilsCrossed}
           title={storefrontCopy.menu.empty.title}
           description={storefrontCopy.menu.empty.description}
           accent="chart-4"
         />
       ) : (
-        sections.map((section, sectionIndex) => (
-          <section key={section.id} className="space-y-3 sm:space-y-4">
-            <SectionHeading
-              title={section.title}
-              description={section.description}
-              icon={section.icon}
-              accent={section.accent === "primary" ? "chart-1" : section.accent}
-              action={
-                sectionIndex === 0 ? (
-                  <Link to="/cardapio" className="text-sm font-semibold text-brand hover:underline">
-                    Ver todos →
-                  </Link>
-                ) : undefined
-              }
-            />
-            {section.products.length === 0 ? (
-              <EmptyState
-                title="Ainda não temos produtos aqui"
-                description="Mas estamos preparando novidades!"
-                accent="chart-2"
-              />
-            ) : (
-              <ul className="divide-y divide-[hsl(0_0%_90%)] border-t border-[hsl(0_0%_90%)]">
-                {section.products.map((product, index) => (
-                  <li key={product.id}>
-                    <ProductListRow product={product} staggerIndex={index} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        ))
+        <div className="space-y-7 sm:space-y-8">
+          {vitrine.categoryRails.map((rail) => (
+            <CategoryProductRail key={rail.category.id} rail={rail} />
+          ))}
+        </div>
       )}
     </div>
   );

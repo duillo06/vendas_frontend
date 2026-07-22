@@ -6,7 +6,7 @@
 > **Status:** Aprovado  
 > **Última atualização:** Julho/2026  
 > **Depende de:** `00-product-philosophy.md`, `20-promotions-philosophy.md`  
-> **Relacionados:** `01-visao-do-produto.md`, `11-guia-ui-ux.md`, `15-futuras-funcionalidades.md`, `19-future-ideas.md`  
+> **Relacionados:** `01-visao-do-produto.md`, `11-guia-ui-ux.md`, `15-futuras-funcionalidades.md`, `19-future-ideas.md`, `20-promotions-philosophy.md`, `24-home-vitrine-inteligente.md`  
 > **Natureza:** Documento de **produto** — não técnico. Sem endpoints, sem tabelas, sem jargão na UI.
 
 ---

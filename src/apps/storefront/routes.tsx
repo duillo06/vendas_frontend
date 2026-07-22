@@ -9,11 +9,13 @@ import { CategoryPage } from "@/apps/storefront/pages/CategoryPage";
 import { CheckoutPage } from "@/apps/storefront/pages/CheckoutPage";
 import { CustomerLoginPage } from "@/apps/storefront/pages/CustomerLoginPage";
 import { CustomerRegisterPage } from "@/apps/storefront/pages/CustomerRegisterPage";
+import { FavoritesPage } from "@/apps/storefront/pages/FavoritesPage";
 import { HomePage } from "@/apps/storefront/pages/HomePage";
 import { MenuPage } from "@/apps/storefront/pages/MenuPage";
 import { OrderConfirmationPage } from "@/apps/storefront/pages/OrderConfirmationPage";
 import { OrderTrackingPage } from "@/apps/storefront/pages/OrderTrackingPage";
 import { ProductPage } from "@/apps/storefront/pages/ProductPage";
+import { SearchPage } from "@/apps/storefront/pages/SearchPage";
 import { CustomerProtectedRoute } from "@/features/customer-auth";
 
 export const storefrontRouter = createBrowserRouter([
@@ -22,6 +24,8 @@ export const storefrontRouter = createBrowserRouter([
     element: <StorefrontLayout />,
     children: [
       { index: true, element: <HomePage /> },
+      { path: "buscar", element: <SearchPage /> },
+      { path: "favoritos", element: <FavoritesPage /> },
       { path: "cardapio", element: <MenuPage /> },
       { path: "categoria/:slug", element: <CategoryPage /> },
       { path: "produto/:slug", element: <ProductPage /> },

@@ -6,6 +6,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { catalogAdminApi } from "@/features/catalog/api/catalogAdminApi";
 import {
   promotionsAdminApi,
+  type CampaignAdmin,
   type CampaignCreatePayload,
   type CommercialGoal,
   type RecurrenceType,
@@ -16,7 +17,9 @@ import { cn } from "@/shared/lib/utils";
 import { formatCurrency } from "@/shared/lib/format";
 
 type Props = {
-  onCreated: () => void;
+  /** se vier, abre já preenchido pra ajustar */
+  campaign?: CampaignAdmin;
+  onSaved: () => void;
   onCancel: () => void;
 };
 
@@ -45,18 +48,52 @@ function calcImpact(reference: number, promo: number) {
   return { save, pct };
 }
 
-export function CampaignAssistant({ onCreated, onCancel }: Props) {
-  const [goal, setGoal] = useState<CommercialGoal | null>(null);
-  const [acceptedPath, setAcceptedPath] = useState(false);
-  const [productId, setProductId] = useState<string | null>(null);
-  const [promoPrice, setPromoPrice] = useState("");
-  const [recurrence, setRecurrence] = useState<RecurrenceType>("once");
-  const [weekdays, setWeekdays] = useState<number[]>([]);
-  const [endsAt, setEndsAt] = useState("");
-  const [showHome, setShowHome] = useState(true);
-  const [showMenu, setShowMenu] = useState(true);
-  const [showProduct, setShowProduct] = useState(true);
-  const [linkOnly, setLinkOnly] = useState(false);
+function weightToIntensity(weight: number): 10 | 100 | 200 {
+  if (weight >= 200) return 200;
+  if (weight >= 100) return 100;
+  return 10;
+}
+
+function toDatetimeLocal(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function goalSupportsDirectPath(goal: CommercialGoal) {
+  return (
+    goal === "increase_sales" ||
+    goal === "sell_category" ||
+    goal === "attract_new" ||
+    goal === "bring_back"
+  );
+}
+
+export function CampaignAssistant({ campaign, onSaved, onCancel }: Props) {
+  const isEdit = Boolean(campaign);
+
+  const [goal, setGoal] = useState<CommercialGoal | null>(campaign?.commercial_goal ?? null);
+  const [acceptedPath, setAcceptedPath] = useState(
+    () => Boolean(campaign) || (campaign?.commercial_goal ? goalSupportsDirectPath(campaign.commercial_goal) : false),
+  );
+  const [productId, setProductId] = useState<string | null>(campaign?.product_id ?? null);
+  const [promoPrice, setPromoPrice] = useState(
+    campaign?.promo_price != null ? String(campaign.promo_price) : "",
+  );
+  const [recurrence, setRecurrence] = useState<RecurrenceType>(
+    campaign?.recurrence_type ?? "once",
+  );
+  const [weekdays, setWeekdays] = useState<number[]>(campaign?.weekdays ?? []);
+  const [endsAt, setEndsAt] = useState(() => toDatetimeLocal(campaign?.ends_at));
+  const [showHome, setShowHome] = useState(campaign?.show_on_home ?? true);
+  const [showMenu, setShowMenu] = useState(campaign?.show_on_menu ?? true);
+  const [showProduct, setShowProduct] = useState(campaign?.show_on_product ?? true);
+  const [linkOnly, setLinkOnly] = useState(campaign?.link_only ?? false);
+  const [intensity, setIntensity] = useState<10 | 100 | 200>(() =>
+    weightToIntensity(campaign?.weight ?? 10),
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [productSearch, setProductSearch] = useState("");
@@ -64,15 +101,25 @@ export function CampaignAssistant({ onCreated, onCancel }: Props) {
   const { data: productsPage } = useQuery({
     queryKey: ["admin", "products", "campaign-picker"],
     queryFn: () => catalogAdminApi.listProducts({ page_size: "100", is_active: "true" }),
-    enabled: acceptedPath,
+    enabled: acceptedPath || isEdit,
   });
 
   const products = productsPage?.results ?? [];
   const selected = products.find((p) => p.id === productId) ?? null;
   const promoNum = Number(promoPrice.replace(",", "."));
+
+  // "De" da campanha: referência travada se for o mesmo produto
+  const referencePrice = (() => {
+    if (!selected) return campaign?.reference_price ?? 0;
+    if (campaign && productId === campaign.product_id) {
+      return Number(campaign.reference_price);
+    }
+    return Number(selected.base_price);
+  })();
+
   const impact =
     selected && Number.isFinite(promoNum) && promoNum > 0
-      ? calcImpact(Number(selected.base_price), promoNum)
+      ? calcImpact(referencePrice, promoNum)
       : null;
 
   const filtered = useMemo(() => {
@@ -80,25 +127,18 @@ export function CampaignAssistant({ onCreated, onCancel }: Props) {
     return products.filter((p) => !q || p.name.toLowerCase().includes(q));
   }, [products, productSearch]);
 
-  // caminhos que nesta fase viram preço de produto
-  const pathReady = Boolean(goal) && (
-    goal === "increase_sales" ||
-    goal === "sell_category" ||
-    goal === "attract_new" ||
-    goal === "bring_back" ||
-    acceptedPath
-  );
+  const pathReady = Boolean(goal) && (goalSupportsDirectPath(goal!) || acceptedPath);
 
-  const canCreate =
+  const canSave =
     productId &&
     Number.isFinite(promoNum) &&
-    selected &&
+    (selected || (isEdit && productId === campaign?.product_id)) &&
     promoNum > 0 &&
-    promoNum < Number(selected.base_price) &&
+    promoNum < referencePrice &&
     (recurrence !== "weekdays" || weekdays.length > 0);
 
-  const handleCreate = async () => {
-    if (!goal || !productId || !canCreate) return;
+  const handleSave = async () => {
+    if (!goal || !productId || !canSave) return;
     setSaving(true);
     setError(null);
     const payload: CampaignCreatePayload = {
@@ -112,12 +152,23 @@ export function CampaignAssistant({ onCreated, onCancel }: Props) {
       show_on_menu: linkOnly ? false : showMenu,
       show_on_product: showProduct,
       link_only: linkOnly,
+      weight: intensity,
     };
     try {
-      await promotionsAdminApi.create(payload);
-      onCreated();
+      if (campaign) {
+        await promotionsAdminApi.update(campaign.id, payload);
+      } else {
+        await promotionsAdminApi.create(payload);
+      }
+      onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível criar a promoção");
+      setError(
+        err instanceof Error
+          ? err.message
+          : campaign
+            ? "Não foi possível salvar as alterações"
+            : "Não foi possível criar a promoção",
+      );
     } finally {
       setSaving(false);
     }
@@ -125,7 +176,9 @@ export function CampaignAssistant({ onCreated, onCancel }: Props) {
 
   return (
     <div className="space-y-8">
-      <QuestionBlock title="O que você deseja aumentar hoje?">
+      <QuestionBlock
+        title={isEdit ? "O que você quer reforçar com essa oferta?" : "O que você deseja aumentar hoje?"}
+      >
         <div className="grid gap-2 sm:grid-cols-2">
           {GOALS.map((g) => (
             <OptionCard
@@ -134,12 +187,7 @@ export function CampaignAssistant({ onCreated, onCancel }: Props) {
               selected={goal === g.id}
               onSelect={() => {
                 setGoal(g.id);
-                setAcceptedPath(
-                  g.id === "increase_sales" ||
-                    g.id === "sell_category" ||
-                    g.id === "attract_new" ||
-                    g.id === "bring_back",
-                );
+                setAcceptedPath(isEdit || goalSupportsDirectPath(g.id));
               }}
             />
           ))}
@@ -182,10 +230,22 @@ export function CampaignAssistant({ onCreated, onCancel }: Props) {
                     onSelect={() => setProductId(p.id)}
                   />
                 ))}
+                {/* se o produto da campanha ainda não veio na lista */}
+                {isEdit &&
+                campaign &&
+                productId === campaign.product_id &&
+                !products.some((p) => p.id === campaign.product_id) ? (
+                  <OptionCard
+                    label={campaign.product_name}
+                    description={`De: ${formatCurrency(campaign.reference_price)}`}
+                    selected
+                    onSelect={() => setProductId(campaign.product_id)}
+                  />
+                ) : null}
               </div>
             </QuestionBlock>
 
-            {selected ? (
+            {productId ? (
               <QuestionBlock title="Qual será o novo preço?">
                 <Input
                   type="number"
@@ -197,16 +257,16 @@ export function CampaignAssistant({ onCreated, onCancel }: Props) {
                   onChange={(e) => setPromoPrice(e.target.value)}
                   className="h-12 max-w-[12rem] text-lg font-semibold"
                 />
-                {impact && promoNum < Number(selected.base_price) ? (
+                {impact && promoNum < referencePrice ? (
                   <p className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
-                    De {formatCurrency(selected.base_price)} · Por {formatCurrency(promoNum)} ·
-                    Desconto de {impact.pct}% · Economia de {formatCurrency(impact.save)}
+                    De {formatCurrency(referencePrice)} · Por {formatCurrency(promoNum)} · Desconto
+                    de {impact.pct}% · Economia de {formatCurrency(impact.save)}
                   </p>
                 ) : null}
               </QuestionBlock>
             ) : null}
 
-            {selected && impact && promoNum < Number(selected.base_price) ? (
+            {productId && impact && promoNum < referencePrice ? (
               <>
                 <QuestionBlock title="Esta promoção acontece…">
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -260,10 +320,46 @@ export function CampaignAssistant({ onCreated, onCancel }: Props) {
                   </label>
                 </QuestionBlock>
 
+                <QuestionBlock
+                  title="Quão especial é essa oferta?"
+                  description="Isso define o destaque na vitrine da loja."
+                >
+                  <div className="grid gap-2">
+                    <OptionCard
+                      label="Do dia a dia"
+                      description="Aparece junto com as outras promoções."
+                      selected={intensity === 10}
+                      onSelect={() => setIntensity(10)}
+                    />
+                    <OptionCard
+                      label="Campanha especial / do mês"
+                      description="Ganha mais prioridade no carrossel."
+                      selected={intensity === 100}
+                      onSelect={() => setIntensity(100)}
+                    />
+                    <OptionCard
+                      label="Oferta relâmpago"
+                      description="Vai na frente — urgência e destaque."
+                      selected={intensity === 200}
+                      onSelect={() => setIntensity(200)}
+                    />
+                  </div>
+                </QuestionBlock>
+
                 <QuestionBlock title="Onde deseja mostrar esta promoção?">
                   <div className="space-y-2">
-                    <ToggleRow label="Home" checked={showHome && !linkOnly} onChange={setShowHome} disabled={linkOnly} />
-                    <ToggleRow label="Cardápio" checked={showMenu && !linkOnly} onChange={setShowMenu} disabled={linkOnly} />
+                    <ToggleRow
+                      label="Home"
+                      checked={showHome && !linkOnly}
+                      onChange={setShowHome}
+                      disabled={linkOnly}
+                    />
+                    <ToggleRow
+                      label="Cardápio"
+                      checked={showMenu && !linkOnly}
+                      onChange={setShowMenu}
+                      disabled={linkOnly}
+                    />
                     <ToggleRow label="Página do produto" checked={showProduct} onChange={setShowProduct} />
                     <ToggleRow
                       label="Apenas pelo link"
@@ -276,8 +372,8 @@ export function CampaignAssistant({ onCreated, onCancel }: Props) {
                 <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30 p-4">
                   <p className="text-sm font-medium">Resumo</p>
                   <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
-                    {selected.name} por {formatCurrency(promoNum)} (de{" "}
-                    {formatCurrency(selected.base_price)})
+                    {(selected?.name ?? campaign?.product_name) || "Produto"} por{" "}
+                    {formatCurrency(promoNum)} (de {formatCurrency(referencePrice)})
                     {impact ? ` · −${impact.pct}% · economize ${formatCurrency(impact.save)}` : ""}
                   </p>
                 </div>
@@ -289,10 +385,16 @@ export function CampaignAssistant({ onCreated, onCancel }: Props) {
                     type="button"
                     size="lg"
                     className="h-12 flex-1 bg-brand font-semibold"
-                    disabled={!canCreate || saving}
-                    onClick={() => void handleCreate()}
+                    disabled={!canSave || saving}
+                    onClick={() => void handleSave()}
                   >
-                    {saving ? "Criando…" : "Criar promoção"}
+                    {saving
+                      ? isEdit
+                        ? "Salvando…"
+                        : "Criando…"
+                      : isEdit
+                        ? "Salvar alterações"
+                        : "Criar promoção"}
                   </Button>
                   <Button type="button" variant="outline" size="lg" className="h-12" onClick={onCancel}>
                     Cancelar

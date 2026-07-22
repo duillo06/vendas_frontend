@@ -5,6 +5,7 @@ export { ProductDetailSkeleton, ProductDetailView } from "./components/ProductDe
 export { ProductList } from "./components/ProductList";
 export { ProductListRow } from "./components/ProductListRow";
 export { ProductListRowSkeleton, ProductListSkeleton } from "./components/ProductListSkeleton";
+export { ProductRail } from "./components/ProductRail";
 export { useCategories } from "./hooks/useCategories";
 export { useProduct } from "./hooks/useProduct";
 export { useProducts } from "./hooks/useProducts";
