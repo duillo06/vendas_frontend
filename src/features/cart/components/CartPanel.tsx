@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Gift, ShoppingCart } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 
 import { CartUpsell } from "./CartUpsell";
 import { useCompanyPublic } from "@/features/company";
@@ -8,8 +8,8 @@ import { useCart } from "../hooks/useCart";
 import { CartItemRow } from "./CartItemRow";
 
 import { EmptyState } from "@/shared/components/EmptyState";
+import { MessageTicker } from "@/shared/components/MessageTicker";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
-import { UiHint } from "@/shared/components/UiHint";
 import { Button } from "@/shared/components/ui/button";
 import { getFreeDeliveryHint, storefrontCopy } from "@/shared/copy/storefront";
 import { cn } from "@/shared/lib/utils";
@@ -44,13 +44,19 @@ export function CartPanel({ onClose }: CartPanelProps) {
     );
   }
 
+  const tipMessages = [
+    "✨ Você pode ajustar quantidades ou remover itens — nada é cobrado até confirmar.",
+    deliveryHint
+      ? deliveryHint.type === "unlocked"
+        ? `🎁 ${deliveryHint.message}`
+        : `🚚 ${deliveryHint.message}`
+      : null,
+    storefrontCopy.cart.feesHint,
+  ].filter((m): m is string => Boolean(m));
+
   return (
     <div className="flex flex-col gap-4 pb-[calc(8.5rem+env(safe-area-inset-bottom,0px))]">
-      {deliveryHint ? (
-        <UiHint icon={Gift} tone={deliveryHint.type === "unlocked" ? "success" : "warm"}>
-          {deliveryHint.type === "unlocked" ? `🎁 ${deliveryHint.message}` : deliveryHint.message}
-        </UiHint>
-      ) : null}
+      <MessageTicker messages={tipMessages} />
 
       <ul className="space-y-3">
         {items.map((item) => (
@@ -89,9 +95,6 @@ export function CartPanel({ onClose }: CartPanelProps) {
                 className="text-lg font-bold tabular-nums text-brand sm:text-xl"
               />
             </div>
-            <p className="max-w-[14rem] text-right text-[11px] leading-snug text-[hsl(var(--muted-foreground))] sm:max-w-none">
-              {storefrontCopy.cart.feesHint}
-            </p>
           </div>
 
           <Link to="/checkout" onClick={onClose} className="block w-full">

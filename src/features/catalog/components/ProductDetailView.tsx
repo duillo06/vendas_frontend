@@ -31,7 +31,7 @@ import type { ProductDetail, ProductListItem } from "../types/catalog.types";
 import type { CartComponent } from "@/features/cart/types/cart.types";
 
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
-import { UiHint } from "@/shared/components/UiHint";
+import { MessageTicker } from "@/shared/components/MessageTicker";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Skeleton } from "@/shared/components/ui/skeleton";
@@ -275,13 +275,15 @@ export function ProductDetailView({
           </div>
 
           {product.is_available ? (
-            <UiHint icon={isPopular ? Flame : Heart} tone="warm">
-              {isPopular
-                ? storefrontCopy.product.favorite
-                : storefrontCopy.product.customizeHint}
-            </UiHint>
+            <MessageTicker
+              messages={[
+                isPopular
+                  ? `🔥 ${storefrontCopy.product.favorite}`
+                  : `✨ ${storefrontCopy.product.customizeHint}`,
+              ]}
+            />
           ) : (
-            <UiHint tone="neutral">{storefrontCopy.product.unavailable}</UiHint>
+            <MessageTicker messages={[`⏸️ ${storefrontCopy.product.unavailable}`]} />
           )}
 
           <ProductFeatureChips items={featureChips} title={storefrontCopy.product.highlightsTitle} />

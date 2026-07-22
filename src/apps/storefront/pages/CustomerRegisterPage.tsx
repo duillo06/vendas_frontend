@@ -7,7 +7,7 @@ import { z } from "zod";
 
 import { useCustomerAuth } from "@/features/customer-auth";
 import { PhoneInput } from "@/shared/components/PhoneInput";
-import { UiHint } from "@/shared/components/UiHint";
+import { MessageTicker } from "@/shared/components/MessageTicker";
 import { BackLink } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
@@ -128,7 +128,11 @@ export function CustomerRegisterPage() {
         </CardContent>
       </Card>
 
-      <UiHint tone="neutral">{storefrontCopy.account.guestCheckout}</UiHint>
+      <MessageTicker
+        messages={[
+          { text: `✨ ${storefrontCopy.account.guestCheckout}`, to: "/checkout" },
+        ]}
+      />
     </div>
   );
 }

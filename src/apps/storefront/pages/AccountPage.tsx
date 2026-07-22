@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { Heart, LogOut, MapPin, Package, User } from "lucide-react";
 
 import { useCustomerAuth } from "@/features/customer-auth";
-import { UiHint } from "@/shared/components/UiHint";
+import { MessageTicker } from "@/shared/components/MessageTicker";
 import { BackLink, PageHeader } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
@@ -58,11 +58,13 @@ export function AccountPage() {
         ))}
       </div>
 
-      <UiHint tone="warm">
-        {customer?.total_orders
-          ? `Você já fez ${customer.total_orders} pedido${customer.total_orders === 1 ? "" : "s"} conosco.`
-          : "Faça seu primeiro pedido e acompanhe tudo por aqui."}
-      </UiHint>
+      <MessageTicker
+        messages={[
+          customer?.total_orders
+            ? `💛 Você já fez ${customer.total_orders} pedido${customer.total_orders === 1 ? "" : "s"} conosco.`
+            : "✨ Faça seu primeiro pedido e acompanhe tudo por aqui.",
+        ]}
+      />
 
       <Button type="button" variant="outline" className="gap-2" onClick={() => void logout()}>
         <LogOut className="h-4 w-4" />

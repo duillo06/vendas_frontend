@@ -1,6 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Link } from "react-router";
+import { useMemo } from "react";
 
 import type { CompanyPublic } from "@/features/company/types/company.types";
 import {
@@ -13,8 +11,8 @@ import {
   getDayPart,
   getHomeGreeting,
 } from "@/features/storefront/utils/homeGreeting";
+import { MessageTicker, type TickerMessage } from "@/shared/components/MessageTicker";
 import { formatCurrency } from "@/shared/lib/format";
-import { cn } from "@/shared/lib/utils";
 
 type Props = {
   company?: CompanyPublic | null;
@@ -26,8 +24,8 @@ function buildMessages(
   company: CompanyPublic | null | undefined,
   products: ProductListItem[],
   now = new Date(),
-): string[] {
-  const messages: string[] = [];
+): TickerMessage[] {
+  const messages: TickerMessage[] = [];
   const greeting = getHomeGreeting(now);
   const dayPart = getDayPart(now);
   messages.push(`✨ ${greeting.title}`);
@@ -57,21 +55,21 @@ function buildMessages(
     (p) => p.is_available && p.tags.some((t) => /mais vendido|destaque|popular/i.test(t)),
   );
   if (champion) {
-    messages.push(`🔥 Mais pedida: ${champion.name}`);
+    messages.push({ text: `🔥 Mais pedida: ${champion.name}`, to: `/produto/${champion.slug}` });
   }
 
   const novelty = products.find(
     (p) => p.is_available && p.tags.some((t) => /^novo$|novidade|lan[cç]amento/i.test(t)),
   );
   if (novelty) {
-    messages.push(`🎉 Novidade: ${novelty.name}`);
+    messages.push({ text: `🎉 Novidade: ${novelty.name}`, to: `/produto/${novelty.slug}` });
   }
 
   const combo = products.find(
     (p) => p.is_available && p.tags.some((t) => /combo|kit|fam[ií]lia/i.test(t)),
   );
   if (combo) {
-    messages.push(`👨‍👩‍👧 Combo em alta: ${combo.name}`);
+    messages.push({ text: `👨‍👩‍👧 Combo em alta: ${combo.name}`, to: `/produto/${combo.slug}` });
   }
 
   const deal = products.find(
@@ -81,55 +79,14 @@ function buildMessages(
       Number(p.compare_price) > Number(p.base_price),
   );
   if (deal) {
-    messages.push(`💥 Oferta em ${deal.name}`);
+    messages.push({ text: `💥 Oferta em ${deal.name}`, to: `/produto/${deal.slug}` });
   }
 
   return messages;
 }
 
-/** ticker vivo — uma mensagem por vez, sem card grosso */
+/** ticker da home — mensagens da loja numa linha só */
 export function HomeMessageTicker({ company, products = [], className }: Props) {
   const messages = useMemo(() => buildMessages(company, products), [company, products]);
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    if (messages.length <= 1) return;
-    const id = window.setInterval(() => {
-      setIndex((i) => (i + 1) % messages.length);
-    }, 3800);
-    return () => window.clearInterval(id);
-  }, [messages.length]);
-
-  if (!messages.length) return null;
-
-  const current = messages[index % messages.length];
-  const linkMatch = products.find((p) => current.includes(p.name));
-
-  return (
-    <div
-      className={cn(
-        "overflow-hidden rounded-xl border border-[hsl(var(--border)/0.8)] bg-gradient-to-r from-[hsl(var(--muted)/0.55)] via-[hsl(var(--primary)/0.06)] to-[hsl(var(--muted)/0.45)] px-3.5 py-2.5",
-        className,
-      )}
-    >
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.p
-          key={current}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-          className="truncate text-[13px] font-medium text-[hsl(var(--foreground))]"
-        >
-          {linkMatch ? (
-            <Link to={`/produto/${linkMatch.slug}`} className="hover:text-brand">
-              {current}
-            </Link>
-          ) : (
-            current
-          )}
-        </motion.p>
-      </AnimatePresence>
-    </div>
-  );
+  return <MessageTicker messages={messages} className={className} />;
 }

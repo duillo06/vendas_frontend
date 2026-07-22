@@ -1,8 +1,8 @@
-import { Gift, ShoppingBag } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 
 import type { CartItem } from "@/features/cart";
+import { MessageTicker } from "@/shared/components/MessageTicker";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
-import { UiHint } from "@/shared/components/UiHint";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { getFreeDeliveryHint, storefrontCopy } from "@/shared/copy/storefront";
 import { cn } from "@/shared/lib/utils";
@@ -79,9 +79,13 @@ export function CheckoutOrderSummary({
         </div>
 
         {deliveryHint ? (
-          <UiHint icon={Gift} tone={deliveryHint.type === "unlocked" ? "success" : "warm"}>
-            {deliveryHint.type === "unlocked" ? `🎁 ${deliveryHint.message}` : deliveryHint.message}
-          </UiHint>
+          <MessageTicker
+            messages={[
+              deliveryHint.type === "unlocked"
+                ? `🎁 ${deliveryHint.message}`
+                : `🚚 ${deliveryHint.message}`,
+            ]}
+          />
         ) : null}
       </CardContent>
     </Card>

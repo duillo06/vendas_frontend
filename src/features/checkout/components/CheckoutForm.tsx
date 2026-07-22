@@ -1,14 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Banknote, CreditCard, MapPin, ShieldCheck, Smartphone, Store, User } from "lucide-react";
+import { Banknote, CreditCard, MapPin, Smartphone, Store, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm, Controller, type FieldPath } from "react-hook-form";
-import { Link } from "react-router";
 import type { ZodIssue } from "zod";
 
 import { useCart } from "@/features/cart";
 import { useCompanyPublic } from "@/features/company";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
-import { UiHint } from "@/shared/components/UiHint";
+import { MessageTicker } from "@/shared/components/MessageTicker";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
@@ -192,23 +191,22 @@ export function CheckoutForm() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
         <div className="space-y-6">
-      {!authLoading && isAuthenticated && customer ? (
-        <UiHint tone="success" icon={User} title={`Olá, ${customer.first_name}!`}>
-          {storefrontCopy.account.checkoutLoggedIn(customer.full_name)}
-        </UiHint>
-      ) : null}
-
-      {!authLoading && !isAuthenticated ? (
-        <UiHint tone="info">
-          {storefrontCopy.account.guestCheckout}{" "}
-          <Link to="/entrar" state={{ from: "/checkout" }} className="font-medium text-brand underline">
-            {storefrontCopy.account.checkoutLoginLink}
-          </Link>
-          .
-        </UiHint>
-      ) : null}
-
-      <UiHint tone="warm">{storefrontCopy.checkout.steps[step as 1 | 2 | 3 | 4]}</UiHint>
+      <MessageTicker
+        messages={[
+          !authLoading && isAuthenticated && customer
+            ? `👋 Olá, ${customer.first_name}! ${storefrontCopy.account.checkoutLoggedIn(customer.full_name)}`
+            : null,
+          !authLoading && !isAuthenticated
+            ? {
+                text: `${storefrontCopy.account.guestCheckout} ${storefrontCopy.account.checkoutLoginLink}`,
+                to: "/entrar",
+              }
+            : null,
+          `✨ ${storefrontCopy.checkout.steps[step as 1 | 2 | 3 | 4]}`,
+          step === 4 ? `🔒 ${storefrontCopy.checkout.confirmReassurance}` : null,
+          `🛡️ ${storefrontCopy.checkout.secureNote}`,
+        ].filter((m): m is NonNullable<typeof m> => m != null)}
+      />
 
       {step === 1 ? (
         <Card className="border-[hsl(var(--border))] shadow-sm">
@@ -474,17 +472,9 @@ export function CheckoutForm() {
                 {PAYMENT_LABELS[paymentMethod] ?? paymentMethod}
               </p>
             </div>
-
-            <UiHint icon={ShieldCheck} tone="success">
-              {storefrontCopy.checkout.confirmReassurance}
-            </UiHint>
           </CardContent>
         </Card>
       ) : null}
-
-      <UiHint tone="neutral" className="text-xs lg:hidden">
-        {storefrontCopy.checkout.secureNote}
-      </UiHint>
         </div>
 
         <div className="space-y-4">
@@ -498,9 +488,6 @@ export function CheckoutForm() {
             baseDeliveryFee={company?.settings.delivery_fee ?? 0}
             compact={step < 4}
           />
-          <UiHint icon={ShieldCheck} tone="neutral" className="hidden text-xs lg:block">
-            {storefrontCopy.checkout.secureNote}
-          </UiHint>
         </div>
       </div>
 

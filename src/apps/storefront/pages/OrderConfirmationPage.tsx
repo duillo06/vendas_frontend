@@ -1,9 +1,9 @@
-import { CheckCircle, Heart, Sparkles } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { Link, Navigate, useLocation, useParams } from "react-router";
 
 import type { Order } from "@/features/checkout";
+import { MessageTicker } from "@/shared/components/MessageTicker";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
-import { UiHint } from "@/shared/components/UiHint";
 import { BackLink } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
@@ -53,10 +53,13 @@ export function OrderConfirmationPage() {
         ) : null}
       </div>
 
-      <div className="animate-fade-up" style={{ animationDelay: "320ms" }}>
-        <UiHint icon={Sparkles} tone="success" className="text-left">
-          {storefrontCopy.order.confirmed.detail}
-        </UiHint>
+      <div className="animate-fade-up w-full" style={{ animationDelay: "320ms" }}>
+        <MessageTicker
+          messages={[
+            `✨ ${storefrontCopy.order.confirmed.detail}`,
+            `💛 ${storefrontCopy.order.delivered}`,
+          ]}
+        />
       </div>
 
       <Card className="animate-fade-up" style={{ animationDelay: "380ms" }}>
@@ -81,7 +84,10 @@ export function OrderConfirmationPage() {
         </CardContent>
       </Card>
 
-      <div className="animate-fade-up flex flex-col gap-2 sm:flex-row sm:justify-center" style={{ animationDelay: "440ms" }}>
+      <div
+        className="animate-fade-up flex flex-col gap-2 sm:flex-row sm:justify-center"
+        style={{ animationDelay: "440ms" }}
+      >
         {id ? (
           <Link to={`/pedido/${id}`}>
             <Button className="w-full sm:w-auto">Acompanhar pedido</Button>
@@ -92,12 +98,6 @@ export function OrderConfirmationPage() {
             Voltar ao cardápio
           </Button>
         </Link>
-      </div>
-
-      <div className="animate-fade-up" style={{ animationDelay: "500ms" }}>
-        <UiHint icon={Heart} tone="warm" className="text-left">
-          {storefrontCopy.order.delivered}
-        </UiHint>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { OrderStatusBadge, type OrderStatus } from "@/shared/components/OrderStatusBadge";
+import { MessageTicker } from "@/shared/components/MessageTicker";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
-import { UiHint } from "@/shared/components/UiHint";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { storefrontCopy } from "@/shared/copy/storefront";
 
@@ -30,10 +30,11 @@ export function OrderTrackingView({ order }: OrderTrackingViewProps) {
           <h1 className="text-2xl font-bold">{order.order_number}</h1>
           <OrderStatusBadge status={order.status as OrderStatus} />
         </div>
-        {statusMessage ? <UiHint tone="warm">{statusMessage}</UiHint> : null}
-        <p className="text-sm text-[hsl(var(--muted-foreground))]">
-          {storefrontCopy.order.tracking}
-        </p>
+        {statusMessage ? (
+          <MessageTicker messages={[`✨ ${statusMessage}`, storefrontCopy.order.tracking]} />
+        ) : (
+          <MessageTicker messages={[storefrontCopy.order.tracking]} />
+        )}
       </div>
 
       <Card>
