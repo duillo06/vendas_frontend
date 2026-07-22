@@ -2,11 +2,11 @@
 
 > **Documento:** Filosofia de Produto e Princípios Invioláveis  
 > **Produto:** Food Service *(nome comercial provisório)*  
-> **Versão:** 1.2  
+> **Versão:** 1.3  
 > **Status:** Aprovado  
 > **Última atualização:** Julho/2026  
 > **Depende de:** — (documento fundador; todos os demais devem respeitá-lo)  
-> **Relacionados:** `01-visao-do-produto.md`, `02-arquitetura.md`, `11-guia-ui-ux.md`, `17-modelo-categoria-produto.md`, `18-domain-rules.md`, `19-future-ideas.md`
+> **Relacionados:** `01-visao-do-produto.md`, `02-arquitetura.md`, `11-guia-ui-ux.md`, `17-modelo-categoria-produto.md`, `18-domain-rules.md`, `19-future-ideas.md`, `20-promotions-philosophy.md`, `21-marketing-engine.md`
 
 ---
 
@@ -314,6 +314,15 @@ Antes de implementar:
 
 Se não → `19-future-ideas.md`.
 
+### 13.3 Vender mais (filtro de produto)
+
+Além da Regra de Ouro, toda funcionalidade nova responde:
+
+> **Como isso ajuda o comerciante a vender mais, economizar tempo ou tomar melhores decisões?**
+
+Se não responder com clareza → repensar a experiência.  
+Detalhe da visão de marketing / consultor de vendas: `21-marketing-engine.md`. Promoções: `20-promotions-philosophy.md`.
+
 Checklist rápido antes de merge:
 
 - [ ] Usuário responde perguntas (não “configura features”)?
@@ -321,6 +330,7 @@ Checklist rápido antes de merge:
 - [ ] Alteração em massa pede confirmação?
 - [ ] Runtime do cardápio permanece estável?
 - [ ] Nome na UI passaria no teste da pizzaria pequena?
+- [ ] Ajuda a vender mais, economizar tempo ou decidir melhor?
 
 ---
 
@@ -328,10 +338,11 @@ Checklist rápido antes de merge:
 
 | Versão | Data | Descrição |
 |--------|------|-----------|
+| 1.3 | Jul/2026 | **Aprovado** — filtro “vender mais / tempo / decisões” (§13.3); links `20` / `21` |
 | 1.2 | Jul/2026 | **Aprovado** — herança de preços (categoria vs produto); §6.8 cadastro mínimo |
 | 1.1 | Jul/2026 | **Aprovado** — Architecture Freeze + MVP First |
 | 1.0 | Jul/2026 | Criação — filosofia fundadora, Regra de Ouro, receita da categoria, vocabulário |
 
 ---
 
-> **Documento aprovado.** Fonte oficial da verdade de produto. Próximo: implementação **Fase 5** (`17`).
+> **Documento aprovado.** Fonte oficial da verdade de produto. Promoções: `20`. Marketing Engine: `21`.

@@ -30,10 +30,15 @@ export function ProductListRow({ product, staggerIndex }: ProductListRowProps) {
   const favorite = isFavorite(product.id);
   const hasPromotion =
     product.compare_price != null && Number(product.compare_price) > Number(product.base_price);
-  const badges = getProductBadges(product.tags, {
-    hasPromotion,
-    isFavorite: favorite,
-  }).slice(0, 2);
+  const promoBadges = (product.promotion?.badges ?? []).slice(0, 2);
+  const badges = (
+    promoBadges.length
+      ? promoBadges.map((label) => ({ label, tone: "sale" as const }))
+      : getProductBadges(product.tags, {
+          hasPromotion,
+          isFavorite: favorite,
+        })
+  ).slice(0, 2);
 
   return (
     <Link

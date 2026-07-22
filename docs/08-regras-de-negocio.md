@@ -614,7 +614,19 @@ stateDiagram-v2
 
 ## 13. Cupons e Promoções
 
-> **Escopo V1.** Documentado para alinhar regras desde já.
+> **Campanhas (Fase 1):** preço promocional de produto — regras de UX em `20`, modelo em `22`, checklist `23`.  
+> **Cupons:** escopo V1 (abaixo) — separado das campanhas conversacionais.
+
+### 13.0 Campanhas — produto em oferta (Fase 1)
+
+| ID | Regra |
+|----|-------|
+| CA-01 | `promo_price` &lt; preço de catálogo (`reference_price`) |
+| CA-02 | Elegibilidade respeita `starts_at` / `ends_at` e recorrência (`once` / `weekdays`) |
+| CA-03 | Checkout calcula com preço promocional no servidor (`CampaignResolver`) |
+| CA-04 | Indicadores (−% / economize) calculados — nunca digitados pelo comerciante |
+| CA-05 | `link_only` não entra em carrosséis Home/Cardápio |
+| CA-06 | Em conflito no mesmo produto, prevalece o menor `promo_price` |
 
 ### 13.1 Cupons
 

@@ -1187,7 +1187,9 @@ Escopo **V2**. Documentado para alinhar modelagem desde já.
 
 ## 11. Módulo: Promoções
 
-Escopo **V1**. Cupons de desconto.
+**Campanhas (Fase 1 — produto em oferta):** ver modelagem completa em `22-promotions-architecture.md` (tabela `campaigns`, mecanismo `product_price`). App Django: `apps.promotions`.
+
+Escopo **V1 adicional**: Cupons de desconto (abaixo) — separado das campanhas conversacionais.
 
 ### 11.1 `coupons`
 

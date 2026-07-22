@@ -136,7 +136,9 @@ export function ProductDetailView({
   );
   const hasPromotion =
     product.compare_price !== null && product.compare_price > product.base_price;
-  const badges = getProductBadges(product.tags, { hasPromotion });
+  const badges = product.promotion?.badges?.length
+    ? product.promotion.badges.slice(0, 3).map((label) => ({ label, tone: "sale" as const }))
+    : getProductBadges(product.tags, { hasPromotion });
   const featureChips = getProductFeatureChips(product.tags);
   const favorite = isFavorite(product.id);
   const hasCustomization =

@@ -1714,6 +1714,7 @@ GET /api/v1/redoc/           # ReDoc
 | 7 | GET | `/public/catalog/products/` | — | — |
 | 8 | GET | `/public/catalog/products/{slug}/` | — | — |
 | 9 | POST | `/public/orders/checkout/` | — | — |
+| 9a | GET | `/public/promotions/offers/` | — | — |
 | 10 | GET | `/public/orders/{id}/` | — | — |
 | 11 | GET | `/admin/dashboard/` | JWT | `dashboard.view` |
 | 12 | GET | `/admin/orders/` | JWT | `orders.view` |
@@ -1727,6 +1728,10 @@ GET /api/v1/redoc/           # ReDoc
 | 20 | DELETE | `/admin/products/{id}/` | JWT | `catalog.manage` |
 | 21 | POST | `/admin/products/{id}/images/` | JWT | `catalog.manage` |
 | 22 | DELETE | `/admin/products/{id}/images/{img}/` | JWT | `catalog.manage` |
+| 22a | GET | `/admin/campaigns/` | JWT | `promotions.manage` |
+| 22b | POST | `/admin/campaigns/` | JWT | `promotions.manage` |
+| 22c | GET | `/admin/campaigns/{id}/` | JWT | `promotions.manage` |
+| 22d | PATCH | `/admin/campaigns/{id}/` | JWT | `promotions.manage` |
 | 23 | GET | `/admin/categories/` | JWT | `catalog.view` |
 | 24 | POST | `/admin/categories/` | JWT | `catalog.manage` |
 | 25 | PATCH | `/admin/categories/{id}/` | JWT | `catalog.manage` |

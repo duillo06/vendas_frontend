@@ -4,6 +4,7 @@ import {
   LogOut,
   Menu,
   Package,
+  Percent,
   Settings,
   ShoppingBag,
   Sparkles,
@@ -38,6 +39,7 @@ const navItems = [
   { to: "/clientes", label: "Clientes", icon: Users, permission: "customers.view" },
   { to: "/produtos", label: "Produtos", icon: Package, permission: "catalog.view" },
   { to: "/categorias", label: "Categorias", icon: Layers, permission: "catalog.view" },
+  { to: "/promocoes", label: "Promoções", icon: Percent, permission: "promotions.manage" },
   { to: "/configuracoes", label: "Configurações", icon: Settings, permission: "settings.manage" },
 ] as const;
 

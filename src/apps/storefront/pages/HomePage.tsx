@@ -21,6 +21,7 @@ import {
   buildHomeSections,
   searchPlaceholders,
 } from "@/features/storefront/utils/homeSections";
+import { HomeOffersCarousel } from "@/features/promotions/components/HomeOffersCarousel";
 import { useCompanyPublic } from "@/features/company";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { SectionHeading } from "@/shared/components/visual";
@@ -90,6 +91,8 @@ export function HomePage() {
       <HomeWelcomeCard products={products} />
 
       <HomeInsightRail chips={insightChips} />
+
+      <HomeOffersCarousel />
 
       <div ref={searchBlockRef}>
         <CatalogSearchSection

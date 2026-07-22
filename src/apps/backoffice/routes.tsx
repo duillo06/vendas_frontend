@@ -12,6 +12,7 @@ import { ProductFormPage } from "@/apps/backoffice/pages/ProductFormPage";
 import { ProductManagePage } from "@/apps/backoffice/pages/ProductManagePage";
 import { ProductWizardPage } from "@/apps/backoffice/pages/ProductWizardPage";
 import { ProductsPage } from "@/apps/backoffice/pages/ProductsPage";
+import { PromotionsPage } from "@/apps/backoffice/pages/PromotionsPage";
 import { SettingsPage } from "@/apps/backoffice/pages/SettingsPage";
 import { ProtectedRoute } from "@/features/auth";
 
@@ -41,6 +42,7 @@ export const backofficeRouter = createBrowserRouter([
       { path: "categorias", element: <CategoriesPage /> },
       // Base do cardápio saiu do menu — cria na conversa da categoria
       { path: "opcoes", element: <Navigate to="/categorias" replace /> },
+      { path: "promocoes", element: <PromotionsPage /> },
       { path: "configuracoes", element: <SettingsPage /> },
     ],
   },

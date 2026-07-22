@@ -58,6 +58,13 @@ Não abrir discussão de remodelagem de arquitetura por ideia futura (Architectu
 
 | Data | Ideia | Nota |
 |------|-------|------|
+| Jul/2026 | Sistema proativo / consultor de vendas | Ver `20` §17 e `21-marketing-engine.md` |
+| Jul/2026 | Campanhas prontas + datas comemorativas | `20` §15 · `21` §7 |
+| Jul/2026 | Calendário visual de campanhas | `20` §16 · `21` §16 |
+| Jul/2026 | Impacto na margem (custo do produto) | `20` §8.1 |
+| Jul/2026 | Cross-sell / upsell / combos inteligentes | `21` §10–11 |
+| Jul/2026 | Recuperação de clientes | `21` §13 |
+| Jul/2026 | Sugestões inteligentes de promoção | Ver `20` §17 — “segunda fraca”, produto sem oferta, falta de combo |
 | Jul/2026 | Assistente de 1ª configuração do estabelecimento | **Feito (Fase 4)** — presets; IA real fica no stub `/admin/ai/suggestions/` |
 | Jul/2026 | IA sugerindo categorias / receita | Pós-MVP; hook stub em `/admin/ai/suggestions/` |
 | Jul/2026 | IA copiando produtos semelhantes | Pós-MVP |

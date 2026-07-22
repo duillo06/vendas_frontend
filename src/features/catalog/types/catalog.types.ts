@@ -28,6 +28,14 @@ export interface ProductListItem {
   tags: string[];
   has_options: boolean;
   prep_time?: number | null;
+  promotion?: {
+    campaign_id: string;
+    promo_price: number;
+    reference_price: number;
+    save_amount: number;
+    discount_percent: number;
+    badges: string[];
+  } | null;
 }
 
 export interface ProductImage {
@@ -129,6 +137,14 @@ export interface ProductDetail {
   images: ProductImage[];
   option_groups: OptionGroup[];
   composition?: ProductComposition | null;
+  promotion?: {
+    campaign_id: string;
+    promo_price: number;
+    reference_price: number;
+    save_amount: number;
+    discount_percent: number;
+    badges: string[];
+  } | null;
 }
 
 export interface ProductFilters {
