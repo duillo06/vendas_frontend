@@ -18,6 +18,7 @@ import { ProductFeatureChips } from "@/features/storefront/components/ProductFea
 import {
   getProductBadges,
   getProductFeatureChips,
+  isPopularProduct,
 } from "@/features/storefront/utils/productBadges";
 import { ProductImageCarousel } from "./ProductImageCarousel";
 import { CompositionPicker, composedBasePrice } from "./CompositionPicker";
@@ -131,9 +132,7 @@ export function ProductDetailView({
   }, [product, selections, compositionParts]);
 
   const primaryImage = product.images.find((img) => img.is_primary) ?? product.images[0];
-  const isPopular = product.tags.some((tag) =>
-    ["destaque", "popular", "favorito", "mais vendido"].includes(tag.toLowerCase()),
-  );
+  const isPopular = isPopularProduct(product.tags);
   const hasPromotion =
     product.compare_price !== null && product.compare_price > product.base_price;
   const badges = product.promotion?.badges?.length

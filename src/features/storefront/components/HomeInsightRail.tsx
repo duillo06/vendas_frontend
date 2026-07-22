@@ -5,6 +5,7 @@ import { Link } from "react-router";
 import type { CompanyPublic } from "@/features/company/types/company.types";
 import { getStorefrontMarketing } from "@/features/company/utils/storefrontTheme";
 import type { ProductListItem } from "@/features/catalog/types/catalog.types";
+import { productHasMatcher, TAG_MATCHERS } from "@/features/catalog/utils/productTags";
 import { formatCurrency } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 
@@ -53,9 +54,7 @@ export function buildHomeInsightChips(
     });
   }
 
-  const bestSeller = available.find((p) =>
-    p.tags.some((t) => /mais vendido|destaque|popular/i.test(t)),
-  );
+  const bestSeller = available.find((p) => productHasMatcher(p.tags, TAG_MATCHERS.bestsellers));
   if (bestSeller) {
     chips.push({
       id: "best",
@@ -66,7 +65,7 @@ export function buildHomeInsightChips(
     });
   }
 
-  const novelty = available.find((p) => p.tags.some((t) => /^novo$|novidade/i.test(t)));
+  const novelty = available.find((p) => productHasMatcher(p.tags, TAG_MATCHERS.launches));
   if (novelty) {
     chips.push({
       id: "new",

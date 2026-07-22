@@ -1,4 +1,5 @@
 import type { Category, ProductListItem } from "@/features/catalog/types/catalog.types";
+import { productHasMatcher, TAG_MATCHERS } from "@/features/catalog/utils/productTags";
 import type { LucideIcon } from "lucide-react";
 import { Flame, Heart, Percent, Sparkles, Star, Tag } from "lucide-react";
 
@@ -14,7 +15,7 @@ export type HomeProductSection = {
 };
 
 function byTag(products: ProductListItem[], re: RegExp) {
-  return products.filter((p) => p.tags.some((t) => re.test(t)));
+  return products.filter((p) => productHasMatcher(p.tags, re));
 }
 
 function take(products: ProductListItem[], n = 8) {
@@ -35,7 +36,7 @@ export function buildHomeSections(
     if (section.products.length) sections.push(section);
   };
 
-  const featuredTagged = byTag(available, /mais vendido|destaque|popular/i);
+  const featuredTagged = byTag(available, TAG_MATCHERS.bestsellers);
   push({
     id: "featured",
     title: "Favoritos da galera",
@@ -64,7 +65,7 @@ export function buildHomeSections(
     description: "Acabaram de chegar no cardápio.",
     icon: Sparkles,
     accent: "chart-2",
-    products: take(byTag(available, /^novo$|novidade/i)),
+    products: take(byTag(available, TAG_MATCHERS.launches)),
   });
 
   push({
@@ -73,7 +74,7 @@ export function buildHomeSections(
     description: "Os queridinhos da nossa cozinha.",
     icon: Heart,
     accent: "chart-1",
-    products: take(byTag(available, /favorito/i)),
+    products: take(byTag(available, TAG_MATCHERS.favorites)),
   });
 
   const sortedCats = [...categories].sort(

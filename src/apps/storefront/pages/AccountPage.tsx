@@ -3,7 +3,7 @@ import { Heart, LogOut, MapPin, Package, User } from "lucide-react";
 
 import { useCustomerAuth } from "@/features/customer-auth";
 import { MessageTicker } from "@/shared/components/MessageTicker";
-import { BackLink, PageHeader } from "@/shared/components/visual";
+import { PageHeader } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { storefrontCopy } from "@/shared/copy/storefront";
@@ -19,8 +19,6 @@ export function AccountPage() {
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
-      <BackLink to="/" label="Início" />
-
       <PageHeader
         density="compact"
         mobileHidden

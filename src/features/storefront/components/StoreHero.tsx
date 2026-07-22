@@ -1,6 +1,5 @@
-import { Bike, Clock, Lock, MapPin, Search, Share2, Star, Store } from "lucide-react";
+import { Bike, Clock, Lock, MapPin, Search, Star, Store } from "lucide-react";
 import { useMemo, type ReactNode } from "react";
-import { toast } from "sonner";
 
 import {
   getEstimatedDeliveryMinutes,
@@ -93,26 +92,14 @@ export function StoreHero({ company, isLoading, compact = false, onSearchClick }
     return parts.join(" · ");
   }, [company]);
 
-  async function handleShare() {
-    const url = window.location.origin + "/";
-    const title = company?.trade_name ?? "Cardápio";
-    try {
-      if (navigator.share) {
-        await navigator.share({ title, url });
-        return;
-      }
-      await navigator.clipboard.writeText(url);
-      toast.success("Link copiado");
-    } catch {
-      /* cancelou share */
-    }
-  }
-
   if (isLoading) {
     return (
-      <div className={cn("-mx-4", compact && "px-0")}>
+      <div className={cn(compact ? "-mx-4" : "-mx-4")}>
         <Skeleton
-          className={cn("w-full rounded-none", compact ? "h-32 sm:h-36" : "h-[192px] sm:h-[208px]")}
+          className={cn(
+            "w-full",
+            compact ? "h-32 rounded-b-2xl sm:h-36" : "h-[192px] rounded-b-2xl sm:h-[208px]",
+          )}
         />
         <div className="space-y-2 px-4 pt-4">
           <Skeleton className="h-14 w-14 rounded-2xl" />
@@ -127,7 +114,7 @@ export function StoreHero({ company, isLoading, compact = false, onSearchClick }
   if (compact) {
     return (
       <section className="-mx-4">
-        <div className="relative h-[7.5rem] overflow-hidden sm:h-36">
+        <div className="relative h-[7.5rem] overflow-hidden rounded-b-2xl sm:h-36">
           <HeroBackdrop coverUrl={company?.cover_url} closed={!isOpen} />
           <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/20 to-black/10" />
 
@@ -137,9 +124,11 @@ export function StoreHero({ company, isLoading, compact = false, onSearchClick }
                 <InstagramIcon className="h-4 w-4" />
               </GlassIconButton>
             ) : null}
-            <GlassIconButton label="Compartilhar" onClick={() => void handleShare()}>
-              <Share2 className="h-4 w-4" />
-            </GlassIconButton>
+            {onSearchClick ? (
+              <GlassIconButton label="Buscar" onClick={onSearchClick}>
+                <Search className="h-4 w-4" />
+              </GlassIconButton>
+            ) : null}
           </div>
 
           {isOpen ? (
@@ -185,21 +174,17 @@ export function StoreHero({ company, isLoading, compact = false, onSearchClick }
 
   return (
     <section className="-mx-4">
-      {/* banner vitrine — ~−20% vs 240/260 */}
-      <div className="relative h-[192px] overflow-hidden sm:h-[208px]">
+      {/* capa colada no header — cantos de baixo arredondados */}
+      <div className="relative h-[192px] overflow-hidden rounded-b-2xl sm:h-[208px]">
         <HeroBackdrop coverUrl={company?.cover_url} closed={!isOpen} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/25 to-black/55" />
 
-        {/* ações glass — busca some na Home (Fase B: /buscar) */}
         <div className="absolute top-3 right-3 z-20 flex gap-2">
           {instagramUrl ? (
             <GlassIconButton label="Instagram" href={instagramUrl}>
               <InstagramIcon className="h-4 w-4" />
             </GlassIconButton>
           ) : null}
-          <GlassIconButton label="Compartilhar" onClick={() => void handleShare()}>
-            <Share2 className="h-4 w-4" />
-          </GlassIconButton>
           {onSearchClick ? (
             <GlassIconButton label="Buscar" onClick={onSearchClick}>
               <Search className="h-4 w-4" />

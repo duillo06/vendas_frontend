@@ -1,3 +1,9 @@
+import {
+  PRODUCT_TAG_PRESETS,
+  productHasMatcher,
+  TAG_MATCHERS,
+} from "@/features/catalog/utils/productTags";
+
 export type ProductBadgeTone = "brand" | "accent" | "hot" | "fresh" | "sale" | "neutral";
 
 export type ProductBadge = {
@@ -5,16 +11,9 @@ export type ProductBadge = {
   tone: ProductBadgeTone;
 };
 
-const BADGE_RULES: Array<{ match: RegExp; label: string; tone: ProductBadgeTone }> = [
-  { match: /mais vendido|destaque|popular/i, label: "Mais vendido", tone: "hot" },
-  { match: /favorito/i, label: "Favorito", tone: "accent" },
-  { match: /^novo$|novidade/i, label: "Novidade", tone: "fresh" },
+const EXTRA_BADGE_RULES: Array<{ match: RegExp; label: string; tone: ProductBadgeTone }> = [
   { match: /promo/i, label: "Promoção", tone: "sale" },
   { match: /frete.?gr[aá]tis|entrega.?gr[aá]tis/i, label: "Frete grátis", tone: "brand" },
-  { match: /vegano|vegetariano/i, label: "Vegano", tone: "fresh" },
-  { match: /picante|apimentado/i, label: "Picante", tone: "hot" },
-  { match: /premium|gourmet/i, label: "Premium", tone: "brand" },
-  { match: /artesanal/i, label: "Artesanal", tone: "brand" },
   { match: /chef|escolha do chef/i, label: "Escolha do chef", tone: "accent" },
 ];
 
@@ -31,8 +30,16 @@ export function getProductBadges(
   const badges: ProductBadge[] = [];
   const used = new Set<string>();
 
+  for (const preset of PRODUCT_TAG_PRESETS) {
+    if (!preset.badge) continue;
+    if (!productHasMatcher(tags, preset.match)) continue;
+    if (used.has(preset.badge.label)) continue;
+    badges.push({ label: preset.badge.label, tone: preset.badge.tone });
+    used.add(preset.badge.label);
+  }
+
   for (const tag of tags) {
-    for (const rule of BADGE_RULES) {
+    for (const rule of EXTRA_BADGE_RULES) {
       if (rule.match.test(tag) && !used.has(rule.label)) {
         badges.push({ label: rule.label, tone: rule.tone });
         used.add(rule.label);
@@ -46,9 +53,9 @@ export function getProductBadges(
     used.add("Promoção");
   }
 
-  if (options?.isFavorite && !used.has("Favorito")) {
+  if (options?.isFavorite && !used.has("Favorito") && !used.has("Seu favorito")) {
     badges.push({ label: "Seu favorito", tone: "accent" });
-    used.add("Favorito");
+    used.add("Seu favorito");
   }
 
   if (
@@ -64,8 +71,11 @@ export function getProductBadges(
 }
 
 export function getProductFeatureChips(tags: string[]): string[] {
-  const badgePatterns = BADGE_RULES.map((rule) => rule.match);
-  return tags.filter((tag) => !badgePatterns.some((pattern) => pattern.test(tag))).slice(0, 6);
+  const known = [
+    ...PRODUCT_TAG_PRESETS.map((p) => p.match),
+    ...EXTRA_BADGE_RULES.map((r) => r.match),
+  ];
+  return tags.filter((tag) => !known.some((pattern) => pattern.test(tag))).slice(0, 6);
 }
 
 const FEATURE_EMOJI: Record<string, string> = {
@@ -82,4 +92,8 @@ const FEATURE_EMOJI: Record<string, string> = {
 export function getFeatureEmoji(label: string): string {
   const key = Object.keys(FEATURE_EMOJI).find((token) => label.toLowerCase().includes(token));
   return key ? FEATURE_EMOJI[key] : "✓";
+}
+
+export function isPopularProduct(tags: string[]): boolean {
+  return productHasMatcher(tags, TAG_MATCHERS.bestsellers);
 }

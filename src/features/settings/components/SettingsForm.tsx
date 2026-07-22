@@ -140,7 +140,7 @@ export function SettingsForm() {
   };
 
   const primaryHex =
-    hslComponentsToHex(form.settings.theme?.primary ?? DEFAULT_THEME.primary) ?? "#10b981";
+    hslComponentsToHex(form.settings.theme?.primary ?? DEFAULT_THEME.primary) ?? "#f06a1a";
   const accentHex =
     hslComponentsToHex(form.settings.theme?.accent ?? DEFAULT_THEME.accent) ?? "#eab308";
 

@@ -109,38 +109,38 @@
 }
 
 :root {
-  /* shell #F7F8FA — cards ficam brancos em --card */
-  --background: 220 14% 97%;
-  --foreground: 220 25% 10%;
+  /* shell claro + texto preto — primary laranja de lanchonete */
+  --background: 40 20% 98%;
+  --foreground: 0 0% 9%;
   --card: 0 0% 100%;
-  --card-foreground: 220 25% 10%;
-  --primary: 160 84% 39%;
+  --card-foreground: 0 0% 9%;
+  --primary: 22 92% 50%;
   --primary-foreground: 0 0% 100%;
-  --accent: 45 93% 47%;
+  --accent: 36 92% 48%;
   --accent-foreground: 0 0% 100%;
-  --primary-soft: 160 40% 96%;
-  --primary-muted: 160 45% 92%;
-  --accent-soft: 45 55% 96%;
+  --primary-soft: 24 100% 96%;
+  --primary-muted: 22 85% 92%;
+  --accent-soft: 40 70% 95%;
   /* legado — só accents/fallback; não pintar heroes */
-  --hero-from: 160 84% 34%;
-  --hero-to: 176 82% 41%;
-  --sidebar-from: 220 18% 14%;
-  --sidebar-to: 220 25% 10%;
-  --muted: 220 14% 95%;
-  --muted-foreground: 220 10% 40%;
-  --border: 220 13% 90%;
+  --hero-from: 20 90% 46%;
+  --hero-to: 28 95% 52%;
+  --sidebar-from: 0 0% 12%;
+  --sidebar-to: 0 0% 6%;
+  --muted: 30 10% 95%;
+  --muted-foreground: 0 0% 38%;
+  --border: 30 10% 90%;
   --radius: 0.5rem;
-  --surface: 220 14% 97%;
-  --surface-accent: 220 12% 96%;
-  --chart-1: 160 84% 39%;
-  --chart-2: 45 93% 47%;
-  --chart-3: 212 80% 42%;
-  --chart-4: 288 65% 48%;
+  --surface: 40 20% 98%;
+  --surface-accent: 30 12% 96%;
+  --chart-1: 22 92% 50%;
+  --chart-2: 36 92% 48%;
+  --chart-3: 210 70% 42%;
+  --chart-4: 0 0% 20%;
   /* elevação suave — elegância, nunca pesada */
-  --shadow-xs: 0 1px 2px rgb(15 23 42 / 0.03);
-  --shadow-sm: 0 1px 3px rgb(15 23 42 / 0.05), 0 1px 2px rgb(15 23 42 / 0.03);
-  --shadow-md: 0 4px 16px -4px rgb(15 23 42 / 0.08), 0 2px 6px -2px rgb(15 23 42 / 0.04);
-  --shadow-lg: 0 12px 28px -10px rgb(15 23 42 / 0.1), 0 4px 10px -4px rgb(15 23 42 / 0.05);
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-md: 0 4px 16px -4px rgb(0 0 0 / 0.1), 0 2px 6px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 12px 28px -10px rgb(0 0 0 / 0.12), 0 4px 10px -4px rgb(0 0 0 / 0.06);
   --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   --duration-fast: 150ms;
   --duration-normal: 200ms;
@@ -148,6 +148,11 @@
 
 * {
   border-color: hsl(var(--border));
+}
+
+/* CardContent logo após CardHeader — sem padding duplo no topo */
+[data-slot="card-header"] + [data-slot="card-content"] {
+  padding-top: 0;
 }
 
 body {

@@ -4,7 +4,6 @@ import { Link } from "react-router";
 import { customerAuthApi } from "@/features/customer-auth";
 import { OrderStatusBadge, type OrderStatus } from "@/shared/components/OrderStatusBadge";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
-import { BackLink } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
@@ -29,10 +28,7 @@ export function AccountOrdersPage() {
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
-      <div className="space-y-2">
-        <BackLink to="/conta" label="Minha conta" />
-        <h1 className="text-2xl font-bold">{storefrontCopy.account.ordersTitle}</h1>
-      </div>
+      <h1 className="text-2xl font-bold">{storefrontCopy.account.ordersTitle}</h1>
 
       {isLoading ? (
         <div className="space-y-3">

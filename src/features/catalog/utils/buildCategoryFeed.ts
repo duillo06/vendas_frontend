@@ -1,4 +1,5 @@
 import type { ProductListItem } from "@/features/catalog/types/catalog.types";
+import { productHasMatcher, TAG_MATCHERS } from "@/features/catalog/utils/productTags";
 
 export type CategoryFeedBlock =
   | { type: "rail"; id: string; title: string; subtitle?: string; products: ProductListItem[] }
@@ -10,7 +11,7 @@ function isPromo(p: ProductListItem) {
 }
 
 function byTag(products: ProductListItem[], re: RegExp) {
-  return products.filter((p) => p.tags.some((t) => re.test(t)));
+  return products.filter((p) => productHasMatcher(p.tags, re));
 }
 
 function chunk<T>(items: T[], size: number): T[][] {
@@ -41,9 +42,9 @@ export function buildCategoryFeed(
     return next;
   };
 
-  const best = claim(byTag(available, /mais vendido|destaque|popular/i), 5);
+  const best = claim(byTag(available, TAG_MATCHERS.bestsellers), 5);
   const promos = claim(available.filter(isPromo), 5);
-  const news = claim(byTag(available, /^novo$|novidade/i), 5);
+  const news = claim(byTag(available, TAG_MATCHERS.launches), 5);
   const chef = claim(byTag(available, /chef|escolha do chef/i), 1);
 
   const rest = available.filter((p) => !used.has(p.id));

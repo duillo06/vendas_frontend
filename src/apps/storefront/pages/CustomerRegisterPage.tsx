@@ -8,7 +8,6 @@ import { z } from "zod";
 import { useCustomerAuth } from "@/features/customer-auth";
 import { PhoneInput } from "@/shared/components/PhoneInput";
 import { MessageTicker } from "@/shared/components/MessageTicker";
-import { BackLink } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
@@ -60,8 +59,6 @@ export function CustomerRegisterPage() {
 
   return (
     <div className="mx-auto max-w-md space-y-6">
-      <BackLink to="/entrar" label="Entrar" />
-
       <div className="space-y-2 text-center">
         <h1 className="text-2xl font-bold">{storefrontCopy.account.registerTitle}</h1>
         <p className="text-sm text-[hsl(var(--muted-foreground))]">
@@ -70,8 +67,8 @@ export function CustomerRegisterPage() {
       </div>
 
       <Card>
-        <CardContent className="space-y-4 pt-6">
-          <form onSubmit={onSubmit} className="space-y-4">
+        <CardContent className="space-y-5">
+          <form onSubmit={onSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="first_name">Nome</Label>
               <Input id="first_name" {...register("first_name")} />

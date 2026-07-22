@@ -4,7 +4,6 @@ import { Link, Navigate, useLocation, useParams } from "react-router";
 import type { Order } from "@/features/checkout";
 import { MessageTicker } from "@/shared/components/MessageTicker";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
-import { BackLink } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { storefrontCopy } from "@/shared/copy/storefront";
@@ -23,10 +22,6 @@ export function OrderConfirmationPage() {
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
-      <div className="text-left">
-        <BackLink to="/" label="Início" />
-      </div>
-
       <div className="flex flex-col items-center gap-3 text-center">
         <div className="tile-brand flex h-20 w-20 animate-success-pop items-center justify-center rounded-full">
           <CheckCircle className="h-12 w-12 text-brand" />

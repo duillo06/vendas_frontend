@@ -15,6 +15,7 @@ import { DescriptionIntentFlow, NameIntentFlow } from "../flows/DescriptionInten
 import { ImageIntentFlow } from "../flows/ImageIntentFlow";
 import { OptionsIntentFlow } from "../flows/OptionsIntentFlow";
 import { PriceIntentFlow } from "../flows/PriceIntentFlow";
+import { TagsIntentFlow } from "../flows/TagsIntentFlow";
 type IntentFlowHostProps = {
   product: ProductAdminDetail;
   intent: ProductIntentId;
@@ -51,6 +52,8 @@ export function IntentFlowHost({ product, intent, onClose }: IntentFlowHostProps
       return <CompositionIntentFlow {...shared} />;
     case "options":
       return <OptionsIntentFlow {...shared} />;
+    case "vitrine":
+      return <TagsIntentFlow {...shared} />;
     case "duplicate":
       return <DuplicateIntentFlow {...shared} />;
     case "delete":

@@ -63,7 +63,7 @@ export function MessageTicker({ messages, intervalMs = 3800, className }: Props)
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-xl border border-[hsl(var(--border)/0.8)] bg-gradient-to-r from-[hsl(var(--muted)/0.55)] via-[hsl(var(--primary)/0.06)] to-[hsl(var(--muted)/0.45)] px-3.5 py-2.5",
+        "overflow-hidden rounded-xl border border-[hsl(var(--border)/0.8)] bg-gradient-to-r from-[hsl(var(--muted)/0.55)] via-[hsl(var(--primary)/0.06)] to-[hsl(var(--muted)/0.45)] px-4 py-3",
         className,
       )}
     >

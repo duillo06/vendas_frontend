@@ -14,7 +14,7 @@ import { formatCategoryLabel } from "@/features/catalog/utils/categoryLabel";
 import { useCatalogSearch } from "@/features/storefront/hooks/useCatalogSearch";
 import { useRecordCategoryVisit } from "@/features/storefront/hooks/useCategoryAffinity";
 import { EmptyState } from "@/shared/components/EmptyState";
-import { BackLink, PageHeader } from "@/shared/components/visual";
+import { PageHeader } from "@/shared/components/visual";
 import { storefrontCopy } from "@/shared/copy/storefront";
 
 export function CategoryPage() {
@@ -35,8 +35,6 @@ export function CategoryPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <BackLink to="/cardapio" label="Cardápio" />
-
       <PageHeader
         density="compact"
         mobileHidden

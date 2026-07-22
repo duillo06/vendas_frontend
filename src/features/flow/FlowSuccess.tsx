@@ -11,7 +11,7 @@ import type { FlowLine } from "./flowMessages";
 export function fireFlowConfetti() {
   const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   if (reduce) return;
-  const colors = ["#10b981", "#34d399", "#fbbf24", "#f472b6"];
+  const colors = ["#f06a1a", "#fb923c", "#fbbf24", "#111111"];
   confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 }, colors, scalar: 0.9 });
   window.setTimeout(() => {
     confetti({ particleCount: 40, angle: 60, spread: 55, origin: { x: 0 }, colors });

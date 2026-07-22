@@ -16,9 +16,15 @@ export function StorefrontBottomNav() {
   return (
     <nav
       aria-label="Navegação principal"
-      className="storefront-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-[hsl(var(--border))] bg-[hsl(var(--card))]/95 backdrop-blur-md"
+      className={cn(
+        "storefront-bottom-nav fixed z-40 border border-[hsl(var(--border))] bg-[hsl(var(--card))]/95 backdrop-blur-md",
+        // celular: colado na base
+        "inset-x-0 bottom-0 border-x-0 border-b-0 border-t",
+        // pc: flutuando com respiro
+        "md:inset-x-4 md:bottom-4 md:mx-auto md:max-w-lg md:rounded-2xl md:border md:shadow-[var(--shadow-lg)]",
+      )}
     >
-      <ul className="mx-auto flex max-w-5xl items-stretch justify-around px-1 pt-1.5 pb-[calc(0.4rem+env(safe-area-inset-bottom,0px))]">
+      <ul className="mx-auto flex max-w-5xl items-stretch justify-around px-1 pt-1.5 pb-[calc(0.4rem+env(safe-area-inset-bottom,0px))] md:px-2 md:pt-2 md:pb-2">
         {items.map((item) => (
           <li key={item.to} className="min-w-0 flex-1">
             <NavLink

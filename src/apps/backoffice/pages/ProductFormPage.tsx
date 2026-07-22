@@ -17,7 +17,9 @@ import {
 import { formatCategoryLabel } from "@/features/catalog/utils/categoryLabel";
 import { linksFromProduct, serializeProductLinks } from "@/features/catalog/utils/productLinks";
 import { ProductImageGallery } from "@/features/catalog/components/ProductImageGallery";
+import { ProductTagPicker } from "@/features/catalog/components/ProductTagPicker";
 import { catalogAdminKeys } from "@/features/catalog/constants/catalog-admin-keys";
+import { normalizeProductTags } from "@/features/catalog/utils/productTags";
 import { CurrencyInput } from "@/shared/components/CurrencyInput";
 import { ProductCard } from "@/shared/components/ProductCard";
 import { UiHint } from "@/shared/components/UiHint";
@@ -67,6 +69,7 @@ export function ProductFormPage() {
     category_id: "",
     is_active: true,
     is_available: true,
+    tags: [] as string[],
     product_option_groups: [] as ProductOptionGroupLink[],
     composition: DEFAULT_COMPOSITION as CompositionForm,
     option_prices: [] as { option_id: string; price: number }[],
@@ -83,6 +86,7 @@ export function ProductFormPage() {
         category_id: product.category_id,
         is_active: product.is_active,
         is_available: product.is_available,
+        tags: normalizeProductTags(product.tags ?? []),
         product_option_groups: linksFromProduct(product),
         composition: product.composition
           ? { ...DEFAULT_COMPOSITION, ...product.composition }
@@ -191,6 +195,7 @@ export function ProductFormPage() {
         category_id: form.category_id,
         is_active: form.is_active,
         is_available: form.is_available,
+        tags: normalizeProductTags(form.tags),
         product_option_groups: serializeProductLinks(form.product_option_groups),
         ...(form.option_prices.length ? { option_prices: form.option_prices } : {}),
         composition: {
@@ -359,6 +364,13 @@ export function ProductFormPage() {
             />
           </div>
 
+          <div className="space-y-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/20 p-4">
+            <ProductTagPicker
+              tags={form.tags}
+              onChange={(tags) => setForm({ ...form, tags })}
+            />
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="base_price">Preço</Label>
@@ -472,6 +484,7 @@ export function ProductFormPage() {
                     description={form.description.trim() || undefined}
                     price={form.base_price || 0}
                     imageUrl={previewImageUrl}
+                    tags={form.tags}
                     unavailable={!form.is_available}
                     className="scale-in"
                   />

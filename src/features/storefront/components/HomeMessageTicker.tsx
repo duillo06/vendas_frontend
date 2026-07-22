@@ -13,6 +13,7 @@ import {
 } from "@/features/storefront/utils/homeGreeting";
 import { MessageTicker, type TickerMessage } from "@/shared/components/MessageTicker";
 import { formatCurrency } from "@/shared/lib/format";
+import { productHasMatcher, TAG_MATCHERS } from "@/features/catalog/utils/productTags";
 
 type Props = {
   company?: CompanyPublic | null;
@@ -52,21 +53,21 @@ function buildMessages(
   }
 
   const champion = products.find(
-    (p) => p.is_available && p.tags.some((t) => /mais vendido|destaque|popular/i.test(t)),
+    (p) => p.is_available && productHasMatcher(p.tags, TAG_MATCHERS.bestsellers),
   );
   if (champion) {
     messages.push({ text: `🔥 Mais pedida: ${champion.name}`, to: `/produto/${champion.slug}` });
   }
 
   const novelty = products.find(
-    (p) => p.is_available && p.tags.some((t) => /^novo$|novidade|lan[cç]amento/i.test(t)),
+    (p) => p.is_available && productHasMatcher(p.tags, TAG_MATCHERS.launches),
   );
   if (novelty) {
     messages.push({ text: `🎉 Novidade: ${novelty.name}`, to: `/produto/${novelty.slug}` });
   }
 
   const combo = products.find(
-    (p) => p.is_available && p.tags.some((t) => /combo|kit|fam[ií]lia/i.test(t)),
+    (p) => p.is_available && productHasMatcher(p.tags, TAG_MATCHERS.combos),
   );
   if (combo) {
     messages.push({ text: `👨‍👩‍👧 Combo em alta: ${combo.name}`, to: `/produto/${combo.slug}` });

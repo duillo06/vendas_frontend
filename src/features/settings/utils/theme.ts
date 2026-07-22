@@ -58,8 +58,9 @@ export function deriveThemeTokens(theme?: TenantTheme | null) {
     { h: base.h, s: Math.min(base.s + 4, 90), l: Math.min(base.l + 3, 46) },
     16,
   );
-  const sidebarFrom: Hsl = { h: base.h, s: Math.min(base.s * 0.55, 58), l: 17 };
-  const sidebarTo: Hsl = { h: 220, s: 25, l: 11 };
+  // sidebar preta — laranja só nos detalhes ativos
+  const sidebarFrom: Hsl = { h: 0, s: 0, l: 12 };
+  const sidebarTo: Hsl = { h: 0, s: 0, l: 7 };
 
   return {
     primary: formatHslComponents(base),

@@ -56,8 +56,8 @@ export function FlowMascot({ mood = "idle", size = "md", className }: FlowMascot
     >
       <defs>
         <linearGradient id="flow-body" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="hsl(168 80% 46%)" />
-          <stop offset="100%" stopColor="hsl(160 84% 36%)" />
+          <stop offset="0%" stopColor="hsl(28 95% 56%)" />
+          <stop offset="100%" stopColor="hsl(20 90% 46%)" />
         </linearGradient>
       </defs>
 
@@ -67,18 +67,18 @@ export function FlowMascot({ mood = "idle", size = "md", className }: FlowMascot
         cy="110"
         rx="30"
         ry="5"
-        fill="hsl(160 40% 30%)"
+        fill="hsl(0 0% 20%)"
         opacity="0.14"
         animate={{ rx: mood === "celebrating" ? [30, 26, 30] : [30, 32, 30] }}
         transition={bodyTransition}
       />
 
-      {/* folhinha (identidade fresh) */}
+      {/* topinho — detalhe da marca */}
       <path
         d="M60 16 C64 6 76 6 78 12 C80 18 70 24 60 22 Z"
-        fill="hsl(142 70% 45%)"
+        fill="hsl(36 92% 48%)"
       />
-      <path d="M60 22 L60 30" stroke="hsl(160 84% 30%)" strokeWidth="3" strokeLinecap="round" />
+      <path d="M60 22 L60 30" stroke="hsl(20 90% 40%)" strokeWidth="3" strokeLinecap="round" />
 
       {/* corpo em gota */}
       <path
@@ -104,7 +104,7 @@ export function FlowMascot({ mood = "idle", size = "md", className }: FlowMascot
         <>
           <motion.path
             d="M22 66 C10 58 8 46 12 40"
-            stroke="hsl(160 84% 36%)"
+            stroke="hsl(20 90% 46%)"
             strokeWidth="7"
             strokeLinecap="round"
             fill="none"
@@ -114,7 +114,7 @@ export function FlowMascot({ mood = "idle", size = "md", className }: FlowMascot
           />
           <motion.path
             d="M98 66 C110 58 112 46 108 40"
-            stroke="hsl(160 84% 36%)"
+            stroke="hsl(20 90% 46%)"
             strokeWidth="7"
             strokeLinecap="round"
             fill="none"

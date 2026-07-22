@@ -1,4 +1,5 @@
 import type { ProductAdminDetail } from "@/features/catalog/api/catalogAdminApi";
+import { getActiveShowcaseLabels } from "@/features/catalog/utils/productTags";
 import { cn } from "@/shared/lib/utils";
 
 import {
@@ -104,6 +105,10 @@ function contextualHint(intent: ProductIntent, product: ProductAdminDetail): str
   }
   if (intent.id === "pause") {
     return product.is_available ? "Produto está vendendo agora" : "Já está pausado";
+  }
+  if (intent.id === "vitrine") {
+    const labels = getActiveShowcaseLabels(product.tags ?? []);
+    return labels.length ? labels.join(" · ") : intent.description;
   }
   return undefined;
 }

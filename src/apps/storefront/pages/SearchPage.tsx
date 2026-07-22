@@ -13,6 +13,7 @@ import {
 import { CatalogSearchBar } from "@/features/storefront/components/CatalogSearchBar";
 import { useCatalogSearch } from "@/features/storefront/hooks/useCatalogSearch";
 import { useSearchHistory } from "@/features/storefront/hooks/useSearchHistory";
+import { productHasMatcher, TAG_MATCHERS } from "@/features/catalog/utils/productTags";
 import { searchPlaceholders } from "@/features/storefront/utils/homeSections";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { storefrontCopy } from "@/shared/copy/storefront";
@@ -56,10 +57,9 @@ export function SearchPage() {
 
   const bestsellers = useMemo(
     () =>
-      catalog.filter(
-        (p) =>
-          p.is_available && p.tags.some((t) => /mais vendido|destaque|popular/i.test(t)),
-      ).slice(0, 12),
+      catalog
+        .filter((p) => p.is_available && productHasMatcher(p.tags, TAG_MATCHERS.bestsellers))
+        .slice(0, 12),
     [catalog],
   );
 

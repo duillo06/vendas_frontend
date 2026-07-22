@@ -1,5 +1,6 @@
 import { getDayPart, getHomeGreeting } from "../utils/homeGreeting";
 import type { ProductListItem } from "@/features/catalog/types/catalog.types";
+import { productHasMatcher, TAG_MATCHERS } from "@/features/catalog/utils/productTags";
 import { cn } from "@/shared/lib/utils";
 
 type HomeWelcomeCardProps = {
@@ -13,7 +14,7 @@ export function HomeWelcomeCard({ products = [], className }: HomeWelcomeCardPro
   const dayPart = getDayPart();
 
   const champion = products.find(
-    (p) => p.is_available && p.tags.some((t) => /mais vendido|destaque|popular/i.test(t)),
+    (p) => p.is_available && productHasMatcher(p.tags, TAG_MATCHERS.bestsellers),
   );
   const deal = products.find(
     (p) =>

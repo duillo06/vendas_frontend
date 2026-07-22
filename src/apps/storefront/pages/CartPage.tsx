@@ -1,13 +1,11 @@
 import { ShoppingCart } from "lucide-react";
 
 import { CartPanel } from "@/features/cart";
-import { BackLink, PageHeader } from "@/shared/components/visual";
+import { PageHeader } from "@/shared/components/visual";
 
 export function CartPage() {
   return (
     <div className="space-y-4 sm:space-y-6">
-      <BackLink to="/cardapio" label="Continuar comprando" />
-
       <PageHeader
         density="compact"
         mobileHidden

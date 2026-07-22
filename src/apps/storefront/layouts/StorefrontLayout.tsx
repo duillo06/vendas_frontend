@@ -177,8 +177,10 @@ export function StorefrontLayout() {
 
       <main
         className={cn(
-          "mx-auto max-w-5xl px-4 py-4 sm:py-6",
-          showBottomNav && "pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))]",
+          "mx-auto max-w-5xl px-4",
+          location.pathname === "/" ? "pt-0 pb-4 sm:pb-6" : "py-4 sm:py-6",
+          showBottomNav &&
+            "pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))] md:pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))]",
         )}
       >
         <Outlet />

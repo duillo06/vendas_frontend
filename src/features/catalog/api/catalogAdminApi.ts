@@ -118,6 +118,7 @@ export interface ProductAdminDetail {
   is_available: boolean;
   sort_order: number;
   prep_time: number | null;
+  tags: string[];
   option_group_ids: string[];
   product_option_groups: ProductOptionGroupLink[];
   composition?: ProductCompositionAdmin | null;

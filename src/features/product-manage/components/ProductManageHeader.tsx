@@ -2,6 +2,7 @@ import { ImageIcon } from "lucide-react";
 
 import type { ProductAdminDetail } from "@/features/catalog/api/catalogAdminApi";
 import { formatCategoryLabel } from "@/features/catalog/utils/categoryLabel";
+import { getActiveShowcaseLabels } from "@/features/catalog/utils/productTags";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { cn } from "@/shared/lib/utils";
 
@@ -82,7 +83,7 @@ function StatusChip({ available, active }: { available: boolean; active: boolean
 }
 
 function buildBadges(product: ProductAdminDetail): string[] {
-  const badges: string[] = [];
+  const badges: string[] = [...getActiveShowcaseLabels(product.tags ?? [])];
   if (product.composition?.enabled) badges.push("Meio a meio");
   if ((product.product_option_groups?.length ?? 0) > 0 || product.option_group_ids.length > 0) {
     badges.push("Opções da casa");

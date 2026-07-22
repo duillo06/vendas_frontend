@@ -1,7 +1,9 @@
 export const DEFAULT_THEME = {
-  primary: "160 84% 39%",
+  /** laranja de lanchonete — botões, links, selos */
+  primary: "22 92% 50%",
   primary_foreground: "0 0% 100%",
-  accent: "45 93% 47%",
+  /** mostarda quente — detalhe secundário */
+  accent: "36 92% 48%",
   accent_foreground: "0 0% 100%",
   radius: "0.5rem",
 } as const;

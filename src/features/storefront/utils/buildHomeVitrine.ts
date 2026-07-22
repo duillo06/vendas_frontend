@@ -1,5 +1,6 @@
 import type { Category, ProductListItem } from "@/features/catalog/types/catalog.types";
 import type { PublicOffer } from "@/features/promotions";
+import { productHasMatcher, TAG_MATCHERS } from "@/features/catalog/utils/productTags";
 
 import {
   categoryPriorityScore,
@@ -44,7 +45,7 @@ export type HomeVitrine = {
 };
 
 function byTag(products: ProductListItem[], re: RegExp) {
-  return products.filter((p) => p.tags.some((t) => re.test(t)));
+  return products.filter((p) => productHasMatcher(p.tags, re));
 }
 
 function claim(seen: Set<string>, items: ProductListItem[]): ProductListItem[] {
@@ -140,7 +141,7 @@ export function buildHomeVitrine(input: {
   }
 
   if (!highlight) {
-    const bestsellers = byTag(available, /mais vendido|destaque|popular/i);
+    const bestsellers = byTag(available, TAG_MATCHERS.bestsellers);
     const claimed = claim(seen, bestsellers);
     if (claimed.length) {
       highlight = {
@@ -154,7 +155,7 @@ export function buildHomeVitrine(input: {
   }
 
   if (!highlight) {
-    const favorites = byTag(available, /favorito/i);
+    const favorites = byTag(available, TAG_MATCHERS.favorites);
     const claimed = claim(seen, favorites);
     if (claimed.length) {
       highlight = {
@@ -168,7 +169,7 @@ export function buildHomeVitrine(input: {
   }
 
   if (!highlight) {
-    const novelties = byTag(available, /^novo$|novidade|lan[cç]amento/i);
+    const novelties = byTag(available, TAG_MATCHERS.launches);
     const claimed = claim(seen, novelties);
     if (claimed.length) {
       highlight = {
@@ -202,7 +203,7 @@ export function buildHomeVitrine(input: {
 
   // lançamentos (se o topo não foi novidades)
   if (highlight?.kind !== "novelties") {
-    const launches = claim(seen, byTag(available, /^novo$|novidade|lan[cç]amento/i));
+    const launches = claim(seen, byTag(available, TAG_MATCHERS.launches));
     if (launches.length) {
       secondaryBlocks.push({
         kind: "launches",
@@ -213,7 +214,7 @@ export function buildHomeVitrine(input: {
     }
   }
 
-  const combos = claim(seen, byTag(available, /combo|kit|fam[ií]lia/i));
+  const combos = claim(seen, byTag(available, TAG_MATCHERS.combos));
   if (combos.length) {
     secondaryBlocks.push({
       kind: "combos",

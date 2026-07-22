@@ -9,6 +9,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import type { ProductAdminDetail } from "@/features/catalog/api/catalogAdminApi";
+import { getActiveShowcaseLabels } from "@/features/catalog/utils/productTags";
 import { cn } from "@/shared/lib/utils";
 
 type ProductInsightCardsProps = {
@@ -25,6 +26,7 @@ type Insight = {
 
 export function ProductInsightCards({ product }: ProductInsightCardsProps) {
   const optionCount = product.product_option_groups?.length ?? product.option_group_ids.length;
+  const showcase = getActiveShowcaseLabels(product.tags ?? []);
 
   const insights: Insight[] = [
     {
@@ -38,10 +40,18 @@ export function ProductInsightCards({ product }: ProductInsightCardsProps) {
       icon: Package,
     },
     {
+      label: "Vitrine",
+      value: showcase.length
+        ? `${showcase.length} destaque${showcase.length === 1 ? "" : "s"}`
+        : "Sem destaque",
+      hint: showcase.slice(0, 2).join(" · ") || "Configure em Destaques na vitrine",
+      icon: Star,
+    },
+    {
       label: "Como vende",
       value: optionCount ? `${optionCount} itens` : "Só o básico",
       hint: product.composition?.enabled ? "Com combinação de sabores" : undefined,
-      icon: Star,
+      icon: ShoppingBag,
     },
     {
       label: "Fotos",

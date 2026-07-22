@@ -7,6 +7,7 @@ export type ProductIntentId =
   | "availability"
   | "composition"
   | "options"
+  | "vitrine"
   | "pause"
   | "duplicate"
   | "archive"
@@ -83,6 +84,27 @@ export const PRODUCT_INTENTS: ProductIntent[] = [
     emoji: "🟢",
     category: "sales",
     keywords: ["disponível", "disponivel", "ativo", "venda", "pedido"],
+  },
+  {
+    id: "vitrine",
+    label: "Destaques na vitrine",
+    shortLabel: "Vitrine",
+    description: "Mais pedido, lançamento, combo — o que sobe na Home.",
+    emoji: "🏠",
+    category: "sales",
+    keywords: [
+      "vitrine",
+      "destaque",
+      "combo",
+      "lançamento",
+      "lancamento",
+      "novidade",
+      "tag",
+      "selo",
+      "home",
+      "mais vendido",
+      "favorito",
+    ],
   },
   {
     id: "composition",

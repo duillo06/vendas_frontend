@@ -6,7 +6,6 @@ import { ProductDetailSkeleton, ProductDetailView, useProduct, useProducts } fro
 import { pickComplementaryProducts } from "@/features/catalog/utils/relatedSuggestions";
 import { useRecordCategoryVisit } from "@/features/storefront/hooks/useCategoryAffinity";
 import { EmptyState } from "@/shared/components/EmptyState";
-import { BackLink } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
 
 export function ProductPage() {
@@ -41,40 +40,29 @@ export function ProductPage() {
   }, [product, catalogPage]);
 
   if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <BackLink to="/cardapio" label="Cardápio" />
-        <ProductDetailSkeleton />
-      </div>
-    );
+    return <ProductDetailSkeleton />;
   }
 
   if (isError || !product) {
     return (
-      <div className="space-y-4">
-        <BackLink to="/cardapio" label="Cardápio" />
-        <EmptyState
-          title="Produto não encontrado"
-          description="Esse item pode ter sido removido do cardápio."
-          action={
-            <Link to="/cardapio">
-              <Button variant="outline">Voltar ao cardápio</Button>
-            </Link>
-          }
-        />
-      </div>
+      <EmptyState
+        title="Produto não encontrado"
+        description="Esse item pode ter sido removido do cardápio."
+        action={
+          <Link to="/cardapio">
+            <Button variant="outline">Ver cardápio</Button>
+          </Link>
+        }
+      />
     );
   }
 
   return (
-    <div className="space-y-4">
-      <BackLink to="/cardapio" label="Cardápio" />
-      <ProductDetailView
-        product={product}
-        relatedProducts={relatedProducts}
-        categoryName={categoryName}
-        onAddToCart={addToCart}
-      />
-    </div>
+    <ProductDetailView
+      product={product}
+      relatedProducts={relatedProducts}
+      categoryName={categoryName}
+      onAddToCart={addToCart}
+    />
   );
 }

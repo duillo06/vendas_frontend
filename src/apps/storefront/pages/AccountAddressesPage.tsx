@@ -9,7 +9,6 @@ import {
 import { useCompanyPublic } from "@/features/company";
 import { customerAuthApi, type CustomerAddressPayload } from "@/features/customer-auth";
 import { useConfirm } from "@/shared/hooks/useConfirm";
-import { BackLink } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
@@ -110,10 +109,7 @@ export function AccountAddressesPage() {
   return (
     <div className="mx-auto max-w-lg space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-2">
-          <BackLink to="/conta" label="Minha conta" />
-          <h1 className="text-2xl font-bold">{storefrontCopy.account.addressesTitle}</h1>
-        </div>
+        <h1 className="text-2xl font-bold">{storefrontCopy.account.addressesTitle}</h1>
         <Button
           type="button"
           onClick={() => {
@@ -130,7 +126,7 @@ export function AccountAddressesPage() {
 
       {showForm ? (
         <Card>
-          <CardContent className="space-y-4 pt-6">
+          <CardContent className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="label">Apelido (Casa, Trabalho...)</Label>
               <Input id="label" value={label} onChange={(e) => setLabel(e.target.value)} />
