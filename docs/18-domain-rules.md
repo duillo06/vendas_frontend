@@ -225,7 +225,8 @@ Novos tipos **não** exigem remodelar o cardápio — só novas perguntas e a de
 ## 15. Meio a meio / sabores
 
 - Capacidade da **receita da categoria** (e depois do produto).  
-- O cliente combina sabores no cardápio.  
+- O cliente combina sabores no cardápio **se quiser**.  
+- “Até 2 sabores” (ou 3, 4…) é o **máximo** — **nunca** obriga escolher mais de um. Pedir só o sabor principal é válido.  
 - Regras de preço (maior / média / proporcional) fazem parte da conversa da categoria.  
 - Não misturar com “adicional” na cabeça do usuário: é “pode escolher mais de um sabor?”.
 

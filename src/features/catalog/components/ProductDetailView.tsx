@@ -159,9 +159,10 @@ export function ProductDetailView({
     }
 
     if (product.composition?.enabled) {
-      const minAdditional = Math.max(0, product.composition.min_parts - 1);
-      if (compositionParts.length < minAdditional) {
-        toast.error(`Escolha ${minAdditional} sabor(es) para combinar.`);
+      // max_parts = teto; nunca obriga combinar sabores
+      const maxAdditional = Math.max(0, product.composition.max_parts - 1);
+      if (compositionParts.length > maxAdditional) {
+        toast.error(`Você pode combinar no máximo ${maxAdditional} sabor(es).`);
         return;
       }
     }

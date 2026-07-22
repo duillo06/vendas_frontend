@@ -10,7 +10,7 @@ import { CartItemRow } from "./CartItemRow";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { UiHint } from "@/shared/components/UiHint";
-import { Button, buttonVariants } from "@/shared/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { getFreeDeliveryHint, storefrontCopy } from "@/shared/copy/storefront";
 import { cn } from "@/shared/lib/utils";
 
@@ -45,7 +45,7 @@ export function CartPanel({ onClose }: CartPanelProps) {
   }
 
   return (
-    <div className="flex flex-col gap-4 pb-[calc(5.75rem+env(safe-area-inset-bottom,0px))]">
+    <div className="flex flex-col gap-4 pb-[calc(8.5rem+env(safe-area-inset-bottom,0px))]">
       {deliveryHint ? (
         <UiHint icon={Gift} tone={deliveryHint.type === "unlocked" ? "success" : "warm"}>
           {deliveryHint.type === "unlocked" ? `🎁 ${deliveryHint.message}` : deliveryHint.message}
@@ -71,35 +71,35 @@ export function CartPanel({ onClose }: CartPanelProps) {
         />
       ) : null}
 
-      {/* barra fixa — CTA sempre à mão, sem caçar no fim da página */}
+      {/* barra fixa — total + CTA em coluna pra o botão nunca sumir */}
       <div
         className={cn(
           "fixed inset-x-0 bottom-0 z-50 border-t border-[hsl(var(--border))] bg-white/95 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-md",
           "pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] pt-3",
         )}
       >
-        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4">
-          <div className="min-w-0 shrink-0">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
-              {storefrontCopy.cart.subtotalLabel}
+        <div className="mx-auto flex max-w-5xl flex-col gap-2.5 px-4">
+          <div className="flex items-end justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-medium uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
+                {storefrontCopy.cart.subtotalLabel}
+              </p>
+              <PriceDisplay
+                value={subtotal}
+                className="text-lg font-bold tabular-nums text-brand sm:text-xl"
+              />
+            </div>
+            <p className="max-w-[14rem] text-right text-[11px] leading-snug text-[hsl(var(--muted-foreground))] sm:max-w-none">
+              {storefrontCopy.cart.feesHint}
             </p>
-            <PriceDisplay value={subtotal} className="text-lg font-bold tabular-nums text-brand sm:text-xl" />
           </div>
 
-          <Link
-            to="/checkout"
-            onClick={onClose}
-            className={cn(
-              buttonVariants({ variant: "default", size: "lg" }),
-              "h-12 min-w-0 flex-1 whitespace-nowrap text-sm font-semibold sm:text-base",
-            )}
-          >
-            {storefrontCopy.cart.checkoutCta}
+          <Link to="/checkout" onClick={onClose} className="block w-full">
+            <Button type="button" size="lg" className="h-12 w-full bg-brand font-semibold hover:brightness-95">
+              {storefrontCopy.cart.checkoutCta}
+            </Button>
           </Link>
         </div>
-        <p className="mx-auto mt-1.5 max-w-5xl px-4 text-[11px] text-[hsl(var(--muted-foreground))]">
-          {storefrontCopy.cart.feesHint}
-        </p>
       </div>
     </div>
   );

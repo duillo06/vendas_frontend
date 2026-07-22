@@ -87,7 +87,6 @@ export function ProductCompositionEditor({ value, onChange, categories, currentP
           ? "other"
           : "same";
 
-  const requiredExtra = value.min_parts >= 2;
   const allowsMulti = value.enabled;
 
   const { data: products, isLoading: loadingProducts } = useQuery({
@@ -113,10 +112,11 @@ export function ProductCompositionEditor({ value, onChange, categories, currentP
       });
       return;
     }
+    // combinar sabores é direito, nunca obrigação — min sempre 1
     patch({
       enabled: true,
       max_parts: Math.max(value.max_parts, 2),
-      min_parts: value.min_parts >= 2 ? Math.min(value.min_parts, Math.max(value.max_parts, 2)) : 1,
+      min_parts: 1,
     });
   };
 
@@ -124,12 +124,8 @@ export function ProductCompositionEditor({ value, onChange, categories, currentP
     const safe = Math.max(2, Math.min(max, 12));
     patch({
       max_parts: safe,
-      min_parts: requiredExtra ? Math.min(Math.max(value.min_parts, 2), safe) : 1,
+      min_parts: 1,
     });
-  };
-
-  const setRequiredExtra = (yes: boolean) => {
-    patch({ min_parts: yes ? Math.min(Math.max(2, value.min_parts), value.max_parts) : 1 });
   };
 
   const setSourceMode = (mode: "same" | "other" | "custom") => {
@@ -156,7 +152,7 @@ export function ProductCompositionEditor({ value, onChange, categories, currentP
     patch({ custom_product_ids: [...set] });
   };
 
-  const preview = buildPreview(value, requiredExtra);
+  const preview = buildPreview(value);
 
   return (
     <div className="space-y-8">
@@ -186,8 +182,8 @@ export function ProductCompositionEditor({ value, onChange, categories, currentP
           <motion.div key="multi-steps" className="space-y-8" {...stepMotion}>
             {/* Etapa 2 */}
             <QuestionBlock
-              title="Quantos sabores o cliente pode escolher?"
-              description="Inclui o sabor principal deste produto."
+              title="Até quantos sabores o cliente pode escolher?"
+              description="É o máximo — ele pode pedir só um sabor se quiser."
             >
               <div className="grid gap-2 sm:grid-cols-2">
                 {MAX_PRESETS.map((n) => (
@@ -233,27 +229,6 @@ export function ProductCompositionEditor({ value, onChange, categories, currentP
 
             {/* Etapa 3 */}
             <QuestionBlock
-              title="O cliente é obrigado a escolher outro sabor?"
-              description="Quando ativado, o cliente obrigatoriamente deverá escolher mais um sabor. Ex.: pizza meio a meio obrigatória."
-            >
-              <div className="grid gap-2 sm:grid-cols-2">
-                <OptionCard
-                  label="Não"
-                  description="Pode pedir só este sabor, se quiser."
-                  selected={!requiredExtra}
-                  onSelect={() => setRequiredExtra(false)}
-                />
-                <OptionCard
-                  label="Sim"
-                  description="Sempre combina com pelo menos mais um."
-                  selected={requiredExtra}
-                  onSelect={() => setRequiredExtra(true)}
-                />
-              </div>
-            </QuestionBlock>
-
-            {/* Etapa 4 */}
-            <QuestionBlock
               title="Como será calculado o preço?"
               description="Isso define o valor que o cliente vê no cardápio."
             >
@@ -270,7 +245,7 @@ export function ProductCompositionEditor({ value, onChange, categories, currentP
               </div>
             </QuestionBlock>
 
-            {/* Etapa 5 */}
+            {/* Etapa 4 */}
             <QuestionBlock
               title="Quais sabores poderão ser escolhidos?"
               description="O cliente só vê o que você liberar aqui."
@@ -488,20 +463,11 @@ function OptionCard({
 }
 
 // resumo em português — o que o cliente vai viver no cardápio
-function buildPreview(value: CompositionForm, requiredExtra: boolean): string[] {
+function buildPreview(value: CompositionForm): string[] {
   if (!value.enabled) return [];
 
   const lines: string[] = [];
-
-  if (requiredExtra && value.max_parts === 2) {
-    lines.push("O cliente será obrigado a escolher 2 sabores.");
-  } else if (requiredExtra) {
-    lines.push(
-      `O cliente deverá escolher entre 2 e ${value.max_parts} sabores.`,
-    );
-  } else {
-    lines.push(`O cliente poderá escolher até ${value.max_parts} sabores.`);
-  }
+  lines.push(`O cliente poderá escolher até ${value.max_parts} sabores (pode pedir só um).`);
 
   const priceLine: Record<CompositionForm["pricing_rule"], string> = {
     highest: "O preço será calculado pelo sabor mais caro.",

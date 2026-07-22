@@ -104,7 +104,7 @@ function answersFromRecipe(recipe: CategoryRecipe | null | undefined): KindAnswe
       half:
         kindId === "half"
           ? {
-              min_parts: Number(cap.settings?.min_parts ?? 2),
+              min_parts: Number(cap.settings?.min_parts ?? 1),
               max_parts: Number(cap.settings?.max_parts ?? 2),
               pricing_rule: pricing,
               label: String(cap.settings?.label ?? "Escolher outro sabor"),
@@ -332,7 +332,7 @@ export function CategoryRecipeAssistant({
           optionNames: [],
           optionPrices: [],
           half: {
-            min_parts: 2,
+            min_parts: 1,
             max_parts: halfDraft.max_parts,
             pricing_rule: halfDraft.pricing_rule,
             label: "Escolher outro sabor",
@@ -730,7 +730,7 @@ export function CategoryRecipeAssistant({
             <div>
               <h3 className="text-base font-semibold">Como funciona o meio a meio?</h3>
               <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
-                O cliente combina sabores no cardápio.
+                Até N sabores é o máximo — o cliente pode pedir só um se quiser.
               </p>
             </div>
             <label className="block space-y-1.5">

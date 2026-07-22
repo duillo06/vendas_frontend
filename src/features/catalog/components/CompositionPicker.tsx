@@ -34,7 +34,6 @@ export function CompositionPicker({ product, selected, onChange }: CompositionPi
   if (!composition?.enabled) return null;
 
   const maxAdditional = Math.max(0, composition.max_parts - 1);
-  const minAdditional = Math.max(0, composition.min_parts - 1);
   const totalParts = selected.length + 1;
   const pct = Math.round(100 / totalParts);
 
@@ -75,11 +74,9 @@ export function CompositionPicker({ product, selected, onChange }: CompositionPi
         <div>
           <p className="font-semibold">{composition.label}</p>
           <p className="text-xs text-[hsl(var(--muted-foreground))]">
-            {minAdditional > 0
-              ? `Escolha ao menos ${minAdditional === maxAdditional ? minAdditional : `${minAdditional} (até ${maxAdditional})`} sabor(es) para combinar.`
-              : maxAdditional > 0
-                ? `Opcional: combine com até ${maxAdditional} sabor(es).`
-                : "Composição indisponível neste produto."}
+            {maxAdditional > 0
+              ? `Opcional: combine com até ${maxAdditional} sabor(es) — ou peça só este.`
+              : "Composição indisponível neste produto."}
           </p>
         </div>
         <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>
