@@ -164,7 +164,7 @@ export function DashboardPage() {
           <div className="mb-2 flex items-center justify-between text-sm">
             <span className="font-medium">{adminCopy.dashboard.progressLabel}</span>
             <span className="text-[hsl(var(--muted-foreground))]">
-              {totalOrders - pendingOrders}/{totalOrders} em andamento
+              {totalOrders - pendingOrders}/{totalOrders} fora da fila
             </span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-[hsl(var(--muted))]">
@@ -207,7 +207,9 @@ export function DashboardPage() {
               <Skeleton className="h-4 w-20" />
             ) : (
               <>
-                {data?.today.completed_orders ?? 0} concluídos
+                {(data?.today.completed_orders ?? 0) === 1
+                  ? "1 concluído"
+                  : `${data?.today.completed_orders ?? 0} concluídos`}
                 <p className="mt-1">{adminCopy.dashboard.metrics.revenue}</p>
               </>
             )

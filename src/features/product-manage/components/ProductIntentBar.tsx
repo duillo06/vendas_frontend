@@ -4,9 +4,16 @@ import { useMemo, useState } from "react";
 import { FlowPanel } from "@/features/flow";
 import { cn } from "@/shared/lib/utils";
 
-import { filterIntents, type ProductIntent, type ProductIntentId } from "../intents";
+import {
+  filterIntents,
+  PRODUCT_INTENTS,
+  resolveIntentForProduct,
+  type ProductIntent,
+  type ProductIntentId,
+} from "../intents";
 
 type ProductIntentBarProps = {
+  product: { is_available: boolean };
   onSelect: (id: ProductIntentId) => void;
 };
 
@@ -20,15 +27,19 @@ const SUGGESTIONS: ProductIntentId[] = [
 ];
 
 // campo pronto pra IA — hoje filtra intents; amanhã manda pro assistente
-export function ProductIntentBar({ onSelect }: ProductIntentBarProps) {
+export function ProductIntentBar({ product, onSelect }: ProductIntentBarProps) {
   const [query, setQuery] = useState("");
-  const matches = useMemo(() => filterIntents(query), [query]);
+  const matches = useMemo(
+    () => filterIntents(query).map((intent) => resolveIntentForProduct(intent, product)),
+    [product, query],
+  );
   const chips = useMemo(
     () =>
-      SUGGESTIONS.map((id) => matches.find((intent) => intent.id === id)).filter(
-        (intent): intent is ProductIntent => Boolean(intent),
-      ),
-    [matches],
+      SUGGESTIONS.map((id) => {
+        const base = PRODUCT_INTENTS.find((intent) => intent.id === id);
+        return base ? resolveIntentForProduct(base, product) : undefined;
+      }).filter((intent): intent is ProductIntent => Boolean(intent)),
+    [product],
   );
 
   const showResults = query.trim().length > 0;

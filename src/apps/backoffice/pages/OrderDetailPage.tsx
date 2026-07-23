@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useParams } from "react-router";
+import { Package } from "lucide-react";
+import { useNavigate, useParams } from "react-router";
 
 import type { OrderStatus } from "@/features/checkout/types/checkout.types";
 import { fireFlowConfetti } from "@/features/flow/FlowSuccess";
@@ -19,11 +20,13 @@ import { useUpdateOrderPayment } from "@/features/orders/hooks/useUpdateOrderPay
 import { useUpdateOrderStatus } from "@/features/orders/hooks/useUpdateOrderStatus";
 import { ORDER_NEXT_STATUS } from "@/features/orders/types/order-admin.types";
 import { useSettings } from "@/features/settings";
+import { Button } from "@/shared/components/ui/button";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 export function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { data: order, isLoading } = useAdminOrder(id, { polling: true });
+  const navigate = useNavigate();
+  const { data: order, isLoading, isError } = useAdminOrder(id, { polling: true });
   const { data: settings } = useSettings();
   const now = useNow(15_000);
 
@@ -31,7 +34,7 @@ export function OrderDetailPage() {
   const { mutate: updatePayment, isPending: paying } = useUpdateOrderPayment(order?.id ?? id ?? "");
   const [cancelNotes, setCancelNotes] = useState("");
 
-  if (isLoading || !order) {
+  if (isLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-36 w-full rounded-2xl" />
@@ -40,6 +43,21 @@ export function OrderDetailPage() {
           <Skeleton className="h-64 rounded-2xl xl:col-span-8" />
           <Skeleton className="h-64 rounded-2xl xl:col-span-4" />
         </div>
+      </div>
+    );
+  }
+
+  if (isError || !order) {
+    return (
+      <div className="space-y-4 py-12 text-center">
+        <Package className="mx-auto h-10 w-10 text-[hsl(var(--muted-foreground))]" />
+        <h1 className="text-xl font-semibold">Pedido não encontrado</h1>
+        <p className="text-sm text-[hsl(var(--muted-foreground))]">
+          Ele pode ter sido excluído ou o link está inválido.
+        </p>
+        <Button type="button" onClick={() => navigate("/pedidos")}>
+          Voltar aos pedidos
+        </Button>
       </div>
     );
   }

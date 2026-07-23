@@ -43,7 +43,7 @@ export function ProductBuilder({
         {visibleGroups.map((group, index) => (
           <div
             key={group.id}
-            className="animate-fade-up"
+            className="animate-fade-up scroll-mb-[calc(11rem+env(safe-area-inset-bottom,0px))] sm:scroll-mb-[calc(9rem+env(safe-area-inset-bottom,0px))]"
             style={{ animationDelay: `${index * 60}ms` }}
           >
             <GroupSection

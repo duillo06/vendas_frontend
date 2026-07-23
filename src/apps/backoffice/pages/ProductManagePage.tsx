@@ -81,7 +81,7 @@ export function ProductManagePage() {
 
       <ProductManageHeader product={product} />
 
-      <ProductIntentBar onSelect={openIntent} />
+      <ProductIntentBar product={product} onSelect={openIntent} />
 
       <ProductInsightCards product={product} />
 

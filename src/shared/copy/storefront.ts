@@ -93,6 +93,11 @@ export const storefrontCopy = {
       title: "Seu carrinho ainda está vazio",
       description: "Adicione itens do cardápio antes de finalizar o pedido.",
     },
+    storeClosed: {
+      title: "A loja está fechada agora",
+      description: "Você ainda pode olhar o cardápio — novos pedidos voltam quando reabrirmos.",
+      cta: "Ver cardápio",
+    },
     steps: {
       1: "Precisamos só dos seus dados para manter você informado sobre o pedido.",
       2: "Escolha como prefere receber — entrega ou retirada na loja.",

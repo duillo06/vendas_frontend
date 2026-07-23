@@ -370,7 +370,9 @@ export function CategoriesPage() {
                     <div>
                       <p className="font-medium">{formatCategoryLabel(category)}</p>
                       <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                        {category.product_count} produto{category.product_count === 1 ? "" : "s"}
+                        {category.product_count === 1
+                          ? "1 produto"
+                          : `${category.product_count} produtos`}
                         {category.has_recipe ? " · como funciona configurado" : ""}
                       </p>
                     </div>

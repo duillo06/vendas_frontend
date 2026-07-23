@@ -75,7 +75,10 @@ export function CustomersPage() {
                       </p>
                     </div>
                     <div className="text-right text-sm">
-                      <p>{customer.total_orders} pedidos</p>
+                      <p>
+                        {customer.total_orders}{" "}
+                        {customer.total_orders === 1 ? "pedido" : "pedidos"}
+                      </p>
                       <PriceDisplay value={customer.total_spent} className="font-medium" />
                       <p className="text-xs text-[hsl(var(--muted-foreground))]">
                         Último: {formatDateTime(customer.last_order_at)}

@@ -24,7 +24,7 @@ export const GroupSection = forwardRef<HTMLElement, GroupSectionProps>(function 
       ref={ref}
       id={`option-group-${group.id}`}
       className={cn(
-        "scroll-mt-28 rounded-2xl border border-[hsl(var(--border))]/70 bg-white/60 p-4 transition-colors duration-200 sm:p-5",
+        "scroll-mt-28 scroll-mb-[calc(11rem+env(safe-area-inset-bottom,0px))] rounded-2xl border border-[hsl(var(--border))]/70 bg-white/60 p-4 transition-colors duration-200 sm:scroll-mb-[calc(9rem+env(safe-area-inset-bottom,0px))] sm:p-5",
         invalid && "animate-shake border-red-200 bg-red-50/60",
       )}
     >

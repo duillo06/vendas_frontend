@@ -5,6 +5,7 @@ import { cn } from "@/shared/lib/utils";
 import {
   INTENT_CATEGORY_LABELS,
   PRODUCT_INTENTS,
+  resolveIntentForProduct,
   type ProductIntent,
   type ProductIntentCategory,
   type ProductIntentId,
@@ -35,15 +36,18 @@ export function ProductQuickActions({ product, onSelect }: ProductQuickActionsPr
               {INTENT_CATEGORY_LABELS[category]}
             </h3>
             <ul className="grid gap-2 sm:grid-cols-2">
-              {intents.map((intent) => (
-                <li key={intent.id}>
-                  <ActionCard
-                    intent={intent}
-                    hint={contextualHint(intent, product)}
-                    onClick={() => onSelect(intent.id)}
-                  />
-                </li>
-              ))}
+              {intents.map((intent) => {
+                const view = resolveIntentForProduct(intent, product);
+                return (
+                  <li key={intent.id}>
+                    <ActionCard
+                      intent={view}
+                      hint={contextualHint(intent, product)}
+                      onClick={() => onSelect(intent.id)}
+                    />
+                  </li>
+                );
+              })}
             </ul>
           </div>
         );
@@ -104,7 +108,9 @@ function contextualHint(intent: ProductIntent, product: ProductAdminDetail): str
       : intent.description;
   }
   if (intent.id === "pause") {
-    return product.is_available ? "Produto está vendendo agora" : "Já está pausado";
+    return product.is_available
+      ? "Produto está vendendo agora"
+      : "Toque para voltar a vender.";
   }
   if (intent.id === "vitrine") {
     const labels = getActiveShowcaseLabels(product.tags ?? []);

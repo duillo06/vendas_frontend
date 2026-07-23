@@ -76,6 +76,7 @@ export function OptionsIntentFlow({ product, onClose, onSuccess }: IntentFlowPro
         onOptionPricesChange={setOptionPrices}
         composition={composition}
         onCompositionChange={setComposition}
+        assistantPresentation="panel"
       />
       <FlowActions onCancel={onClose} onConfirm={() => save.mutate()} pending={save.isPending} />
     </IntentFlowDialog>

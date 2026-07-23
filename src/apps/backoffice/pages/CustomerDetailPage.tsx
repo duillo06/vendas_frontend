@@ -1,11 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "react-router";
+import { Users } from "lucide-react";
+import { Link, useNavigate, useParams } from "react-router";
 
 import { customersAdminApi } from "@/features/customers";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { OrderStatusBadge, type OrderStatus } from "@/shared/components/OrderStatusBadge";
 import { UiHint } from "@/shared/components/UiHint";
 import { BackLink } from "@/shared/components/visual";
+import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { adminCopy } from "@/shared/copy/admin";
@@ -21,17 +23,34 @@ function formatDateTime(iso: string) {
 
 export function CustomerDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { data: customer, isLoading } = useQuery({
+  const navigate = useNavigate();
+  const { data: customer, isLoading, isError } = useQuery({
     queryKey: ["admin", "customers", id],
     queryFn: () => customersAdminApi.get(id!),
     enabled: Boolean(id),
+    retry: false,
   });
 
-  if (isLoading || !customer) {
+  if (isLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-40 w-full" />
+      </div>
+    );
+  }
+
+  if (isError || !customer) {
+    return (
+      <div className="space-y-4 py-12 text-center">
+        <Users className="mx-auto h-10 w-10 text-[hsl(var(--muted-foreground))]" />
+        <h1 className="text-xl font-semibold">Cliente não encontrado</h1>
+        <p className="text-sm text-[hsl(var(--muted-foreground))]">
+          Ele pode ter sido excluído ou o link está inválido.
+        </p>
+        <Button type="button" onClick={() => navigate("/clientes")}>
+          Voltar aos clientes
+        </Button>
       </div>
     );
   }

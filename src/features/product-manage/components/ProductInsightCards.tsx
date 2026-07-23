@@ -49,7 +49,11 @@ export function ProductInsightCards({ product }: ProductInsightCardsProps) {
     },
     {
       label: "Como vende",
-      value: optionCount ? `${optionCount} itens` : "Só o básico",
+      value: optionCount
+        ? optionCount === 1
+          ? "1 item"
+          : `${optionCount} itens`
+        : "Só o básico",
       hint: product.composition?.enabled ? "Com combinação de sabores" : undefined,
       icon: ShoppingBag,
     },

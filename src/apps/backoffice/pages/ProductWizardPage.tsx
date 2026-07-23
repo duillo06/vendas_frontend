@@ -187,7 +187,8 @@ export function ProductWizardPage() {
               onBack={wizard.goBack}
               onNext={handleNext}
               canGoBack={wizard.stepIndex > 0}
-              canGoNext={wizard.isCurrentValid}
+              // tipo/pergunta já avançam sozinhos ao escolher — Continuar liberado só nas outras telas
+              canGoNext={wizard.isCurrentValid && !isAutoAdvanceScreen(wizard.currentScreen)}
               isLast={wizard.isLast}
               loading={create.isPending}
             />
@@ -210,6 +211,11 @@ function screenKey(wizard: ReturnType<typeof useProductWizard>): string {
   if (s.kind === "question") return `question-${s.questionId}`;
   if (s.kind === "options") return `options-${s.groupKey}`;
   return s.kind;
+}
+
+/** telas em que o toque na opção já avança — Continuar fica só pra não atrapalhar */
+function isAutoAdvanceScreen(screen: ReturnType<typeof useProductWizard>["currentScreen"]) {
+  return screen.kind === "segment" || screen.kind === "question";
 }
 
 function getFlowLine(wizard: ReturnType<typeof useProductWizard>): FlowLine {

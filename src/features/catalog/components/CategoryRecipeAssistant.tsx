@@ -530,7 +530,11 @@ export function CategoryRecipeAssistant({
                 Pergunta {queueIndex + 1} de {queue.length}
               </p>
               <h3 className="mt-1 text-base font-semibold leading-snug sm:text-lg">
-                {currentKind.gateQuestion.replace(/este produto/gi, "esta categoria").replace(/Esta pizza/gi, categoryName).replace(/Este produto/gi, "Esta categoria")}
+                {currentKind.gateQuestion
+                  .replace(/Este produto/g, "Esta categoria")
+                  .replace(/este produto/gi, "esta categoria")
+                  .replace(/será vendido/gi, "será vendida")
+                  .replace(/Esta pizza/gi, categoryName)}
               </h3>
               {currentKind.gateHint ? (
                 <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">{currentKind.gateHint}</p>
@@ -821,7 +825,8 @@ export function CategoryRecipeAssistant({
             <div>
               <h3 className="text-base font-semibold sm:text-lg">Como deseja aplicar?</h3>
               <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
-                Esta categoria já tem {productCount} produto{productCount === 1 ? "" : "s"}. Preços e
+                Esta categoria já tem{" "}
+                {productCount === 1 ? "1 produto" : `${productCount} produtos`}. Preços e
                 escolhas especiais de cada um ficam.
               </p>
             </div>

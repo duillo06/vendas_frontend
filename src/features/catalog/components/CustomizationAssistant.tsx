@@ -110,8 +110,24 @@ export function CustomizationAssistant({
 
   const libraryItems = useMemo(() => {
     if (!kind || kind.opensComposition) return [];
-    return buildLibraryItems(availableGroups, kind, new Set());
-  }, [kind, availableGroups]);
+    const base = buildLibraryItems(availableGroups, kind, new Set());
+    const byName = new Map(base.map((item) => [item.name.toLowerCase(), item]));
+    // itens acabados de criar no rascunho — precisam aparecer pra desmarcar
+    for (const choice of draft.choices) {
+      const name = choice.name.trim();
+      if (!name) continue;
+      const needle = name.toLowerCase();
+      if (byName.has(needle)) continue;
+      byName.set(needle, {
+        key: choice.key,
+        name,
+        price: choice.price,
+        description: choice.description || undefined,
+        fromLibrary: false,
+      });
+    }
+    return [...byName.values()];
+  }, [kind, availableGroups, draft.choices]);
 
   const selectedNames = useMemo(
     () => new Set(draft.choices.map((c) => c.name.trim().toLowerCase()).filter(Boolean)),
@@ -510,7 +526,7 @@ export function CustomizationAssistant({
                 />
               </label>
               <Button type="button" className="mt-4 bg-brand hover:brightness-95" onClick={saveNewItem}>
-                Salvar na biblioteca
+                Incluir na lista
               </Button>
             </QuestionBlock>
           </motion.div>

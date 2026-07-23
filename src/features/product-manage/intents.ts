@@ -141,7 +141,16 @@ export const PRODUCT_INTENTS: ProductIntent[] = [
     description: "Tira temporariamente do pedido sem apagar o produto.",
     emoji: "⏸️",
     category: "sales",
-    keywords: ["pausar", "pause", "indisponível", "indisponivel", "parar"],
+    keywords: [
+      "pausar",
+      "pause",
+      "indisponível",
+      "indisponivel",
+      "parar",
+      "retomar",
+      "despausar",
+      "continuar",
+    ],
   },
   {
     id: "duplicate",
@@ -200,4 +209,19 @@ export function filterIntents(query: string): ProductIntent[] {
 
 export function getIntent(id: ProductIntentId): ProductIntent | undefined {
   return PRODUCT_INTENTS.find((intent) => intent.id === id);
+}
+
+/** Card/atalho: se já pausado, o mesmo intent vira “Retomar”. */
+export function resolveIntentForProduct(
+  intent: ProductIntent,
+  product: { is_available: boolean },
+): ProductIntent {
+  if (intent.id !== "pause" || product.is_available) return intent;
+  return {
+    ...intent,
+    label: "Retomar as vendas",
+    shortLabel: "Retomar",
+    description: "Volta a aceitar pedidos agora.",
+    emoji: "▶️",
+  };
 }

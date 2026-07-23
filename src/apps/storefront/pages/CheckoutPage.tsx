@@ -3,6 +3,7 @@ import { Link } from "react-router";
 
 import { useCart } from "@/features/cart";
 import { CheckoutForm } from "@/features/checkout";
+import { useCompanyPublic } from "@/features/company";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { PageHeader } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
@@ -10,6 +11,8 @@ import { storefrontCopy } from "@/shared/copy/storefront";
 
 export function CheckoutPage() {
   const { isEmpty } = useCart();
+  const { data: company, isLoading: companyLoading } = useCompanyPublic();
+  const storeClosed = !companyLoading && company != null && !company.is_open;
 
   if (isEmpty) {
     return (
@@ -19,6 +22,20 @@ export function CheckoutPage() {
         action={
           <Link to="/cardapio">
             <Button>Ver cardápio</Button>
+          </Link>
+        }
+      />
+    );
+  }
+
+  if (storeClosed) {
+    return (
+      <EmptyState
+        title={storefrontCopy.checkout.storeClosed.title}
+        description={storefrontCopy.checkout.storeClosed.description}
+        action={
+          <Link to="/cardapio">
+            <Button>{storefrontCopy.checkout.storeClosed.cta}</Button>
           </Link>
         }
       />

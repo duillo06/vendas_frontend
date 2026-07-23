@@ -113,5 +113,7 @@ export function AvailabilityIntentFlow({
 }
 
 export function PauseIntentFlow(props: IntentFlowProps) {
-  return <AvailabilityIntentFlow {...props} initialMode="paused" />;
+  // vendendo → atalho pausa; já pausado → atalho retoma
+  const initialMode = props.product.is_available ? "paused" : "available";
+  return <AvailabilityIntentFlow {...props} initialMode={initialMode} />;
 }

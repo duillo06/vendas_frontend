@@ -17,7 +17,7 @@ export function WizardShell({ stepKey, emoji, title, subtitle, children }: Wizar
         key={stepKey}
         initial={{ opacity: 0, x: 24 }}
         animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -24 }}
+        exit={{ opacity: 0, x: -24, pointerEvents: "none" }}
         transition={{ duration: 0.22, ease: "easeOut" }}
         className="space-y-6"
       >

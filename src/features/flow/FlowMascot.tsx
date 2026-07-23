@@ -61,7 +61,7 @@ export function FlowMascot({ mood = "idle", size = "md", className }: FlowMascot
         </linearGradient>
       </defs>
 
-      {/* sombra suave no chão */}
+      {/* sombra no chão — escala em vez de rx (framer-motion às vezes manda undefined no atributo SVG) */}
       <motion.ellipse
         cx="60"
         cy="110"
@@ -69,8 +69,9 @@ export function FlowMascot({ mood = "idle", size = "md", className }: FlowMascot
         ry="5"
         fill="hsl(0 0% 20%)"
         opacity="0.14"
-        animate={{ rx: mood === "celebrating" ? [30, 26, 30] : [30, 32, 30] }}
+        animate={{ scaleX: mood === "celebrating" ? [1, 0.87, 1] : [1, 1.07, 1] }}
         transition={bodyTransition}
+        style={{ transformOrigin: "60px 110px" }}
       />
 
       {/* topinho — detalhe da marca */}

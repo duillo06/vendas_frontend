@@ -7,6 +7,7 @@ import { catalogAdminKeys } from "@/features/catalog/constants/catalog-admin-key
 import { CurrencyInput } from "@/shared/components/CurrencyInput";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { Label } from "@/shared/components/ui/label";
+import { formatCurrency } from "@/shared/lib/format";
 
 import { FlowActions, IntentFlowDialog } from "../components/IntentFlowDialog";
 import type { IntentFlowProps } from "../types";
@@ -57,8 +58,10 @@ export function PriceIntentFlow({ product, onClose, onSuccess }: IntentFlowProps
       ) : (
         <div className="space-y-4">
           <p className="text-sm text-[hsl(var(--muted-foreground))]">
-            De <PriceDisplay value={product.base_price} /> para{" "}
-            <PriceDisplay value={price} className="font-semibold text-brand" />.
+            {`De ${formatCurrency(product.base_price)} para `}
+            <span className="font-semibold text-brand tabular-nums">
+              {`${formatCurrency(price)}.`}
+            </span>
           </p>
           <FlowActions
             onBack={() => setStep("ask")}

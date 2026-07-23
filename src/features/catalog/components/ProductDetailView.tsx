@@ -205,8 +205,9 @@ export function ProductDetailView({
     navigate("/cardapio");
   };
 
+  // pb + scroll-mb: barra fixa ~5–7rem; opções não podem ficar sob o CTA
   return (
-    <div className="pb-[calc(8.5rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(7rem+env(safe-area-inset-bottom,0px))]">
+    <div className="pb-[calc(11rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(9rem+env(safe-area-inset-bottom,0px))]">
       {/* protagonista: foto + identidade do produto */}
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
         <ProductImageCarousel images={product.images} productName={product.name} />
@@ -313,7 +314,7 @@ export function ProductDetailView({
 
       {/* personalização — continuação do produto, não um bloco rival */}
       {hasCustomization ? (
-        <section className="mt-12 space-y-6 border-t border-[hsl(var(--border))]/80 pt-10 sm:mt-16 sm:pt-12">
+        <section className="mt-12 space-y-6 scroll-mb-[calc(11rem+env(safe-area-inset-bottom,0px))] border-t border-[hsl(var(--border))]/80 pt-10 sm:mt-16 sm:scroll-mb-[calc(9rem+env(safe-area-inset-bottom,0px))] sm:pt-12">
           <div className="space-y-1">
             <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
               <span aria-hidden className="mr-1.5">
