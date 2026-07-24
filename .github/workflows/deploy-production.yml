@@ -1,0 +1,31 @@
+name: Deploy Production
+
+# Push em main no frontend → rebuilda stack na VPS (nginx/SPA)
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-production-frontend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          command_timeout: 15m
+          script: |
+            set -euo pipefail
+            # Frontend fica irmão do backend; o script puxa os dois e rebuilda
+            cd /opt/foodservice/vendas_backend
+            export DEPLOY_BRANCH=main
+            bash deploy/scripts/remote-deploy.sh
