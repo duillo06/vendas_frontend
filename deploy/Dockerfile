@@ -20,5 +20,10 @@ FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/storefront
 COPY --from=builder /app/dist-admin /usr/share/nginx/admin
 
+# Vite admin sai como index.admin.html — nginx procura index.html
+RUN if [ -f /usr/share/nginx/admin/index.admin.html ] && [ ! -f /usr/share/nginx/admin/index.html ]; then \
+      cp /usr/share/nginx/admin/index.admin.html /usr/share/nginx/admin/index.html; \
+    fi
+
 # Config real é montada via volume no docker-compose do backend
 EXPOSE 80
