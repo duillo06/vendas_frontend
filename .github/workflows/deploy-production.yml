@@ -25,7 +25,7 @@ jobs:
           command_timeout: 15m
           script: |
             set -euo pipefail
-            # Frontend fica irmão do backend; o script puxa os dois e rebuilda
             cd /opt/foodservice/vendas_backend
+            git checkout -- deploy/nginx/default.conf deploy/caddy/Caddyfile 2>/dev/null || true
             export DEPLOY_BRANCH=main
             bash deploy/scripts/remote-deploy.sh
