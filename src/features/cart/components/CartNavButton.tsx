@@ -84,24 +84,25 @@ export function CartNavButton() {
           variant="default"
           size="sm"
           className={cn(
-            "relative min-h-10 gap-2 bg-brand transition-transform duration-200 hover:brightness-95",
+            "relative min-h-10 gap-1.5 bg-brand px-2.5 transition-transform duration-200 hover:brightness-95",
             bump && "scale-105",
             open && "ring-2 ring-[hsl(var(--primary)/0.35)]",
           )}
           aria-expanded={open}
           aria-haspopup="dialog"
-          aria-label={`Carrinho, ${totalItems} itens`}
+          aria-label={`Carrinho, ${totalItems} itens, total ${subtotal.toFixed(2)}`}
           onClick={() => setOpen((prev) => !prev)}
         >
           <ShoppingCart className="h-4 w-4" />
-          <span className="text-xs font-semibold tabular-nums">
+          {/* preço some em telas bem estreitas — evita estourar o header */}
+          <span className="hidden text-xs font-semibold tabular-nums min-[360px]:inline">
             <PriceDisplay value={subtotal} />
           </span>
           {badge}
         </Button>
 
         {open ? (
-          <div className="absolute top-full right-0 z-50 mt-2 w-[min(calc(100vw-1.5rem),20rem)]">
+          <div className="absolute top-full right-0 z-50 mt-2 w-72 max-w-[calc(100vw-2rem)]">
             <CartMiniPreview onClose={() => setOpen(false)} />
           </div>
         ) : null}

@@ -162,6 +162,11 @@ body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+html {
+  overflow-x: clip;
 }
 
 /* Tailwind v4 não põe pointer em botão — restaura o esperado em clicáveis */
@@ -350,6 +355,8 @@ select:disabled {
 /* shells — #F7F8FA; cards brancos contrastam */
 .app-shell-storefront {
   background-color: hsl(var(--background));
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 .app-shell-backoffice {
@@ -705,6 +712,9 @@ select:disabled {
   bottom: 0;
   left: 0;
   right: 0;
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
   z-index: 30;
   border-top: 1px solid hsl(var(--border));
   background: hsl(var(--card) / 0.94);

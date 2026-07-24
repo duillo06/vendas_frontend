@@ -86,7 +86,7 @@ export function StorefrontLayout() {
   return (
     <div className="app-shell-storefront min-h-screen">
       <header className="sticky top-0 z-40 border-b border-[hsl(var(--border))] bg-[hsl(var(--card))]/92 shadow-[var(--shadow-xs)] backdrop-blur-md">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-2.5">
+        <div className="mx-auto flex w-full min-w-0 max-w-5xl items-center justify-between gap-2 px-4 py-2.5 sm:gap-3">
           <Link to="/" className="group flex min-w-0 items-center gap-2.5">
             {company?.logo_url ? (
               <div className="logo-frame h-9 w-9">
@@ -177,7 +177,7 @@ export function StorefrontLayout() {
 
       <main
         className={cn(
-          "mx-auto max-w-5xl px-4",
+          "mx-auto w-full min-w-0 max-w-5xl px-4",
           location.pathname === "/" ? "pt-0 pb-4 sm:pb-6" : "py-4 sm:py-6",
           showBottomNav &&
             "pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))] md:pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))]",

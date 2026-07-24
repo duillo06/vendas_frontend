@@ -185,12 +185,12 @@ export function CheckoutForm() {
       onSubmit={(event) => {
         event.preventDefault();
       }}
-      className="space-y-6 pb-24 lg:pb-0"
+      className="space-y-6 pb-24 lg:pb-0 w-full min-w-0 max-w-full"
     >
       <CheckoutStepper currentStep={step} />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
-        <div className="space-y-6">
+      <div className="grid w-full min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
+        <div className="min-w-0 space-y-6">
       <MessageTicker
         messages={[
           !authLoading && isAuthenticated && customer
@@ -477,7 +477,7 @@ export function CheckoutForm() {
       ) : null}
         </div>
 
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <CheckoutOrderSummary
             className="lg:sticky lg:top-24"
             items={items}
@@ -492,7 +492,7 @@ export function CheckoutForm() {
       </div>
 
       <div className="checkout-sticky-actions lg:static lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
-        <div className="mx-auto flex max-w-5xl flex-col-reverse gap-2 sm:flex-row sm:justify-between lg:max-w-none">
+        <div className="mx-auto flex w-full max-w-5xl flex-col-reverse gap-2 sm:flex-row sm:justify-between lg:max-w-none">
         <Button
           type="button"
           variant="outline"

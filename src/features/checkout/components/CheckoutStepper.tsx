@@ -19,17 +19,19 @@ export function CheckoutStepper({ currentStep }: CheckoutStepperProps) {
   const progressPercent = ((currentStep - 1) / (STEPS.length - 1)) * 100;
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between text-xs text-[hsl(var(--muted-foreground))]">
-        <span>{storefrontCopy.checkout.progress(currentStep, STEPS.length)}</span>
-        <span className="font-medium text-brand">{STEPS[currentStep - 1]?.label}</span>
+    <div className="w-full min-w-0 space-y-3 overflow-x-clip">
+      <div className="flex items-center justify-between gap-2 text-xs text-[hsl(var(--muted-foreground))]">
+        <span className="min-w-0 truncate">
+          {storefrontCopy.checkout.progress(currentStep, STEPS.length)}
+        </span>
+        <span className="shrink-0 font-medium text-brand">{STEPS[currentStep - 1]?.label}</span>
       </div>
 
-      <div className="relative">
-        <div className="absolute left-0 right-0 top-4 h-0.5 bg-[hsl(var(--muted))]" />
+      <div className="relative px-1">
+        <div className="absolute left-1 right-1 top-4 h-0.5 bg-[hsl(var(--muted))]" />
         <div
-          className="absolute left-0 top-4 h-0.5 bg-brand transition-all duration-500"
-          style={{ width: `${progressPercent}%` }}
+          className="absolute left-1 top-4 h-0.5 bg-brand transition-all duration-500"
+          style={{ width: `calc(${progressPercent}% - 0.125rem)` }}
         />
 
         <ol className="relative flex justify-between">
@@ -45,8 +47,10 @@ export function CheckoutStepper({ currentStep }: CheckoutStepperProps) {
                   className={cn(
                     "relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-all",
                     (isCurrent || isCompleted) && "bg-brand text-[hsl(var(--primary-foreground))]",
-                    isCurrent && "ring-2 ring-[hsl(var(--primary)/0.25)] ring-offset-2",
-                    !isCurrent && !isCompleted && "bg-white text-[hsl(var(--muted-foreground))] ring-1 ring-[hsl(var(--border))]",
+                    isCurrent && "ring-2 ring-[hsl(var(--primary)/0.25)] ring-offset-1 sm:ring-offset-2",
+                    !isCurrent &&
+                      !isCompleted &&
+                      "bg-white text-[hsl(var(--muted-foreground))] ring-1 ring-[hsl(var(--border))]",
                   )}
                 >
                   {isCompleted ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
@@ -54,7 +58,9 @@ export function CheckoutStepper({ currentStep }: CheckoutStepperProps) {
                 <span
                   className={cn(
                     "hidden text-xs sm:block",
-                    isCurrent ? "font-semibold text-[hsl(var(--foreground))]" : "text-[hsl(var(--muted-foreground))]",
+                    isCurrent
+                      ? "font-semibold text-[hsl(var(--foreground))]"
+                      : "text-[hsl(var(--muted-foreground))]",
                   )}
                 >
                   {step.label}
