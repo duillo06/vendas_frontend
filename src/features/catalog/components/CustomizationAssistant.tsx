@@ -179,7 +179,7 @@ export function CustomizationAssistant({
       if (exists) {
         return { ...d, choices: d.choices.filter((c) => c.name.trim().toLowerCase() !== needle) };
       }
-      const price = (item.optionId && priceByOptionId.get(item.optionId)) ?? 0;
+      const price = item.optionId ? (priceByOptionId.get(item.optionId) ?? 0) : 0;
       return {
         ...d,
         choices: [...d.choices, newChoice(item.name, price, item.description ?? "")],
@@ -397,8 +397,9 @@ export function CustomizationAssistant({
               <ul className="space-y-1.5">
                 {libraryItems.map((item) => {
                   const checked = selectedNames.has(item.name.toLowerCase());
-                  const hintPrice =
-                    (item.optionId && priceByOptionId.get(item.optionId)) ?? null;
+                  const hintPrice = item.optionId
+                    ? (priceByOptionId.get(item.optionId) ?? null)
+                    : null;
                   return (
                     <li key={item.key}>
                       <button

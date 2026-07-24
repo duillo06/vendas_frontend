@@ -143,9 +143,12 @@ export function CategoryRecipeAssistant({
   const [queueIndex, setQueueIndex] = useState(0);
   const [step, setStep] = useState<Step>("intro");
   const [draft, setDraft] = useState<CustomizationDraft | null>(null);
-  const [halfDraft, setHalfDraft] = useState({
+  const [halfDraft, setHalfDraft] = useState<{
+    max_parts: number;
+    pricing_rule: "highest" | "average" | "sum" | "main";
+  }>({
     max_parts: 2,
-    pricing_rule: "highest" as const,
+    pricing_rule: "highest",
   });
   const [newName, setNewName] = useState("");
   const [error, setError] = useState<string | null>(null);

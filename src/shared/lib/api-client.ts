@@ -80,7 +80,13 @@ function looksLikeRawDict(message: string): boolean {
   return trimmed.startsWith("{") || trimmed.startsWith("[") || trimmed.includes("ErrorDetail");
 }
 
-export function normalizeApiError(error: AxiosError<ApiErrorBody>): Error {
+export function normalizeApiError(error: unknown): Error {
+  // react-query passa Error genérico; interceptor já pode ter normalizado
+  if (!axios.isAxiosError<ApiErrorBody>(error)) {
+    if (error instanceof Error) return error;
+    return new Error("Erro inesperado");
+  }
+
   if (!error.response) {
     return new Error("Erro de conexão. Verifique sua internet.");
   }

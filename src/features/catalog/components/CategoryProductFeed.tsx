@@ -5,7 +5,6 @@ import type { ProductListItem } from "../types/catalog.types";
 import { buildCategoryFeed } from "../utils/buildCategoryFeed";
 import { ProductListRow } from "./ProductListRow";
 import { ProductRail, ProductSpotlight } from "./ProductRail";
-import { ProductListRowSkeleton } from "./ProductListSkeleton";
 
 import { EmptyState } from "@/shared/components/EmptyState";
 import { storefrontCopy } from "@/shared/copy/storefront";

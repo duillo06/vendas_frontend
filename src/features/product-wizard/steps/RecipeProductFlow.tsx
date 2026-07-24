@@ -26,7 +26,7 @@ import {
   recipeToPriceRows,
   type RecipePriceRow,
 } from "../createFromRecipe";
-import type { WizardBasics, WizardImage } from "./types";
+import type { WizardBasics, WizardImage } from "../types";
 
 type Step = "preparing" | "prices" | "review";
 
