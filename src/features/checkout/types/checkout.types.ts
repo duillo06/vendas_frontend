@@ -8,6 +8,8 @@ export interface CheckoutAddress {
   neighborhood: string;
   city: string;
   state: string;
+  cityId?: number | null;
+  stateId?: number | null;
   zipCode: string;
   reference?: string;
   latitude?: number | null;
@@ -50,6 +52,8 @@ export interface CheckoutPayload {
     neighborhood: string;
     city: string;
     state: string;
+    city_id?: number | null;
+    state_id?: number | null;
     zip_code: string;
     reference?: string;
     latitude?: number | null;

@@ -52,6 +52,8 @@ export function AccountAddressesPage() {
         neighborhood: address.neighborhood,
         city: address.city,
         state: address.state.toUpperCase(),
+        city_id: address.cityId,
+        state_id: address.stateId,
         zip_code: address.fromGeo ? "" : address.zipCode,
         reference: address.reference,
         latitude:
@@ -117,6 +119,19 @@ export function AccountAddressesPage() {
             if (showForm) {
               setLabel("");
               setAddress(emptyAddress);
+            } else if (
+              company?.settings.delivery_city &&
+              company.settings.delivery_state &&
+              company.settings.delivery_city_id &&
+              company.settings.delivery_state_id
+            ) {
+              setAddress({
+                ...emptyAddress,
+                city: company.settings.delivery_city,
+                state: company.settings.delivery_state,
+                cityId: company.settings.delivery_city_id,
+                stateId: company.settings.delivery_state_id,
+              });
             }
           }}
         >
@@ -136,6 +151,8 @@ export function AccountAddressesPage() {
               onChange={setAddress}
               deliveryCity={company?.settings.delivery_city}
               deliveryState={company?.settings.delivery_state}
+              deliveryCityId={company?.settings.delivery_city_id}
+              deliveryStateId={company?.settings.delivery_state_id}
               showLabel={false}
             />
             <Button

@@ -10,6 +10,8 @@ const addressSchema = z
     neighborhood: z.string().min(1, "Bairro é obrigatório"),
     city: z.string().min(1, "Cidade é obrigatória"),
     state: z.string().length(2, "UF com 2 letras"),
+    cityId: z.number().int().positive().nullable().optional(),
+    stateId: z.number().int().positive().nullable().optional(),
     zipCode: z.string(),
     reference: z.string().optional(),
     latitude: z.number().nullable().optional(),

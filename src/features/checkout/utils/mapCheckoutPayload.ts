@@ -18,6 +18,8 @@ export function mapCheckoutPayload(
           neighborhood: form.address.neighborhood,
           city: form.address.city,
           state: form.address.state.toUpperCase(),
+          city_id: form.address.cityId,
+          state_id: form.address.stateId,
           zip_code: form.address.zipCode || "",
           reference: form.address.reference,
           latitude:

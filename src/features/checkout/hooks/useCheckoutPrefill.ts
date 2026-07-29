@@ -6,6 +6,7 @@ import { customerAuthApi, useCustomerAuth } from "@/features/customer-auth";
 import type { CustomerAddress } from "@/features/customer-auth";
 
 import type { CheckoutFormValues } from "../schemas/checkout.schema";
+import { isInDeliveryArea } from "@/shared/lib/geo";
 import { formatPhoneMask } from "@/shared/lib/phone";
 
 function mapAddressToForm(address: CustomerAddress): NonNullable<CheckoutFormValues["address"]> {
@@ -17,6 +18,8 @@ function mapAddressToForm(address: CustomerAddress): NonNullable<CheckoutFormVal
     neighborhood: address.neighborhood,
     city: address.city,
     state: address.state,
+    cityId: address.city_id,
+    stateId: address.state_id,
     zipCode: address.zip_code ?? "",
     reference: address.reference ?? "",
     latitude: address.latitude ?? null,
@@ -50,11 +53,31 @@ export function useCheckoutPrefill(company?: CompanyPublic | null) {
 
     if (defaultAddress && acceptsDelivery) {
       values.deliveryType = "delivery";
-      values.address = mapAddressToForm(defaultAddress);
+      const addressIsAccepted = isInDeliveryArea({
+        city: defaultAddress.city,
+        state: defaultAddress.state,
+        deliveryCity: company?.settings.delivery_city,
+        deliveryState: company?.settings.delivery_state,
+      });
+      values.address = addressIsAccepted
+        ? mapAddressToForm(defaultAddress)
+        : {
+            street: "",
+            number: "",
+            complement: "",
+            neighborhood: "",
+            city: company?.settings.delivery_city ?? "",
+            state: company?.settings.delivery_state ?? "",
+            cityId: company?.settings.delivery_city_id ?? null,
+            stateId: company?.settings.delivery_state_id ?? null,
+            zipCode: "",
+            reference: "",
+            fromGeo: false,
+          };
     }
 
     return values;
-  }, [isAuthenticated, customer, addresses, company?.settings.accepts_delivery]);
+  }, [isAuthenticated, customer, addresses, company?.settings]);
 
   const isPrefillReady = !authLoading && (!isAuthenticated || !addressesLoading);
 

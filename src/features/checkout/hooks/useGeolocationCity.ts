@@ -8,6 +8,8 @@ export type GeoCityStatus = "idle" | "prompting" | "ready" | "denied" | "error";
 export type GeoCityResult = {
   city: string;
   state: string;
+  cityId: number | null;
+  stateId: number | null;
   latitude: number;
   longitude: number;
 };
@@ -15,6 +17,8 @@ export type GeoCityResult = {
 type ReverseResponse = {
   city: string;
   state: string;
+  city_id: number | null;
+  state_id: number | null;
 };
 
 export function useGeolocationCity() {
@@ -57,6 +61,8 @@ export function useGeolocationCity() {
       const next: GeoCityResult = {
         city: data.city,
         state: data.state.toUpperCase(),
+        cityId: data.city_id,
+        stateId: data.state_id,
         latitude: roundGeoCoordinate(latitude),
         longitude: roundGeoCoordinate(longitude),
       };

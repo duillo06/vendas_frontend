@@ -8,6 +8,8 @@ export interface CompanySettingsPublic {
   accepts_pickup: boolean;
   delivery_city?: string;
   delivery_state?: string;
+  delivery_city_id?: number | null;
+  delivery_state_id?: number | null;
   payment_methods: string[];
 }
 

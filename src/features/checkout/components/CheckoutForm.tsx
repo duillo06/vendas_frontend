@@ -304,8 +304,10 @@ export function CheckoutForm() {
                       number: "",
                       complement: "",
                       neighborhood: "",
-                      city: "",
-                      state: "",
+                      city: company?.settings.delivery_city ?? "",
+                      state: company?.settings.delivery_state ?? "",
+                      cityId: company?.settings.delivery_city_id ?? null,
+                      stateId: company?.settings.delivery_state_id ?? null,
                       zipCode: "",
                       reference: "",
                       fromGeo: false,
@@ -333,8 +335,10 @@ export function CheckoutForm() {
                     number: "",
                     complement: "",
                     neighborhood: "",
-                    city: "",
-                    state: "",
+                    city: company?.settings.delivery_city ?? "",
+                    state: company?.settings.delivery_state ?? "",
+                    cityId: company?.settings.delivery_city_id ?? null,
+                    stateId: company?.settings.delivery_state_id ?? null,
                     zipCode: "",
                     reference: "",
                     fromGeo: false,
@@ -344,6 +348,8 @@ export function CheckoutForm() {
                 errors={errors.address}
                 deliveryCity={company?.settings.delivery_city}
                 deliveryState={company?.settings.delivery_state}
+                deliveryCityId={company?.settings.delivery_city_id}
+                deliveryStateId={company?.settings.delivery_state_id}
                 showLabel={false}
               />
             ) : null}

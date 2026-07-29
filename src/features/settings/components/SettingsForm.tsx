@@ -24,6 +24,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 import { adminCopy } from "@/shared/copy/admin";
 import { resolveMediaUrl } from "@/shared/lib/media";
 import { formatPhoneMask, isBrazilianMobile } from "@/shared/lib/phone";
+import { useBrazilianCities, useBrazilianStates } from "@/shared/hooks/useLocations";
 import { cn } from "@/shared/lib/utils";
 import { toast } from "sonner";
 
@@ -75,12 +76,56 @@ export function SettingsForm() {
 
   const [form, setForm] = useState<SettingsData | null>(null);
   const [contrastWarning, setContrastWarning] = useState(false);
+  const { data: states = [], isLoading: statesLoading } = useBrazilianStates();
+  const { data: cities = [], isLoading: citiesLoading } = useBrazilianCities(
+    form?.settings.delivery_state_id,
+  );
 
   useEffect(() => {
     if (data) {
       setForm(data);
     }
   }, [data]);
+
+  useEffect(() => {
+    if (!form || form.settings.delivery_state_id || !form.settings.delivery_state) return;
+    const state = states.find(
+      (item) => item.acronym === form.settings.delivery_state?.toUpperCase(),
+    );
+    if (!state) return;
+    setForm((current) =>
+      current
+        ? {
+            ...current,
+            settings: { ...current.settings, delivery_state_id: state.id },
+          }
+        : current,
+    );
+  }, [form, states]);
+
+  useEffect(() => {
+    if (!form || form.settings.delivery_city_id || !form.settings.delivery_city) return;
+    const expected = form.settings.delivery_city
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .toLowerCase();
+    const city = cities.find(
+      (item) =>
+        item.name
+          .normalize("NFD")
+          .replace(/\p{Diacritic}/gu, "")
+          .toLowerCase() === expected,
+    );
+    if (!city) return;
+    setForm((current) =>
+      current
+        ? {
+            ...current,
+            settings: { ...current.settings, delivery_city_id: city.id },
+          }
+        : current,
+    );
+  }, [cities, form]);
 
   useEffect(() => {
     const theme = form?.settings.theme;
@@ -179,6 +224,24 @@ export function SettingsForm() {
   };
 
   const handleSave = () => {
+    const hasDeliveryState = Boolean(
+      form.settings.delivery_state_id || form.settings.delivery_state,
+    );
+    const hasDeliveryCity = Boolean(
+      form.settings.delivery_city_id || form.settings.delivery_city,
+    );
+    if (hasDeliveryState !== hasDeliveryCity) {
+      toast.error("Escolha o estado e a cidade onde a loja entrega");
+      return;
+    }
+    if (
+      (hasDeliveryState || hasDeliveryCity) &&
+      (!form.settings.delivery_state_id || !form.settings.delivery_city_id)
+    ) {
+      toast.error("Não foi possível validar a cidade. Escolha novamente.");
+      return;
+    }
+
     const phone = (form.company.phone ?? "").trim();
     if (phone && !isBrazilianMobile(phone)) {
       toast.error("Informe um celular válido com DDD");
@@ -206,6 +269,14 @@ export function SettingsForm() {
         accepts_pickup: form.settings.accepts_pickup,
         delivery_city: (form.settings.delivery_city ?? "").trim(),
         delivery_state: (form.settings.delivery_state ?? "").trim().toUpperCase(),
+        delivery_city_id:
+          form.settings.delivery_city || form.settings.delivery_state
+            ? form.settings.delivery_city_id ?? undefined
+            : null,
+        delivery_state_id:
+          form.settings.delivery_city || form.settings.delivery_state
+            ? form.settings.delivery_state_id ?? undefined
+            : null,
         is_open: form.settings.is_open,
         auto_close_outside_hours: form.settings.auto_close_outside_hours,
         theme: form.settings.theme,
@@ -369,6 +440,11 @@ export function SettingsForm() {
           />
 
           <div className="grid gap-4 sm:grid-cols-2">
+            {!statesLoading && states.length === 0 ? (
+              <UiHint tone="warm" className="sm:col-span-2">
+                Catálogo de cidades ainda não foi carregado. Rode o seed de localidades na API.
+              </UiHint>
+            ) : null}
             <div className="space-y-2">
               <Label htmlFor="min_order_value">Pedido mínimo (R$)</Label>
               <Input
@@ -408,28 +484,75 @@ export function SettingsForm() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="delivery_city">Cidade onde entregam</Label>
-              <Input
-                id="delivery_city"
-                placeholder="Ex.: São Paulo"
-                value={form.settings.delivery_city ?? ""}
-                onChange={(event) => updateSettings("delivery_city", event.target.value)}
-              />
-              <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                Pedidos de entrega de outras cidades serão recusados.
-              </p>
+              <Label htmlFor="delivery_state">Estado onde entregam</Label>
+              <select
+                id="delivery_state"
+                value={form.settings.delivery_state_id ?? ""}
+                disabled={statesLoading}
+                onChange={(event) => {
+                  const state = states.find((item) => item.id === Number(event.target.value));
+                  setForm((current) =>
+                    current
+                      ? {
+                          ...current,
+                          settings: {
+                            ...current.settings,
+                            delivery_state_id: state?.id ?? null,
+                            delivery_state: state?.acronym ?? "",
+                            delivery_city_id: null,
+                            delivery_city: "",
+                          },
+                        }
+                      : current,
+                  );
+                }}
+                className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm"
+              >
+                <option value="">
+                  {statesLoading ? "Carregando estados..." : "Escolha o estado"}
+                </option>
+                {states.map((state) => (
+                  <option key={state.id} value={state.id}>
+                    {state.name} ({state.acronym})
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="delivery_state">Estado (UF)</Label>
-              <Input
-                id="delivery_state"
-                maxLength={2}
-                placeholder="SP"
-                value={form.settings.delivery_state ?? ""}
-                onChange={(event) =>
-                  updateSettings("delivery_state", event.target.value.toUpperCase())
-                }
-              />
+              <Label htmlFor="delivery_city">Cidade onde entregam</Label>
+              <select
+                id="delivery_city"
+                value={form.settings.delivery_city_id ?? ""}
+                disabled={!form.settings.delivery_state_id || citiesLoading}
+                onChange={(event) => {
+                  const city = cities.find((item) => item.id === Number(event.target.value));
+                  setForm((current) =>
+                    current
+                      ? {
+                          ...current,
+                          settings: {
+                            ...current.settings,
+                            delivery_city_id: city?.id ?? null,
+                            delivery_city: city?.name ?? "",
+                          },
+                        }
+                      : current,
+                  );
+                }}
+                className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm"
+              >
+                <option value="">
+                  {citiesLoading ? "Carregando cidades..." : "Escolha a cidade"}
+                </option>
+                {cities.map((city) => (
+                  <option key={city.id} value={city.id}>
+                    {city.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                Pedidos de entrega ficam limitados a essa cidade.
+              </p>
             </div>
           </div>
         </CardContent>
