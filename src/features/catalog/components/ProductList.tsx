@@ -36,6 +36,7 @@ export function ProductList({
           basePrice: product.base_price,
           unitPrice: product.base_price,
           selectedOptions: [],
+          maxQuantityPerOrder: product.max_quantity_per_order,
         }),
       );
     }
@@ -69,6 +70,7 @@ export function ProductList({
           prepTime={product.prep_time}
           unavailable={!product.is_available}
           hasOptions={product.has_options}
+          maxQuantityPerOrder={product.max_quantity_per_order}
           onQuickAdd={quickAddMap.get(product.id)}
           staggerIndex={index}
         />

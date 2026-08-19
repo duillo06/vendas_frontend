@@ -15,6 +15,7 @@ export type CreateFromRecipeInput = {
   optionPrices: { option_id: string; price: number }[];
   optionExclusions: string[];
   images: { file: File }[];
+  maxQuantityPerOrder?: number;
 };
 
 /** produto mágico: herda a receita no backend; aqui só preços Tipo 1 + overrides */
@@ -26,6 +27,7 @@ export async function createProductFromRecipe(input: CreateFromRecipeInput) {
     category_id: input.categoryId,
     is_active: true,
     is_available: true,
+    max_quantity_per_order: input.maxQuantityPerOrder ?? 10,
     from_recipe: true,
     ...(input.optionPrices.length ? { option_prices: input.optionPrices } : {}),
     ...(input.optionExclusions.length

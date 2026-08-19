@@ -39,6 +39,8 @@ export const storefrontCopy = {
     continueShopping: "Continuar",
     favoriteSaved: "Salvo nos favoritos",
     favoriteRemoved: "Removido dos favoritos",
+    maxPerOrder: (max: number, name: string) =>
+      `Neste pedido dá pra levar até ${max} ${name}.`,
   },
   menu: {
     subtitle: "Navegue pelas categorias ou busque o que está com vontade.",

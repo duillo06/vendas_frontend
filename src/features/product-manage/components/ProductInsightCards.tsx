@@ -58,6 +58,12 @@ export function ProductInsightCards({ product }: ProductInsightCardsProps) {
       icon: ShoppingBag,
     },
     {
+      label: "Por pedido",
+      value: `Até ${product.max_quantity_per_order ?? 10}`,
+      hint: "Máximo que o cliente leva de uma vez",
+      icon: Package,
+    },
+    {
       label: "Fotos",
       value: String(product.images.length),
       icon: Heart,

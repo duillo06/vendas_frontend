@@ -27,6 +27,7 @@ export interface CartItem {
   basePrice: number;
   selectedOptions: CartSelectedOption[];
   components?: CartComponent[];
+  maxQuantityPerOrder?: number;
 }
 
 export type AddToCartPayload = Omit<CartItem, "id" | "quantity"> & {

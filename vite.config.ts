@@ -14,6 +14,8 @@ export default defineConfig({
     port: 5174,
     strictPort: true,
     host: true,
+    // túnel (ngrok) — senão o Vite recusa o Host
+    allowedHosts: [".ngrok-free.app", ".ngrok.app", ".ngrok.io", ".ngrok-free.dev"],
     proxy: {
       // API + media na mesma origem do Vite (LAN / demo.localhost)
       "/api": {

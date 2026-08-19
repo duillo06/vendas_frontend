@@ -2,48 +2,72 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import { buildCartItemId } from "../utils/cartItemId";
+import { productOrderLimit, remainingForProduct } from "../utils/orderQuantity";
 import type { AddToCartPayload, CartItem } from "../types/cart.types";
-import { MAX_CART_QUANTITY } from "../types/cart.types";
 
 import { getTenantSubdomain } from "@/shared/lib/tenant-api";
 
 interface CartState {
   items: CartItem[];
-  addItem: (payload: AddToCartPayload) => void;
+  addItem: (payload: AddToCartPayload) => { added: number; limited: boolean; max: number };
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
 }
 
-function clampQuantity(quantity: number): number {
-  return Math.min(MAX_CART_QUANTITY, Math.max(1, quantity));
+export type AddToCartResult = { added: number; limited: boolean; max: number };
+
+function clamp(quantity: number, max: number): number {
+  return Math.min(max, Math.max(1, quantity));
 }
 
 export const useCartStore = create<CartState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       items: [],
 
-      addItem: (payload) =>
-        set((state) => {
-          const id = buildCartItemId(payload.productId, payload.selectedOptions, payload.components);
-          const quantity = clampQuantity(payload.quantity ?? 1);
-          const existing = state.items.find((item) => item.id === id);
+      addItem: (payload) => {
+        const id = buildCartItemId(payload.productId, payload.selectedOptions, payload.components);
+        const max = productOrderLimit(payload.maxQuantityPerOrder);
+        const want = Math.max(1, payload.quantity ?? 1);
+        const existing = get().items.find((item) => item.id === id);
+        const remaining = remainingForProduct(
+          get().items,
+          payload.productId,
+          max,
+          existing?.id,
+        );
 
+        if (remaining <= 0) {
+          return { added: 0, limited: true, max };
+        }
+
+        const nextQty = existing
+          ? clamp(existing.quantity + want, existing.quantity + remaining)
+          : clamp(want, remaining);
+        const limited = nextQty < (existing ? existing.quantity + want : want);
+
+        set((state) => {
           if (existing) {
             return {
               items: state.items.map((item) =>
                 item.id === id
-                  ? { ...item, quantity: clampQuantity(item.quantity + quantity) }
+                  ? { ...item, quantity: nextQty, maxQuantityPerOrder: max }
                   : item,
               ),
             };
           }
 
           return {
-            items: [...state.items, { ...payload, id, quantity }],
+            items: [
+              ...state.items,
+              { ...payload, id, quantity: nextQty, maxQuantityPerOrder: max },
+            ],
           };
-        }),
+        });
+
+        return { added: nextQty - (existing?.quantity ?? 0), limited, max };
+      },
 
       removeItem: (id) =>
         set((state) => ({
@@ -56,9 +80,21 @@ export const useCartStore = create<CartState>()(
             return { items: state.items.filter((item) => item.id !== id) };
           }
 
+          const current = state.items.find((item) => item.id === id);
+          if (!current) return state;
+
+          const max = productOrderLimit(current.maxQuantityPerOrder);
+          const remaining = remainingForProduct(
+            state.items,
+            current.productId,
+            max,
+            current.id,
+          );
+          const nextQty = clamp(quantity, remaining + current.quantity);
+
           return {
             items: state.items.map((item) =>
-              item.id === id ? { ...item, quantity: clampQuantity(quantity) } : item,
+              item.id === id ? { ...item, quantity: nextQty } : item,
             ),
           };
         }),

@@ -118,6 +118,7 @@ export interface ProductAdminDetail {
   is_available: boolean;
   sort_order: number;
   prep_time: number | null;
+  max_quantity_per_order: number;
   tags: string[];
   option_group_ids: string[];
   product_option_groups: ProductOptionGroupLink[];

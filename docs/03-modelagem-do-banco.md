@@ -711,6 +711,7 @@ O mesmo mecanismo serve hamburgueria, açaiteria, cafeteria — apenas os nomes 
 | `sku` | `VARCHAR(50)` | YES | — | Código interno |
 | `is_active` | `BOOLEAN` | NO | `true` | Visível no cardápio |
 | `is_available` | `BOOLEAN` | NO | `true` | Disponível para pedido agora |
+| `max_quantity_per_order` | `INT` | NO | `10` | Teto de unidades deste produto no mesmo pedido (1–99). Não é estoque |
 | `sort_order` | `INT` | NO | `0` | Ordenação na categoria |
 | `prep_time` | `INT` | YES | — | Tempo de preparo específico (min) |
 | `calories` | `INT` | YES | — | Informação nutricional (futuro) |
@@ -729,6 +730,7 @@ O mesmo mecanismo serve hamburgueria, açaiteria, cafeteria — apenas os nomes 
 **Regras:**
 - `base_price >= 0`
 - `is_available = false` exibe produto como "indisponível" (não esconde)
+- `max_quantity_per_order` limita unidades **por pedido** (não baixa estoque)
 - `is_active = false` esconde do cardápio
 - Preço final = `base_price` + soma dos `price_modifier` das opções selecionadas
 

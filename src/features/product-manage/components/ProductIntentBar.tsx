@@ -20,6 +20,7 @@ type ProductIntentBarProps = {
 const SUGGESTIONS: ProductIntentId[] = [
   "price",
   "image",
+  "max_quantity",
   "composition",
   "options",
   "pause",

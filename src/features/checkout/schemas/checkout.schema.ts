@@ -12,21 +12,11 @@ const addressSchema = z
     state: z.string().length(2, "UF com 2 letras"),
     cityId: z.number().int().positive().nullable().optional(),
     stateId: z.number().int().positive().nullable().optional(),
-    zipCode: z.string(),
+    zipCode: z.string().optional(),
     reference: z.string().optional(),
     latitude: z.number().nullable().optional(),
     longitude: z.number().nullable().optional(),
     fromGeo: z.boolean().optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.fromGeo) return;
-    if (!data.zipCode || !/^\d{5}-?\d{3}$/.test(data.zipCode)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "CEP inválido",
-        path: ["zipCode"],
-      });
-    }
   });
 
 const customerPhoneSchema = z

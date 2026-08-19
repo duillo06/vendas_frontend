@@ -15,6 +15,7 @@ type ProductPurchaseBarProps = {
   onAdd: () => void;
   onContinueShopping: () => void;
   disabled?: boolean;
+  max?: number;
   /** já entrou no carrinho — troca o CTA pra guiar o próximo passo */
   addedToCart?: boolean;
   priceBump?: boolean;
@@ -28,6 +29,7 @@ export function ProductPurchaseBar({
   onAdd,
   onContinueShopping,
   disabled,
+  max,
   addedToCart,
   priceBump,
 }: ProductPurchaseBarProps) {
@@ -112,6 +114,7 @@ export function ProductPurchaseBar({
               <QuantitySelector
                 value={quantity}
                 onChange={onQuantityChange}
+                max={max}
                 className="h-11 shrink-0 rounded-xl border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40"
               />
 

@@ -71,6 +71,7 @@ export function ProductWizardPage() {
         optionsByGroup: wizard.state.optionsByGroup,
         images: wizard.state.images,
         composition: wizard.composition,
+        maxQuantityPerOrder: wizard.state.basics.maxQuantityPerOrder,
       }),
     onSuccess: (product) => {
       void queryClient.invalidateQueries({ queryKey: catalogAdminKeys.all });

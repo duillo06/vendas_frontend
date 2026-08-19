@@ -5,7 +5,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import type { ProductWizard } from "../useProductWizard";
 import type { WizardImage } from "../types";
-import { createId } from "@/shared/lib/utils";
+import { MaxPerOrderField } from "@/features/catalog/components/MaxPerOrderField";
 
 const MAX_IMAGES = 5;
 
@@ -86,6 +86,13 @@ export function BasicsStep({ wizard, categories }: BasicsStepProps) {
           }
         />
       </div>
+
+      <MaxPerOrderField
+        value={state.basics.maxQuantityPerOrder}
+        onChange={(maxQuantityPerOrder) =>
+          dispatch({ type: "SET_BASICS", patch: { maxQuantityPerOrder } })
+        }
+      />
     </div>
   );
 }

@@ -95,4 +95,5 @@ export type WizardBasics = {
   name: string;
   description: string;
   categoryId: string;
+  maxQuantityPerOrder: number;
 };

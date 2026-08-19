@@ -16,6 +16,7 @@ import {
 import type { BusinessHoursAdmin, TenantTheme } from "@/features/settings/types/settings.types";
 import { UiHint } from "@/shared/components/UiHint";
 import { PhoneInput } from "@/shared/components/PhoneInput";
+import { SearchableSelect } from "@/shared/components/SearchableSelect";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
@@ -485,12 +486,19 @@ export function SettingsForm() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="delivery_state">Estado onde entregam</Label>
-              <select
+              <SearchableSelect
                 id="delivery_state"
-                value={form.settings.delivery_state_id ?? ""}
-                disabled={statesLoading}
-                onChange={(event) => {
-                  const state = states.find((item) => item.id === Number(event.target.value));
+                value={form.settings.delivery_state_id ? String(form.settings.delivery_state_id) : ""}
+                loading={statesLoading}
+                placeholder="Escolha o estado"
+                searchPlaceholder="Buscar estado…"
+                emptyText="Nenhum estado com esse nome."
+                options={states.map((state) => ({
+                  value: String(state.id),
+                  label: `${state.name} (${state.acronym})`,
+                }))}
+                onChange={(next) => {
+                  const state = states.find((item) => item.id === Number(next));
                   setForm((current) =>
                     current
                       ? {
@@ -506,26 +514,26 @@ export function SettingsForm() {
                       : current,
                   );
                 }}
-                className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm"
-              >
-                <option value="">
-                  {statesLoading ? "Carregando estados..." : "Escolha o estado"}
-                </option>
-                {states.map((state) => (
-                  <option key={state.id} value={state.id}>
-                    {state.name} ({state.acronym})
-                  </option>
-                ))}
-              </select>
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="delivery_city">Cidade onde entregam</Label>
-              <select
+              <SearchableSelect
                 id="delivery_city"
-                value={form.settings.delivery_city_id ?? ""}
-                disabled={!form.settings.delivery_state_id || citiesLoading}
-                onChange={(event) => {
-                  const city = cities.find((item) => item.id === Number(event.target.value));
+                value={form.settings.delivery_city_id ? String(form.settings.delivery_city_id) : ""}
+                disabled={!form.settings.delivery_state_id}
+                loading={citiesLoading}
+                placeholder={
+                  form.settings.delivery_state_id ? "Escolha a cidade" : "Escolha o estado primeiro"
+                }
+                searchPlaceholder="Buscar cidade…"
+                emptyText="Nenhuma cidade com esse nome."
+                options={cities.map((city) => ({
+                  value: String(city.id),
+                  label: city.name,
+                }))}
+                onChange={(next) => {
+                  const city = cities.find((item) => item.id === Number(next));
                   setForm((current) =>
                     current
                       ? {
@@ -539,17 +547,7 @@ export function SettingsForm() {
                       : current,
                   );
                 }}
-                className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm"
-              >
-                <option value="">
-                  {citiesLoading ? "Carregando cidades..." : "Escolha a cidade"}
-                </option>
-                {cities.map((city) => (
-                  <option key={city.id} value={city.id}>
-                    {city.name}
-                  </option>
-                ))}
-              </select>
+              />
               <p className="text-xs text-[hsl(var(--muted-foreground))]">
                 Pedidos de entrega ficam limitados a essa cidade.
               </p>

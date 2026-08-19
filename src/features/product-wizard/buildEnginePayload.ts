@@ -24,6 +24,7 @@ export type BuildProductInput = {
   optionsByGroup: Record<string, WizardOptionInput[]>;
   images: WizardImage[];
   composition?: WizardComposition | null;
+  maxQuantityPerOrder?: number;
 };
 
 /**
@@ -81,6 +82,7 @@ export async function createProductFromWizard(input: BuildProductInput) {
     category_id: input.categoryId,
     is_active: true,
     is_available: true,
+    max_quantity_per_order: input.maxQuantityPerOrder ?? 10,
     product_option_groups: linkedIds.map((id, i) => ({
       option_group_id: id,
       sort_order: i,

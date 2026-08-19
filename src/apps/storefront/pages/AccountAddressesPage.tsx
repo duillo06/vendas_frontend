@@ -54,7 +54,7 @@ export function AccountAddressesPage() {
         state: address.state.toUpperCase(),
         city_id: address.cityId,
         state_id: address.stateId,
-        zip_code: address.fromGeo ? "" : address.zipCode,
+        zip_code: "",
         reference: address.reference,
         latitude:
           address.latitude != null ? roundGeoCoordinate(address.latitude) : null,
@@ -105,8 +105,7 @@ export function AccountAddressesPage() {
     address.number.trim() &&
     address.neighborhood.trim() &&
     address.city.trim() &&
-    address.state.trim().length === 2 &&
-    (address.fromGeo || /^\d{5}-?\d{3}$/.test(address.zipCode));
+    address.state.trim().length === 2;
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
@@ -191,7 +190,6 @@ export function AccountAddressesPage() {
                       </p>
                       <p className="text-sm text-[hsl(var(--muted-foreground))]">
                         {row.neighborhood} · {row.city}/{row.state}
-                        {row.zip_code ? ` · ${row.zip_code}` : ""}
                       </p>
                     </div>
                   </div>

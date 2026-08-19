@@ -11,13 +11,24 @@ export function useAddToCart() {
   return useCallback(
     (payload: AddToCartPayload) => {
       const wasEmpty = useCartStore.getState().items.length === 0;
-      addItem(payload);
+      const result = addItem(payload);
+
+      if (result.added <= 0) {
+        toast.error(storefrontCopy.product.maxPerOrder(result.max, payload.productName));
+        return result;
+      }
+
+      if (result.limited) {
+        toast.success(storefrontCopy.product.maxPerOrder(result.max, payload.productName));
+        return result;
+      }
 
       toast.success("Adicionado ao carrinho", {
         description: wasEmpty
           ? storefrontCopy.addToCart.default(payload.productName)
           : storefrontCopy.addToCart.returning,
       });
+      return result;
     },
     [addItem],
   );

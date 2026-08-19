@@ -53,6 +53,7 @@ export default defineConfig({
     port: 5175,
     strictPort: true,
     host: true,
+    allowedHosts: [".ngrok-free.app", ".ngrok.app", ".ngrok.io", ".ngrok-free.dev"],
     // browser → mesma origem; Vite encaminha pro Django local
     proxy: {
       "/api": {

@@ -20,7 +20,7 @@ export function mapCheckoutPayload(
           state: form.address.state.toUpperCase(),
           city_id: form.address.cityId,
           state_id: form.address.stateId,
-          zip_code: form.address.zipCode || "",
+          zip_code: "",
           reference: form.address.reference,
           latitude:
             form.address.latitude != null

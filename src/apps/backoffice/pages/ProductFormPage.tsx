@@ -18,6 +18,7 @@ import { formatCategoryLabel } from "@/features/catalog/utils/categoryLabel";
 import { linksFromProduct, serializeProductLinks } from "@/features/catalog/utils/productLinks";
 import { ProductImageGallery } from "@/features/catalog/components/ProductImageGallery";
 import { ProductTagPicker } from "@/features/catalog/components/ProductTagPicker";
+import { MaxPerOrderField } from "@/features/catalog/components/MaxPerOrderField";
 import { catalogAdminKeys } from "@/features/catalog/constants/catalog-admin-keys";
 import { normalizeProductTags } from "@/features/catalog/utils/productTags";
 import { CurrencyInput } from "@/shared/components/CurrencyInput";
@@ -73,6 +74,7 @@ export function ProductFormPage() {
     product_option_groups: [] as ProductOptionGroupLink[],
     composition: DEFAULT_COMPOSITION as CompositionForm,
     option_prices: [] as { option_id: string; price: number }[],
+    max_quantity_per_order: 10,
   });
   const [previewMode, setPreviewMode] = useState<"storefront" | "builder">("storefront");
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
@@ -92,6 +94,7 @@ export function ProductFormPage() {
           ? { ...DEFAULT_COMPOSITION, ...product.composition }
           : DEFAULT_COMPOSITION,
         option_prices: product.option_prices ?? [],
+        max_quantity_per_order: product.max_quantity_per_order ?? 10,
       });
       setPendingImages([]);
     } else if (isNew && categories?.length) {
@@ -196,6 +199,7 @@ export function ProductFormPage() {
         is_active: form.is_active,
         is_available: form.is_available,
         tags: normalizeProductTags(form.tags),
+        max_quantity_per_order: form.max_quantity_per_order,
         product_option_groups: serializeProductLinks(form.product_option_groups),
         ...(form.option_prices.length ? { option_prices: form.option_prices } : {}),
         composition: {
@@ -397,6 +401,11 @@ export function ProductFormPage() {
               </select>
             </div>
           </div>
+
+          <MaxPerOrderField
+            value={form.max_quantity_per_order}
+            onChange={(max_quantity_per_order) => setForm({ ...form, max_quantity_per_order })}
+          />
 
           {noCategories ? (
             <UiHint icon={FolderOpen} title={adminCopy.products.form.noCategories.title} tone="warm">

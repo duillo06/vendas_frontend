@@ -73,6 +73,7 @@ export function CartUpsell({ products, cartProductIds }: CartUpsellProps) {
                     basePrice: product.base_price,
                     unitPrice: product.base_price,
                     selectedOptions: [],
+                    maxQuantityPerOrder: product.max_quantity_per_order,
                   })
                 }
               >

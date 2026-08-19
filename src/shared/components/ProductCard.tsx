@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { toast } from "sonner";
 
 import { useAddToCart, useCart } from "@/features/cart";
+import { remainingForProduct, productOrderLimit } from "@/features/cart/utils/orderQuantity";
 import { buildCartItemId } from "@/features/cart/utils/cartItemId";
 import { useFavorites } from "@/features/favorites";
 import {
@@ -27,6 +28,7 @@ type ProductCardProps = {
   prepTime?: number | null;
   unavailable?: boolean;
   hasOptions?: boolean;
+  maxQuantityPerOrder?: number | null;
   /** legado: se false, card gerencia qty sozinho pra item simples */
   onQuickAdd?: () => void;
   staggerIndex?: number;
@@ -59,6 +61,7 @@ export function ProductCard({
   prepTime,
   unavailable = false,
   hasOptions = false,
+  maxQuantityPerOrder,
   onQuickAdd,
   staggerIndex,
   className,
@@ -73,6 +76,9 @@ export function ProductCard({
   const cartLine = items.find((item) => item.id === simpleCartId);
   const qty = cartLine?.quantity ?? 0;
   const canQuickQty = !unavailable && !hasOptions;
+  const orderMax = productOrderLimit(maxQuantityPerOrder);
+  const remaining = remainingForProduct(items, id, orderMax);
+  const atOrderMax = remaining <= 0;
 
   const numericPrice = Number(price);
   const numericCompare =
@@ -110,6 +116,7 @@ export function ProductCard({
       basePrice: numericPrice,
       unitPrice: numericPrice,
       selectedOptions: [],
+      maxQuantityPerOrder: orderMax,
     });
   };
 
@@ -125,6 +132,10 @@ export function ProductCard({
     event.stopPropagation();
     if (!cartLine) {
       addSimple();
+      return;
+    }
+    if (atOrderMax) {
+      toast.error(storefrontCopy.product.maxPerOrder(orderMax, name));
       return;
     }
     updateQuantity(cartLine.id, cartLine.quantity + 1);
@@ -220,7 +231,8 @@ export function ProductCard({
                   <button
                     type="button"
                     aria-label="Aumentar"
-                    className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-white/15 active:scale-95"
+                    className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-white/15 active:scale-95 disabled:opacity-40"
+                    disabled={atOrderMax}
                     onClick={handleInc}
                   >
                     <Plus className="h-4 w-4" />

@@ -27,6 +27,7 @@ export interface ProductListItem {
   is_available: boolean;
   tags: string[];
   has_options: boolean;
+  max_quantity_per_order?: number;
   prep_time?: number | null;
   promotion?: {
     campaign_id: string;
@@ -133,6 +134,7 @@ export interface ProductDetail {
   compare_price: number | null;
   is_available: boolean;
   prep_time: number | null;
+  max_quantity_per_order?: number;
   tags: string[];
   images: ProductImage[];
   option_groups: OptionGroup[];

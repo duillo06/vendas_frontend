@@ -636,6 +636,7 @@ Lista produtos disponíveis.
         "slug": "pizzas"
       },
       "is_available": true,
+      "max_quantity_per_order": 10,
       "tags": ["mais-vendida"],
       "has_options": true
     }
@@ -661,6 +662,7 @@ Detalhe do produto com grupos de opções.
   "compare_price": 52.00,
   "is_available": true,
   "prep_time": 25,
+  "max_quantity_per_order": 10,
   "tags": ["mais-vendida"],
   "images": [
     {
@@ -1162,6 +1164,7 @@ Cria produto.
   "is_available": true,
   "sort_order": 0,
   "prep_time": 25,
+  "max_quantity_per_order": 10,
   "tags": ["mais-vendida"],
   "option_group_ids": [
     "aa0e8400-e29b-41d4-a716-446655440006",

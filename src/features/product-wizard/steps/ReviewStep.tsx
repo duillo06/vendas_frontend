@@ -33,6 +33,9 @@ export function ReviewStep({ wizard, categories }: ReviewStepProps) {
           <p className="mt-1 text-base font-semibold text-brand">
             {formatCurrency(state.basePrice)}
           </p>
+          <p className="text-xs text-[hsl(var(--muted-foreground))]">
+            Até {state.basics.maxQuantityPerOrder} por pedido
+          </p>
         </div>
       </div>
 

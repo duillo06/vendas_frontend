@@ -5,6 +5,7 @@ import { CartUpsell } from "./CartUpsell";
 import { useCompanyPublic } from "@/features/company";
 import { useProducts } from "@/features/catalog";
 import { useCart } from "../hooks/useCart";
+import { remainingForProduct, productOrderLimit } from "../utils/orderQuantity";
 import { CartItemRow } from "./CartItemRow";
 
 import { EmptyState } from "@/shared/components/EmptyState";
@@ -63,6 +64,14 @@ export function CartPanel({ onClose }: CartPanelProps) {
           <li key={item.id}>
             <CartItemRow
               item={item}
+              max={
+                remainingForProduct(
+                  items,
+                  item.productId,
+                  productOrderLimit(item.maxQuantityPerOrder),
+                  item.id,
+                ) + item.quantity
+              }
               onQuantityChange={(quantity) => updateQuantity(item.id, quantity)}
               onRemove={() => removeItem(item.id)}
             />

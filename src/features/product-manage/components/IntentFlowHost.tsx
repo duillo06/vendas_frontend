@@ -14,6 +14,7 @@ import {
 import { DescriptionIntentFlow, NameIntentFlow } from "../flows/DescriptionIntentFlow";
 import { ImageIntentFlow } from "../flows/ImageIntentFlow";
 import { OptionsIntentFlow } from "../flows/OptionsIntentFlow";
+import { MaxQuantityIntentFlow } from "../flows/MaxQuantityIntentFlow";
 import { PriceIntentFlow } from "../flows/PriceIntentFlow";
 import { TagsIntentFlow } from "../flows/TagsIntentFlow";
 type IntentFlowHostProps = {
@@ -54,6 +55,8 @@ export function IntentFlowHost({ product, intent, onClose }: IntentFlowHostProps
       return <OptionsIntentFlow {...shared} />;
     case "vitrine":
       return <TagsIntentFlow {...shared} />;
+    case "max_quantity":
+      return <MaxQuantityIntentFlow {...shared} />;
     case "duplicate":
       return <DuplicateIntentFlow {...shared} />;
     case "delete":

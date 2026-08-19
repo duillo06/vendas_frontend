@@ -9,6 +9,7 @@ export type ProductIntentId =
   | "options"
   | "vitrine"
   | "pause"
+  | "max_quantity"
   | "duplicate"
   | "archive"
   | "delete"
@@ -141,16 +142,16 @@ export const PRODUCT_INTENTS: ProductIntent[] = [
     description: "Tira temporariamente do pedido sem apagar o produto.",
     emoji: "⏸️",
     category: "sales",
-    keywords: [
-      "pausar",
-      "pause",
-      "indisponível",
-      "indisponivel",
-      "parar",
-      "retomar",
-      "despausar",
-      "continuar",
-    ],
+    keywords: ["pausar", "pause", "indisponível", "indisponivel", "parar", "retomar", "despausar", "continuar"],
+  },
+  {
+    id: "max_quantity",
+    label: "Limite por pedido",
+    shortLabel: "Limite",
+    description: "Quantas unidades o cliente pode levar no mesmo pedido.",
+    emoji: "🔢",
+    category: "sales",
+    keywords: ["limite", "quantidade", "máximo", "maximo", "pedido", "unidades", "teto"],
   },
   {
     id: "duplicate",

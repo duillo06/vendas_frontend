@@ -1,4 +1,4 @@
-// beep curto pra avisar pedido novo — sem arquivo de áudio
+// campainha de cozinha — alta, aguda, duas levadas (sem arquivo de áudio)
 let audioCtx: AudioContext | null = null;
 
 function getAudioContext(): AudioContext | null {
@@ -18,6 +18,26 @@ export async function unlockOrderAlertAudio(): Promise<void> {
   }
 }
 
+function beep(
+  ctx: AudioContext,
+  dest: AudioNode,
+  start: number,
+  freq: number,
+  duration = 0.16,
+) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "square";
+  osc.frequency.setValueAtTime(freq, start);
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(0.34, start + 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  osc.connect(gain);
+  gain.connect(dest);
+  osc.start(start);
+  osc.stop(start + duration + 0.02);
+}
+
 export function playOrderAlertSound(): void {
   try {
     const ctx = getAudioContext();
@@ -25,23 +45,25 @@ export function playOrderAlertSound(): void {
 
     void ctx.resume().then(() => {
       const now = ctx.currentTime;
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.22, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
-      gain.connect(ctx.destination);
+      const master = ctx.createGain();
+      // um pouco de filtro pra não estourar fone, mas ainda chama atenção
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(3200, now);
+      master.gain.setValueAtTime(0.85, now);
+      filter.connect(master);
+      master.connect(ctx.destination);
 
-      // dois tons curtinhos — tipo campainha
-      for (const [offset, freq] of [
-        [0, 880],
-        [0.12, 1175],
-      ] as const) {
-        const osc = ctx.createOscillator();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(freq, now + offset);
-        osc.connect(gain);
-        osc.start(now + offset);
-        osc.stop(now + offset + 0.18);
+      // duas sequências: ti-ti-ti … ti-ti-ti
+      const notes = [1397, 1760, 2093] as const;
+      const gap = 0.15;
+      const roundGap = 0.55;
+
+      for (let round = 0; round < 2; round += 1) {
+        const roundStart = now + round * (notes.length * gap + roundGap);
+        notes.forEach((freq, index) => {
+          beep(ctx, filter, roundStart + index * gap, freq);
+        });
       }
     });
   } catch {

@@ -346,7 +346,7 @@ total = R$ 78,00
 | K-03 | Item do carrinho = `product_id` + opções selecionadas + quantity |
 | K-04 | ID do item = hash de `product_id + sorted(option_ids)` |
 | K-05 | Mesmo produto com opções diferentes = itens separados |
-| K-06 | Quantidade mínima: 1; máxima: 99 |
+| K-06 | Quantidade mínima: 1; máxima por produto: `max_quantity_per_order` (1–99, padrão 10). Soma todas as linhas do mesmo produto no pedido |
 | K-07 | Preço exibido é estimativa; backend recalcula no checkout |
 | K-08 | Carrinho limpo após pedido confirmado com sucesso |
 | K-09 | Carrinho persiste entre sessões (localStorage) |
@@ -367,11 +367,12 @@ total = R$ 78,00
 | K-19 | `notes` opcional, max 500 caracteres |
 | K-20 | Mínimo 1 item no pedido |
 | K-21 | Todos os produtos devem estar ativos e disponíveis |
+| K-27 | Soma das quantidades do mesmo produto no pedido ≤ `max_quantity_per_order` (`QUANTITY_LIMIT`) |
 | K-22 | Loja deve estar aberta |
 | K-23 | Subtotal ≥ pedido mínimo |
 | K-24 | Endereço é snapshot no pedido (JSONB) |
 | K-25 | Delivery com área configurada: cidade/UF do endereço devem bater com a loja (`OUT_OF_DELIVERY_AREA`) |
-| K-26 | CEP opcional quando o endereço veio da geolocalização; obrigatório no preenchimento manual |
+| K-26 | CEP não é pedido no checkout: entrega só na cidade da loja; motoboy se localiza por rua/bairro |
 | K-27 | `pickup` ignora restrição de cidade |
 
 ### 8.3 Fluxo de Checkout

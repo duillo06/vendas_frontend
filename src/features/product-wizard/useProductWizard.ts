@@ -42,7 +42,7 @@ type Action =
   | { type: "GO"; index: number };
 
 const initialState: State = {
-  basics: { name: "", description: "", categoryId: "" },
+  basics: { name: "", description: "", categoryId: "", maxQuantityPerOrder: 10 },
   images: [],
   basePrice: 0,
   segmentId: null,

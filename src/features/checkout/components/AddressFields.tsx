@@ -7,6 +7,7 @@ import { useBrazilianCities, useBrazilianStates } from "@/shared/hooks/useLocati
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
+import { SearchableSelect } from "@/shared/components/SearchableSelect";
 import { cn } from "@/shared/lib/utils";
 
 export type AddressFieldsValue = {
@@ -40,7 +41,7 @@ type AddressFieldsProps = {
   className?: string;
 };
 
-/** campos de endereço — com GPS esconde CEP e trava cidade/UF */
+/** campos de endereço — cidade da loja; sem CEP */
 export function AddressFields({
   value,
   onChange,
@@ -189,7 +190,7 @@ export function AddressFields({
 
       {fromGeo ? (
         <p className="rounded-lg bg-brand-soft px-3 py-2 text-xs text-brand">
-          Cidade e estado pela sua localização — CEP não é necessário.
+          Cidade e estado pela sua localização.
         </p>
       ) : null}
 
@@ -240,55 +241,43 @@ export function AddressFields({
           ) : null}
         </div>
 
-        {!fromGeo ? (
-          <div className="space-y-2">
-            <Label htmlFor="addr-zip">CEP</Label>
-            <Input
-              id="addr-zip"
-              placeholder="01310-100"
-              value={value.zipCode}
-              onChange={(e) => patch({ zipCode: e.target.value })}
-              autoComplete="postal-code"
-            />
-            {errors?.zipCode?.message ? (
-              <p className="text-xs text-red-600">{errors.zipCode.message}</p>
-            ) : null}
-          </div>
-        ) : null}
-
         <div className={cn("space-y-2", fromGeo && "sm:col-span-1")}>
           <Label htmlFor="addr-city">Cidade</Label>
-          <select
-            id="addr-city"
-            value={value.cityId ?? (value.city ? "current" : "")}
-            disabled={fromGeo || locationLocked || !value.stateId || citiesLoading}
-            onChange={(event) => {
-              const city = cities.find((item) => item.id === Number(event.target.value));
-              patch({ city: city?.name ?? "", cityId: city?.id ?? null });
-            }}
-            className={cn(
-              "flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm",
-              (fromGeo || locationLocked) && "bg-[hsl(var(--muted))]/40",
-            )}
-          >
-            {locationLocked && deliveryCityId ? (
-              <option value={deliveryCityId}>{deliveryCity}</option>
-            ) : fromGeo && value.cityId ? (
-              <option value={value.cityId}>{value.city}</option>
-            ) : (
-              <>
-                {!value.cityId && value.city ? (
-                  <option value="current">{value.city}</option>
-                ) : null}
-                <option value="">{citiesLoading ? "Carregando..." : "Escolha a cidade"}</option>
-                {cities.map((city) => (
-                  <option key={city.id} value={city.id}>
-                    {city.name}
-                  </option>
-                ))}
-              </>
-            )}
-          </select>
+          {locationLocked && deliveryCityId ? (
+            <SearchableSelect
+              id="addr-city"
+              value={String(deliveryCityId)}
+              options={[{ value: String(deliveryCityId), label: deliveryCity ?? "" }]}
+              disabled
+              onChange={() => undefined}
+            />
+          ) : fromGeo && value.cityId ? (
+            <SearchableSelect
+              id="addr-city"
+              value={String(value.cityId)}
+              options={[{ value: String(value.cityId), label: value.city }]}
+              disabled
+              onChange={() => undefined}
+            />
+          ) : (
+            <SearchableSelect
+              id="addr-city"
+              value={value.cityId ? String(value.cityId) : ""}
+              disabled={!value.stateId}
+              loading={citiesLoading}
+              placeholder={value.stateId ? "Escolha a cidade" : "Escolha o estado primeiro"}
+              searchPlaceholder="Buscar cidade…"
+              emptyText="Nenhuma cidade com esse nome."
+              options={cities.map((city) => ({
+                value: String(city.id),
+                label: city.name,
+              }))}
+              onChange={(next) => {
+                const city = cities.find((item) => item.id === Number(next));
+                patch({ city: city?.name ?? "", cityId: city?.id ?? null });
+              }}
+            />
+          )}
           {errors?.city?.message ? (
             <p className="text-xs text-red-600">{errors.city.message}</p>
           ) : null}
@@ -296,42 +285,45 @@ export function AddressFields({
 
         <div className="space-y-2">
           <Label htmlFor="addr-state">UF</Label>
-          <select
-            id="addr-state"
-            value={value.stateId ?? (value.state ? "current" : "")}
-            disabled={fromGeo || locationLocked || statesLoading}
-            onChange={(event) => {
-              const state = states.find((item) => item.id === Number(event.target.value));
-              patch({
-                state: state?.acronym ?? "",
-                stateId: state?.id ?? null,
-                city: "",
-                cityId: null,
-              });
-            }}
-            className={cn(
-              "flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm",
-              (fromGeo || locationLocked) && "bg-[hsl(var(--muted))]/40",
-            )}
-          >
-            {locationLocked && deliveryStateId ? (
-              <option value={deliveryStateId}>{deliveryState}</option>
-            ) : fromGeo && value.stateId ? (
-              <option value={value.stateId}>{value.state}</option>
-            ) : (
-              <>
-                {!value.stateId && value.state ? (
-                  <option value="current">{value.state}</option>
-                ) : null}
-                <option value="">{statesLoading ? "Carregando..." : "Escolha o estado"}</option>
-                {states.map((state) => (
-                  <option key={state.id} value={state.id}>
-                    {state.name} ({state.acronym})
-                  </option>
-                ))}
-              </>
-            )}
-          </select>
+          {locationLocked && deliveryStateId ? (
+            <SearchableSelect
+              id="addr-state"
+              value={String(deliveryStateId)}
+              options={[{ value: String(deliveryStateId), label: deliveryState ?? "" }]}
+              disabled
+              onChange={() => undefined}
+            />
+          ) : fromGeo && value.stateId ? (
+            <SearchableSelect
+              id="addr-state"
+              value={String(value.stateId)}
+              options={[{ value: String(value.stateId), label: value.state }]}
+              disabled
+              onChange={() => undefined}
+            />
+          ) : (
+            <SearchableSelect
+              id="addr-state"
+              value={value.stateId ? String(value.stateId) : ""}
+              loading={statesLoading}
+              placeholder="Escolha o estado"
+              searchPlaceholder="Buscar estado…"
+              emptyText="Nenhum estado com esse nome."
+              options={states.map((state) => ({
+                value: String(state.id),
+                label: `${state.name} (${state.acronym})`,
+              }))}
+              onChange={(next) => {
+                const state = states.find((item) => item.id === Number(next));
+                patch({
+                  state: state?.acronym ?? "",
+                  stateId: state?.id ?? null,
+                  city: "",
+                  cityId: null,
+                });
+              }}
+            />
+          )}
           {errors?.state?.message ? (
             <p className="text-xs text-red-600">{errors.state.message}</p>
           ) : null}

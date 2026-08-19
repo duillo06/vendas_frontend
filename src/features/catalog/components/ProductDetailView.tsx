@@ -30,6 +30,8 @@ import { ProductPurchaseBar } from "./ProductPurchaseBar";
 import { ProductSuggestionRail } from "./ProductSuggestionRail";
 import type { ProductDetail, ProductListItem } from "../types/catalog.types";
 import type { CartComponent } from "@/features/cart/types/cart.types";
+import { useCart } from "@/features/cart";
+import { remainingForProduct, productOrderLimit } from "@/features/cart/utils/orderQuantity";
 
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { MessageTicker } from "@/shared/components/MessageTicker";
@@ -57,6 +59,7 @@ export type ProductAddToCartPayload = {
     quantity: number;
   }>;
   components?: CartComponent[];
+  maxQuantityPerOrder?: number;
 };
 
 type ProductDetailViewProps = {
@@ -84,6 +87,10 @@ export function ProductDetailView({
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { isFavorite, toggle } = useFavorites();
+  const { items: cartItems } = useCart();
+  const orderMax = productOrderLimit(product.max_quantity_per_order);
+  const remaining = remainingForProduct(cartItems, product.id, orderMax);
+  const quantityMax = Math.max(1, remaining);
 
   useEffect(() => {
     setSelections(buildInitialSelections(product.option_groups));
@@ -92,6 +99,10 @@ export function ProductDetailView({
     setInvalidGroupId(null);
     setAddedToCart(false);
   }, [product.id]);
+
+  useEffect(() => {
+    setQuantity((current) => Math.min(current, Math.max(1, remaining)));
+  }, [remaining]);
 
   const unitPrice = useMemo(() => {
     const withOptions = calculateProductPrice(product, selections);
@@ -168,6 +179,11 @@ export function ProductDetailView({
       }
     }
 
+    if (remaining <= 0) {
+      toast.error(storefrontCopy.product.maxPerOrder(orderMax, product.name));
+      return;
+    }
+
     setInvalidGroupId(null);
     if (!onAddToCart) return;
 
@@ -191,6 +207,7 @@ export function ProductDetailView({
       quantity,
       selectedOptions: optionsPayload,
       components: compositionParts.length > 0 ? compositionParts : undefined,
+      maxQuantityPerOrder: orderMax,
     });
 
     setAddedToCart(true);
@@ -378,12 +395,13 @@ export function ProductDetailView({
         unitPrice={unitPrice}
         quantity={quantity}
         onQuantityChange={(next) => {
-          setQuantity(next);
+          setQuantity(Math.min(next, quantityMax));
           setAddedToCart(false);
         }}
+        max={quantityMax}
         onAdd={handleAddToCart}
         onContinueShopping={handleContinueShopping}
-        disabled={!product.is_available || !onAddToCart}
+        disabled={!product.is_available || !onAddToCart || remaining <= 0}
         addedToCart={addedToCart}
         priceBump={priceBump}
       />

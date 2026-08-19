@@ -18,11 +18,12 @@ function formatCompositionParts(mainName: string, components: CartComponent[]): 
 
 type CartItemRowProps = {
   item: CartItem;
+  max: number;
   onQuantityChange: (quantity: number) => void;
   onRemove: () => void;
 };
 
-export function CartItemRow({ item, onQuantityChange, onRemove }: CartItemRowProps) {
+export function CartItemRow({ item, max, onQuantityChange, onRemove }: CartItemRowProps) {
   const lineTotal = item.unitPrice * item.quantity;
 
   return (
@@ -75,7 +76,7 @@ export function CartItemRow({ item, onQuantityChange, onRemove }: CartItemRowPro
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <QuantitySelector value={item.quantity} onChange={onQuantityChange} />
+          <QuantitySelector value={item.quantity} max={max} onChange={onQuantityChange} />
           <PriceDisplay value={lineTotal} className="font-semibold text-[hsl(var(--primary))]" />
         </div>
       </div>

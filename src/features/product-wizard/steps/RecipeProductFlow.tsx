@@ -136,6 +136,7 @@ export function RecipeProductFlow({
         optionPrices: productOptionPricesFromRows(rows),
         optionExclusions: rows.filter((r) => !r.included).map((r) => r.option_id),
         images,
+        maxQuantityPerOrder: basics.maxQuantityPerOrder,
       }),
     onSuccess: (product) => onCreated(product.id),
     onError: () => toast.error("Não deu pra criar o produto. Tente de novo."),

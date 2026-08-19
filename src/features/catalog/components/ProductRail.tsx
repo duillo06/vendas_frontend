@@ -65,6 +65,7 @@ export function ProductRail({ title, subtitle, products }: ProductRailProps) {
                         basePrice: product.base_price,
                         unitPrice: product.base_price,
                         selectedOptions: [],
+                        maxQuantityPerOrder: product.max_quantity_per_order,
                       });
                       toast.success(storefrontCopy.product.added);
                     }}
@@ -149,6 +150,7 @@ export function ProductSpotlight({ product, label }: ProductSpotlightProps) {
                   basePrice: product.base_price,
                   unitPrice: product.base_price,
                   selectedOptions: [],
+                  maxQuantityPerOrder: product.max_quantity_per_order,
                 });
                 toast.success(storefrontCopy.product.added);
               }}
