@@ -17,7 +17,7 @@ import { ProductWizardPage } from "@/apps/backoffice/pages/ProductWizardPage";
 import { ProductsPage } from "@/apps/backoffice/pages/ProductsPage";
 import { PromotionsPage } from "@/apps/backoffice/pages/PromotionsPage";
 import { SettingsPage } from "@/apps/backoffice/pages/SettingsPage";
-import { ProtectedRoute } from "@/features/auth";
+import { PermissionRoute, ProtectedRoute } from "@/features/auth";
 
 export const backofficeRouter = createBrowserRouter([
   {
@@ -32,24 +32,122 @@ export const backofficeRouter = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <DashboardPage /> },
+      {
+        index: true,
+        element: (
+          <PermissionRoute permission="dashboard.view" fallbackTo="/pedidos">
+            <DashboardPage />
+          </PermissionRoute>
+        ),
+      },
       { path: "pedidos", element: <OrdersPage /> },
       { path: "pedidos/:id", element: <OrderDetailPage /> },
-      { path: "clientes", element: <CustomersPage /> },
-      { path: "clientes/:id", element: <CustomerDetailPage /> },
-      { path: "produtos", element: <ProductsPage /> },
-      { path: "produtos/novo", element: <ProductWizardPage /> },
-      { path: "produtos/novo/avancado", element: <ProductFormPage /> },
-      { path: "produtos/:id", element: <ProductManagePage /> },
-      { path: "produtos/:id/avancado", element: <ProductFormPage /> },
-      { path: "categorias", element: <CategoriesPage /> },
+      {
+        path: "clientes",
+        element: (
+          <PermissionRoute permission="customers.view">
+            <CustomersPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "clientes/:id",
+        element: (
+          <PermissionRoute permission="customers.view">
+            <CustomerDetailPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "produtos",
+        element: (
+          <PermissionRoute permission="catalog.view">
+            <ProductsPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "produtos/novo",
+        element: (
+          <PermissionRoute permission="catalog.manage">
+            <ProductWizardPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "produtos/novo/avancado",
+        element: (
+          <PermissionRoute permission="catalog.manage">
+            <ProductFormPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "produtos/:id",
+        element: (
+          <PermissionRoute permission="catalog.view">
+            <ProductManagePage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "produtos/:id/avancado",
+        element: (
+          <PermissionRoute permission="catalog.manage">
+            <ProductFormPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "categorias",
+        element: (
+          <PermissionRoute permission="catalog.view">
+            <CategoriesPage />
+          </PermissionRoute>
+        ),
+      },
       // Base do cardápio saiu do menu — cria na conversa da categoria
       { path: "opcoes", element: <Navigate to="/categorias" replace /> },
-      { path: "promocoes", element: <PromotionsPage /> },
-      { path: "conexoes", element: <ConexoesPage /> },
-      { path: "conexoes/whatsapp", element: <ConexoesWhatsAppPage /> },
-      { path: "conexoes/whatsapp/templates", element: <ConexoesTemplatesPage /> },
-      { path: "configuracoes", element: <SettingsPage /> },
+      {
+        path: "promocoes",
+        element: (
+          <PermissionRoute permission="promotions.manage">
+            <PromotionsPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "conexoes",
+        element: (
+          <PermissionRoute permission="connections.manage">
+            <ConexoesPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "conexoes/whatsapp",
+        element: (
+          <PermissionRoute permission="connections.manage">
+            <ConexoesWhatsAppPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "conexoes/whatsapp/templates",
+        element: (
+          <PermissionRoute permission="connections.manage">
+            <ConexoesTemplatesPage />
+          </PermissionRoute>
+        ),
+      },
+      {
+        path: "configuracoes",
+        element: (
+          <PermissionRoute permission="settings.manage">
+            <SettingsPage />
+          </PermissionRoute>
+        ),
+      },
     ],
   },
 ]);

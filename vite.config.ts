@@ -19,7 +19,7 @@ export default defineConfig({
     proxy: {
       // API + media na mesma origem do Vite (LAN / demo.localhost)
       "/api": {
-        target: "http://127.0.0.1:8001",
+        target: `http://127.0.0.1:${process.env.VITE_API_PORT || "8001"}`,
         changeOrigin: true,
         configure: (proxy) => {
           proxy.on("proxyReq", (proxyReq, req) => {
@@ -31,7 +31,7 @@ export default defineConfig({
         },
       },
       "/media": {
-        target: "http://127.0.0.1:8001",
+        target: `http://127.0.0.1:${process.env.VITE_API_PORT || "8001"}`,
         changeOrigin: true,
         configure: (proxy) => {
           proxy.on("proxyReq", (proxyReq, req) => {

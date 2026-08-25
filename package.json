@@ -11,7 +11,9 @@
     "preview": "vite preview",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
-    "format": "prettier --write \"src/**/*.{ts,tsx,css}\""
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
+    "test:e2e": "playwright test",
+    "test:e2e:security": "playwright test e2e/security"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -32,6 +34,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/vite": "^4.3.2",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^24.13.2",
@@ -44,5 +47,8 @@
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.46.4",
     "vite": "^8.1.1"
+  },
+  "optionalDependencies": {
+    "@rolldown/binding-linux-x64-gnu": "^1.1.4"
   }
 }
