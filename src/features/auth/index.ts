@@ -1,5 +1,6 @@
 export { AuthProvider } from "./components/AuthProvider";
 export { Can } from "./components/Can";
+export { ChangePasswordCard } from "./components/ChangePasswordCard";
 export { GuestRoute, ProtectedRoute } from "./components/ProtectedRoute";
 export { PermissionRoute } from "./components/PermissionRoute";
 export { useAuth } from "./hooks/useAuth";

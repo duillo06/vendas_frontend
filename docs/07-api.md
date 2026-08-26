@@ -510,6 +510,38 @@ Invalida o refresh token.
 
 ---
 
+### 9.4 `POST /api/v1/auth/change-password/`
+
+Altera a senha do funcionário autenticado (própria conta).
+
+**Auth:** Bearer (employee)
+
+**Request:**
+
+```json
+{
+  "current_password": "senhaAtual",
+  "new_password": "novaSenha99",
+  "confirm_password": "novaSenha99"
+}
+```
+
+| Campo | Tipo | Obrigatório |
+|-------|------|-------------|
+| `current_password` | string | Sim |
+| `new_password` | string | Sim (mín. 8) |
+| `confirm_password` | string | Sim (igual a `new_password`) |
+
+**Response `200`:**
+
+```json
+{ "detail": "Senha atualizada" }
+```
+
+**Erros comuns:** senha atual incorreta (`400`), senhas não coincidem (`400`), sem JWT (`401`).
+
+---
+
 ## 10. API Pública — Empresa
 
 ### 10.1 `GET /api/v1/public/company/`

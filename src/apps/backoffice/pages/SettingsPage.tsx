@@ -1,5 +1,6 @@
 import { Settings, Sparkles } from "lucide-react";
 
+import { ChangePasswordCard } from "@/features/auth";
 import { SettingsForm } from "@/features/settings/components/SettingsForm";
 import { UiHint } from "@/shared/components/UiHint";
 import { BackLink, PageHeader } from "@/shared/components/visual";
@@ -19,6 +20,8 @@ export function SettingsPage() {
       <UiHint icon={Sparkles} tone="warm">
         {adminCopy.settings.guidance}
       </UiHint>
+
+      <ChangePasswordCard />
 
       <SettingsForm />
     </div>

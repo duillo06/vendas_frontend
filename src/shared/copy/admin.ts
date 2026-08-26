@@ -197,12 +197,14 @@ export const adminCopy = {
       hours: "Marque os dias fechados ou ajuste abertura e fechamento.",
       appearance:
         "Cor principal e destaque personalizam o cardápio e o painel. As mudanças aparecem ao vivo antes de salvar.",
+      password: "Troque a senha de acesso ao painel. Use pelo menos 8 caracteres.",
     },
     contrastWarning: "Contraste baixo entre cor principal e texto — pode prejudicar a leitura.",
     toasts: {
       saved: "Configurações salvas",
       logoUploaded: "Logo atualizada",
       coverUploaded: "Capa atualizada",
+      passwordChanged: "Senha alterada",
     },
   },
   customers: {
