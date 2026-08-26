@@ -3,6 +3,7 @@ import { ProductImageGallery } from "@/features/catalog/components/ProductImageG
 import { formatCategoryLabel } from "@/features/catalog/utils/categoryLabel";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
+import { createId } from "@/shared/lib/utils";
 import type { ProductWizard } from "../useProductWizard";
 import type { WizardImage } from "../types";
 import { MaxPerOrderField } from "@/features/catalog/components/MaxPerOrderField";
