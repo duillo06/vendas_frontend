@@ -15,6 +15,7 @@ import {
 } from "@/features/catalog/utils/canonicalLibrary";
 import {
   buildLibraryItems,
+  choiceMatchesLibraryItem,
   draftFromKind,
   isCategoryPricedKind,
   kindById,
@@ -178,10 +179,8 @@ export function CategoryRecipeAssistant({
     return buildLibraryItems(mergedGroups, currentKind, new Set());
   }, [currentKind, mergedGroups]);
 
-  const selectedNames = useMemo(
-    () => new Set((draft?.choices ?? []).map((c) => c.name.trim().toLowerCase()).filter(Boolean)),
-    [draft],
-  );
+  const choiceForItem = (item: LibraryItem) =>
+    draft?.choices.find((c) => choiceMatchesLibraryItem(c, item));
 
   const startKind = (index: number) => {
     const kindId = queue[index];
@@ -239,16 +238,33 @@ export function CategoryRecipeAssistant({
 
   const toggleLibraryItem = (item: LibraryItem) => {
     if (!draft) return;
-    const needle = item.name.toLowerCase();
     setDraft((d) => {
       if (!d) return d;
-      const exists = d.choices.some((c) => c.name.trim().toLowerCase() === needle);
+      const exists = d.choices.some((c) => choiceMatchesLibraryItem(c, item));
       if (exists) {
-        return { ...d, choices: d.choices.filter((c) => c.name.trim().toLowerCase() !== needle) };
+        return { ...d, choices: d.choices.filter((c) => !choiceMatchesLibraryItem(c, item)) };
       }
       return {
         ...d,
-        choices: [...d.choices, newChoice(item.name, 0, item.description ?? "")],
+        choices: [
+          ...d.choices,
+          {
+            ...newChoice(item.name, 0, item.description ?? "", item.optionId),
+            key: item.key,
+          },
+        ],
+      };
+    });
+  };
+
+  const renameLibraryItem = (item: LibraryItem, name: string) => {
+    setDraft((d) => {
+      if (!d) return d;
+      return {
+        ...d,
+        choices: d.choices.map((c) =>
+          choiceMatchesLibraryItem(c, item) ? { ...c, name } : c,
+        ),
       };
     });
   };
@@ -265,11 +281,14 @@ export function CategoryRecipeAssistant({
     try {
       const { group } = await saveCanonicalFromDraft(draft, mergedGroups);
       setLocalGroups((curr) => [...curr.filter((g) => g.id !== group.id), group]);
+      const byId = new Map(group.options.map((o) => [o.id, o]));
       const byName = new Map(group.options.map((o) => [o.name.trim().toLowerCase(), o]));
       const optionIds: string[] = [];
       const optionNames: string[] = [];
       for (const choice of named) {
-        const opt = byName.get(choice.name.trim().toLowerCase());
+        const opt =
+          (choice.id ? byId.get(choice.id) : undefined) ??
+          byName.get(choice.name.trim().toLowerCase());
         if (!opt) continue;
         optionIds.push(opt.id);
         optionNames.push(opt.name);
@@ -568,17 +587,17 @@ export function CategoryRecipeAssistant({
                 {currentKind.libraryQuestion}
               </h3>
               <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
-                Só identidade — preço fica em cada produto.
+                Marque os que oferece — com o item marcado, você pode editar o nome. Preço fica em
+                cada produto.
               </p>
             </div>
             <ul className="space-y-1.5">
               {libraryItems.map((item) => {
-                const checked = selectedNames.has(item.name.toLowerCase());
+                const choice = choiceForItem(item);
+                const checked = Boolean(choice);
                 return (
                   <li key={item.key}>
-                    <button
-                      type="button"
-                      onClick={() => toggleLibraryItem(item)}
+                    <div
                       className={cn(
                         "flex w-full items-center gap-3 rounded-xl border-2 px-3 py-2.5 text-left transition",
                         checked
@@ -586,21 +605,40 @@ export function CategoryRecipeAssistant({
                           : "border-[hsl(var(--border))] bg-white hover:border-[hsl(var(--primary)/0.25)]",
                       )}
                     >
-                      <span
+                      <button
+                        type="button"
+                        onClick={() => toggleLibraryItem(item)}
+                        aria-pressed={checked}
+                        aria-label={checked ? `Remover ${item.name}` : `Adicionar ${item.name}`}
                         className={cn(
                           "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2",
                           checked ? "border-brand bg-brand text-white" : "border-[hsl(var(--border))]",
                         )}
                       >
                         {checked ? <Check className="h-3 w-3" /> : null}
-                      </span>
-                      <span className="text-sm font-medium">{item.name}</span>
+                      </button>
+                      {checked ? (
+                        <Input
+                          value={choice?.name ?? item.name}
+                          onChange={(e) => renameLibraryItem(item, e.target.value)}
+                          className="h-9 flex-1 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
+                          aria-label={`Nome de ${item.name}`}
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => toggleLibraryItem(item)}
+                          className="min-w-0 flex-1 text-left text-sm font-medium"
+                        >
+                          {item.name}
+                        </button>
+                      )}
                       {item.fromLibrary ? (
-                        <span className="ml-auto text-[10px] font-medium uppercase tracking-wide text-brand">
+                        <span className="ml-auto shrink-0 text-[10px] font-medium uppercase tracking-wide text-brand">
                           Base
                         </span>
                       ) : null}
-                    </button>
+                    </div>
                   </li>
                 );
               })}

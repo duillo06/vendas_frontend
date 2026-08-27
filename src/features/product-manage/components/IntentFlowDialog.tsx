@@ -31,16 +31,23 @@ export function IntentFlowDialog({
   wide,
 }: IntentFlowDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={(next) => !next && onClose()} className={wide ? "max-w-2xl" : undefined}>
-      <DialogContent onClose={onClose} className="max-h-[min(90vh,720px)] overflow-y-auto">
-        <DialogHeader>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => !next && onClose()}
+      className={wide ? "max-w-lg sm:max-w-3xl lg:max-w-4xl" : undefined}
+    >
+      <DialogContent
+        onClose={onClose}
+        className="flex max-h-[min(92vh,860px)] flex-col overflow-hidden p-0 sm:p-0"
+      >
+        <DialogHeader className="shrink-0 border-b border-[hsl(var(--border))] px-6 pb-4 pt-6">
           <DialogTitle className="flex items-center gap-2">
             {emoji ? <span aria-hidden>{emoji}</span> : null}
             {title}
           </DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}
         </DialogHeader>
-        {children}
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">{children}</div>
       </DialogContent>
     </Dialog>
   );
@@ -55,7 +62,31 @@ type FlowActionsProps = {
   pending?: boolean;
   confirmDisabled?: boolean;
   danger?: boolean;
+  /** gruda no rodapé do scroll da modal */
+  sticky?: boolean;
 };
+
+/** barra de ações que acompanha o scroll — fica sempre à vista */
+export function StickyActions({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "sticky bottom-0 z-20 mt-4 flex flex-col-reverse gap-2 border-t border-[hsl(var(--border))] bg-[hsl(var(--card))]/95 py-3 backdrop-blur-md",
+        "shadow-[0_-10px_28px_-16px_rgba(0,0,0,0.18)]",
+        "sm:flex-row sm:justify-end",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
 
 export function FlowActions({
   onBack,
@@ -66,9 +97,10 @@ export function FlowActions({
   pending,
   confirmDisabled,
   danger,
+  sticky = true,
 }: FlowActionsProps) {
-  return (
-    <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+  const buttons = (
+    <>
       {onBack ? (
         <Button type="button" variant="ghost" onClick={onBack} disabled={pending}>
           Voltar
@@ -90,6 +122,14 @@ export function FlowActions({
       >
         {pending ? "Salvando…" : confirmLabel}
       </Button>
-    </div>
+    </>
+  );
+
+  if (sticky) {
+    return <StickyActions className="mt-6">{buttons}</StickyActions>;
+  }
+
+  return (
+    <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">{buttons}</div>
   );
 }

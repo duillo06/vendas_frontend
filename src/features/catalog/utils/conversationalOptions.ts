@@ -91,7 +91,7 @@ export const PERSONALIZATION_KINDS: PersonalizationKind[] = [
     example: "Pequena, Média e Grande.",
     gateQuestion: "Este produto será vendido em mais de um tamanho?",
     libraryQuestion: "Quais tamanhos deseja oferecer?",
-    libraryHint: "Marque os que já existem ou crie um novo — fica salvo pra próxima vez.",
+    libraryHint: "Marque os tamanhos e edite o nome se quiser — fica salvo pra próxima vez.",
     createLabel: "Criar novo tamanho",
     groupName: "Tamanho",
     groupDescription: "Escolha o tamanho",
@@ -515,11 +515,27 @@ export function findReusableGroups(
         : [];
   if (matchNames.length === 0) return [];
 
+  const kindId = "id" in kindOrTemplate && "matchNames" in kindOrTemplate ? kindOrTemplate.id : null;
+
   return groups.filter((group) => {
     if (excludeIds.has(group.id) || !group.is_active) return false;
+    // kind explícito bate → não depende do nome do grupo
+    if (kindId && group.kind === kindId) return true;
     const name = group.name.toLowerCase();
     return matchNames.some((m) => name.includes(m) || m.includes(name));
   });
+}
+
+/** tira "(4 fatias)" e afins pra comparar Pequena ≈ Pequena (4 fatias) */
+export function normalizeOptionLabel(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /** item da biblioteca da empresa (opções já criadas + sugestões) */
@@ -534,49 +550,114 @@ export type LibraryItem = {
   groupId?: string;
 };
 
+/**
+ * Lista pra marcar: sugestões primeiro (sem duplicar com a base),
+ * depois opções da casa que não batem com nenhuma sugestão.
+ * Usa só o grupo canônico — evita misturar Tamanho de pizza com o de lanche.
+ */
 export function buildLibraryItems(
   groups: OptionGroupAdmin[],
   kind: PersonalizationKind,
   excludeGroupIds: Set<string>,
 ): LibraryItem[] {
   const reusable = findReusableGroups(groups, kind, excludeGroupIds);
-  const byName = new Map<string, LibraryItem>();
+  const byKind = reusable.filter((g) => g.kind === kind.id);
+  const pool = byKind.length > 0 ? byKind : reusable;
+  const pickCanonical = (list: OptionGroupAdmin[]) =>
+    [...list].sort(
+      (a, b) => (b.options_count || b.options.length) - (a.options_count || a.options.length),
+    )[0] ?? null;
+  const exact = pool.filter((g) => g.name.toLowerCase() === kind.groupName.toLowerCase());
+  const canonical = (exact.length > 0 ? pickCanonical(exact) : pickCanonical(pool)) ?? null;
 
-  for (const group of reusable) {
-    for (const option of group.options) {
+  type LibOpt = {
+    id: string;
+    name: string;
+    price: number;
+    description?: string;
+    groupId: string;
+  };
+  const libraryOpts: LibOpt[] = [];
+  if (canonical) {
+    for (const option of canonical.options) {
       if (option.is_active === false) continue;
       const name = option.name.trim();
       if (!name) continue;
-      const needle = name.toLowerCase();
-      if (byName.has(needle)) continue;
-      byName.set(needle, {
-        key: `lib-${option.id}`,
+      libraryOpts.push({
+        id: option.id,
         name,
         price: option.price_modifier,
         description: option.description ?? undefined,
-        fromLibrary: true,
-        optionId: option.id,
-        groupId: group.id,
+        groupId: canonical.id,
       });
     }
   }
 
+  const usedIds = new Set<string>();
+  const items: LibraryItem[] = [];
+
+  // sugestões = opções possíveis; se já existe na base (mesmo “núcleo”), reaproveita o id
   for (const suggestion of kind.suggestions) {
-    const needle = suggestion.toLowerCase();
-    if (byName.has(needle)) continue;
-    byName.set(needle, {
-      key: `sug-${needle}`,
-      name: suggestion,
-      price: 0,
-      fromLibrary: false,
+    const norm = normalizeOptionLabel(suggestion);
+    if (!norm) continue;
+    const match = libraryOpts.find(
+      (o) => !usedIds.has(o.id) && normalizeOptionLabel(o.name) === norm,
+    );
+    if (match) {
+      usedIds.add(match.id);
+      items.push({
+        key: `lib-${match.id}`,
+        // nome sugerido limpo; id da base — usuário edita se quiser fatias etc.
+        name: suggestion,
+        price: match.price,
+        description: match.description,
+        fromLibrary: true,
+        optionId: match.id,
+        groupId: match.groupId,
+      });
+    } else {
+      items.push({
+        key: `sug-${norm}`,
+        name: suggestion,
+        price: 0,
+        fromLibrary: false,
+      });
+    }
+  }
+
+  // o que a casa já tem e não entrou nas sugestões (ex.: tamanho custom)
+  for (const opt of libraryOpts) {
+    if (usedIds.has(opt.id)) continue;
+    items.push({
+      key: `lib-${opt.id}`,
+      name: opt.name,
+      price: opt.price,
+      description: opt.description,
+      fromLibrary: true,
+      optionId: opt.id,
+      groupId: opt.groupId,
     });
   }
 
-  return [...byName.values()];
+  return items;
 }
 
-export function newChoice(name = "", price = 0, description = ""): ChoiceDraft {
-  return { key: createId(), name, price, description };
+export function newChoice(
+  name = "",
+  price = 0,
+  description = "",
+  id?: string,
+): ChoiceDraft {
+  return { key: createId(), id, name, price, description };
+}
+
+/** escolha marcada bate com o item da lista (id, key ou nome normalizado) */
+export function choiceMatchesLibraryItem(choice: ChoiceDraft, item: LibraryItem): boolean {
+  if (item.optionId && choice.id && choice.id === item.optionId) return true;
+  if (choice.key === item.key) return true;
+  const choiceNorm = normalizeOptionLabel(choice.name);
+  const itemNorm = normalizeOptionLabel(item.name);
+  return Boolean(choiceNorm && itemNorm && choiceNorm === itemNorm);
 }
 
 /** checks dos mapeamentos — usado no script de verificação */
@@ -631,6 +712,75 @@ export function selfCheckConversationalOptions(): void {
   const pizzaHints = suggestedKindIds("Pizzas");
   if (!pizzaHints.includes("size") || !pizzaHints.includes("half")) {
     throw new Error("suggestedKindIds pizza inválido");
+  }
+
+  if (normalizeOptionLabel("Pequena (4 fatias)") !== "pequena") {
+    throw new Error("normalizeOptionLabel deveria ignorar fatias");
+  }
+  if (normalizeOptionLabel("Média") !== normalizeOptionLabel("Média (6 fatias)")) {
+    throw new Error("normalizeOptionLabel deveria igualar Média e Média (6 fatias)");
+  }
+
+  const fakeGroups = [
+    {
+      id: "g-size",
+      name: "Tamanho",
+      description: null,
+      selection_type: "single" as const,
+      min_selections: 1,
+      max_selections: 1,
+      is_required: true,
+      is_active: true,
+      sort_order: 0,
+      kind: "size",
+      options: [
+        {
+          id: "o1",
+          name: "Pequena (4 fatias)",
+          price_modifier: 0,
+          is_active: true,
+          sort_order: 0,
+        },
+        {
+          id: "o2",
+          name: "Média (6 fatias)",
+          price_modifier: 0,
+          is_active: true,
+          sort_order: 1,
+        },
+      ],
+      options_count: 2,
+    },
+    {
+      id: "g-burger",
+      name: "Tamanho",
+      description: null,
+      selection_type: "single" as const,
+      min_selections: 1,
+      max_selections: 1,
+      is_required: true,
+      is_active: true,
+      sort_order: 0,
+      kind: null,
+      options: [
+        { id: "b1", name: "Normal", price_modifier: 0, is_active: true, sort_order: 0 },
+        { id: "b2", name: "Duplo", price_modifier: 8, is_active: true, sort_order: 1 },
+      ],
+      options_count: 2,
+    },
+  ] as OptionGroupAdmin[];
+
+  const sizeItems = buildLibraryItems(fakeGroups, size, new Set());
+  const sizeNames = sizeItems.map((i) => i.name.toLowerCase());
+  if (sizeNames.filter((n) => n.includes("pequena")).length !== 1) {
+    throw new Error("buildLibraryItems não deveria duplicar Pequena");
+  }
+  if (sizeNames.some((n) => n === "normal" || n === "duplo")) {
+    throw new Error("buildLibraryItems não deveria misturar tamanho de lanche");
+  }
+  const pequena = sizeItems.find((i) => normalizeOptionLabel(i.name) === "pequena");
+  if (!pequena?.optionId || pequena.optionId !== "o1") {
+    throw new Error("buildLibraryItems deveria reaproveitar id da base");
   }
 
   const legacy = {

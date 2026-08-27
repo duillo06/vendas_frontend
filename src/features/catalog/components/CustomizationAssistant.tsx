@@ -7,12 +7,14 @@ import {
   PERSONALIZATION_KINDS,
   buildLibraryItems,
   buildPreviewLines,
+  choiceMatchesLibraryItem,
   draftFromGroup,
   draftFromKind,
   emptyDraft,
   findReusableGroups,
   kindById,
   newChoice,
+  normalizeOptionLabel,
   suggestedKindIds,
   validateDraft,
   type CustomizationDraft,
@@ -44,6 +46,7 @@ type CustomizationAssistantProps = {
   onOpenHalfAndHalf?: () => void;
   pending?: boolean;
   confirmLabel?: string;
+  cancelLabel?: string;
 };
 
 type Step = "hub" | "gate" | "reuse" | "library" | "create-item" | "name";
@@ -69,6 +72,7 @@ export function CustomizationAssistant({
   onOpenHalfAndHalf,
   pending,
   confirmLabel,
+  cancelLabel = "Cancelar",
 }: CustomizationAssistantProps) {
   const isEdit = mode === "edit" && !!initialGroup;
   const showPrice = priceContext === "product";
@@ -111,28 +115,27 @@ export function CustomizationAssistant({
   const libraryItems = useMemo(() => {
     if (!kind || kind.opensComposition) return [];
     const base = buildLibraryItems(availableGroups, kind, new Set());
-    const byName = new Map(base.map((item) => [item.name.toLowerCase(), item]));
+    const byNorm = new Map(base.map((item) => [normalizeOptionLabel(item.name), item]));
     // itens acabados de criar no rascunho — precisam aparecer pra desmarcar
     for (const choice of draft.choices) {
       const name = choice.name.trim();
       if (!name) continue;
-      const needle = name.toLowerCase();
-      if (byName.has(needle)) continue;
-      byName.set(needle, {
+      const norm = normalizeOptionLabel(name);
+      if (norm && byNorm.has(norm)) continue;
+      byNorm.set(norm || choice.key, {
         key: choice.key,
         name,
         price: choice.price,
         description: choice.description || undefined,
         fromLibrary: false,
+        optionId: choice.id,
       });
     }
-    return [...byName.values()];
+    return [...byNorm.values()];
   }, [kind, availableGroups, draft.choices]);
 
-  const selectedNames = useMemo(
-    () => new Set(draft.choices.map((c) => c.name.trim().toLowerCase()).filter(Boolean)),
-    [draft.choices],
-  );
+  const choiceForItem = (item: LibraryItem) =>
+    draft.choices.find((c) => choiceMatchesLibraryItem(c, item));
 
   const preview = buildPreviewLines(draft);
 
@@ -173,18 +176,32 @@ export function CustomizationAssistant({
   };
 
   const toggleLibraryItem = (item: LibraryItem) => {
-    const needle = item.name.toLowerCase();
     setDraft((d) => {
-      const exists = d.choices.some((c) => c.name.trim().toLowerCase() === needle);
+      const exists = d.choices.some((c) => choiceMatchesLibraryItem(c, item));
       if (exists) {
-        return { ...d, choices: d.choices.filter((c) => c.name.trim().toLowerCase() !== needle) };
+        return { ...d, choices: d.choices.filter((c) => !choiceMatchesLibraryItem(c, item)) };
       }
       const price = item.optionId ? (priceByOptionId.get(item.optionId) ?? 0) : 0;
       return {
         ...d,
-        choices: [...d.choices, newChoice(item.name, price, item.description ?? "")],
+        choices: [
+          ...d.choices,
+          {
+            ...newChoice(item.name, price, item.description ?? "", item.optionId),
+            key: item.key,
+          },
+        ],
       };
     });
+  };
+
+  const renameLibraryItem = (item: LibraryItem, name: string) => {
+    setDraft((d) => ({
+      ...d,
+      choices: d.choices.map((c) =>
+        choiceMatchesLibraryItem(c, item) ? { ...c, name } : c,
+      ),
+    }));
   };
 
   const saveNewItem = () => {
@@ -389,22 +406,21 @@ export function CustomizationAssistant({
               description={
                 isEdit
                   ? showPrice
-                    ? "Nome na biblioteca; preço só neste produto."
-                    : "Só identidade — sem preço na base do cardápio."
+                    ? "Marque e edite o nome se quiser; preço só neste produto."
+                    : "Marque e edite o nome se quiser — só identidade na base."
                   : kind.libraryHint
               }
             >
               <ul className="space-y-1.5">
                 {libraryItems.map((item) => {
-                  const checked = selectedNames.has(item.name.toLowerCase());
+                  const choice = choiceForItem(item);
+                  const checked = Boolean(choice);
                   const hintPrice = item.optionId
                     ? (priceByOptionId.get(item.optionId) ?? null)
                     : null;
                   return (
                     <li key={item.key}>
-                      <button
-                        type="button"
-                        onClick={() => toggleLibraryItem(item)}
+                      <div
                         className={cn(
                           "flex w-full items-center gap-3 rounded-xl border-2 px-3 py-2.5 text-left transition",
                           checked
@@ -412,16 +428,35 @@ export function CustomizationAssistant({
                             : "border-[hsl(var(--border))] bg-white hover:border-[hsl(var(--primary)/0.25)]",
                         )}
                       >
-                        <span
+                        <button
+                          type="button"
+                          onClick={() => toggleLibraryItem(item)}
+                          aria-pressed={checked}
+                          aria-label={checked ? `Remover ${item.name}` : `Adicionar ${item.name}`}
                           className={cn(
                             "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2",
                             checked ? "border-brand bg-brand text-white" : "border-[hsl(var(--border))]",
                           )}
                         >
                           {checked ? <Check className="h-3 w-3" /> : null}
-                        </span>
+                        </button>
                         <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-medium">{item.name}</span>
+                          {checked ? (
+                            <Input
+                              value={choice?.name ?? item.name}
+                              onChange={(e) => renameLibraryItem(item, e.target.value)}
+                              className="h-9 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
+                              aria-label={`Nome de ${item.name}`}
+                            />
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => toggleLibraryItem(item)}
+                              className="block w-full text-left text-sm font-medium"
+                            >
+                              {item.name}
+                            </button>
+                          )}
                           {showPrice && hintPrice != null && hintPrice > 0 ? (
                             <span className="text-xs text-[hsl(var(--muted-foreground))]">
                               +{hintPrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}{" "}
@@ -430,11 +465,11 @@ export function CustomizationAssistant({
                           ) : null}
                         </span>
                         {item.fromLibrary ? (
-                          <span className="text-[10px] font-medium uppercase tracking-wide text-brand">
+                          <span className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-brand">
                             Biblioteca
                           </span>
                         ) : null}
-                      </button>
+                      </div>
                     </li>
                   );
                 })}
@@ -557,9 +592,15 @@ export function CustomizationAssistant({
       ) : null}
 
       {step === "library" ? (
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div
+          className={cn(
+            "sticky bottom-0 z-20 mt-4 flex flex-col-reverse gap-2 border-t border-[hsl(var(--border))] bg-[hsl(var(--card))]/95 py-3 backdrop-blur-md",
+            "shadow-[0_-10px_28px_-16px_rgba(0,0,0,0.18)]",
+            "sm:flex-row sm:justify-end",
+          )}
+        >
           <Button type="button" variant="outline" onClick={onCancel} disabled={pending}>
-            Cancelar
+            {cancelLabel}
           </Button>
           <Button
             type="button"
@@ -571,9 +612,14 @@ export function CustomizationAssistant({
           </Button>
         </div>
       ) : step === "hub" || step === "reuse" || step === "gate" ? (
-        <div className="flex justify-end">
+        <div
+          className={cn(
+            "sticky bottom-0 z-20 mt-4 flex justify-end border-t border-[hsl(var(--border))] bg-[hsl(var(--card))]/95 py-3 backdrop-blur-md",
+            "shadow-[0_-10px_28px_-16px_rgba(0,0,0,0.18)]",
+          )}
+        >
           <Button type="button" variant="outline" onClick={onCancel}>
-            Cancelar
+            {cancelLabel}
           </Button>
         </div>
       ) : null}

@@ -36,7 +36,7 @@ export const PRODUCT_INTENTS: ProductIntent[] = [
     id: "price",
     label: "Alterar o preço",
     shortLabel: "Preço",
-    description: "Atualize o valor base em poucos segundos.",
+    description: "Atualize o valor — e os tamanhos, se o produto tiver.",
     emoji: "💰",
     category: "essentials",
     keywords: ["preço", "preco", "valor", "precar", "barato", "caro"],

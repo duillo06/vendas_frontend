@@ -26,6 +26,8 @@ export function OptionsIntentFlow({ product, onClose, onSuccess }: IntentFlowPro
       ? { ...DEFAULT_COMPOSITION, ...product.composition }
       : { ...DEFAULT_COMPOSITION },
   );
+  // assistente aberto = esconde o Salvar de fora (só um lugar pra confirmar)
+  const [assistantOpen, setAssistantOpen] = useState(false);
 
   const { data: optionGroups } = useQuery({
     queryKey: catalogAdminKeys.optionGroups(),
@@ -62,7 +64,11 @@ export function OptionsIntentFlow({ product, onClose, onSuccess }: IntentFlowPro
       onClose={onClose}
       emoji="🧀"
       title="Como você vende?"
-      description="Perguntas simples — o que criar fica na biblioteca e serve em outros produtos."
+      description={
+        assistantOpen
+          ? "Faça os ajustes e confirme com o botão laranja desta edição."
+          : "Perguntas simples — o que criar fica na biblioteca e serve em outros produtos."
+      }
       wide
     >
       <ProductCustomizationsPanel
@@ -77,8 +83,16 @@ export function OptionsIntentFlow({ product, onClose, onSuccess }: IntentFlowPro
         composition={composition}
         onCompositionChange={setComposition}
         assistantPresentation="panel"
+        onAssistantOpenChange={setAssistantOpen}
       />
-      <FlowActions onCancel={onClose} onConfirm={() => save.mutate()} pending={save.isPending} />
+      {!assistantOpen ? (
+        <FlowActions
+          onCancel={onClose}
+          onConfirm={() => save.mutate()}
+          pending={save.isPending}
+          confirmLabel="Concluir"
+        />
+      ) : null}
     </IntentFlowDialog>
   );
 }

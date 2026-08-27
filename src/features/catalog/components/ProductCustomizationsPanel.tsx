@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import type {
@@ -31,6 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/components/ui/dialog";
+import { cn } from "@/shared/lib/utils";
 
 type ProductCustomizationsPanelProps = {
   links: ProductOptionGroupLink[];
@@ -50,6 +51,8 @@ type ProductCustomizationsPanelProps = {
    * use dentro de IntentFlowDialog
    */
   assistantPresentation?: "dialog" | "panel";
+  /** avisa o fluxo pai pra esconder o Salvar de fora (dois botões confundem) */
+  onAssistantOpenChange?: (open: boolean) => void;
 };
 
 type DialogMode = "closed" | "create" | "edit" | "half";
@@ -66,6 +69,7 @@ export function ProductCustomizationsPanel({
   composition,
   onCompositionChange,
   assistantPresentation = "dialog",
+  onAssistantOpenChange,
 }: ProductCustomizationsPanelProps) {
   const queryClient = useQueryClient();
   const [dialog, setDialog] = useState<DialogMode>("closed");
@@ -75,6 +79,11 @@ export function ProductCustomizationsPanel({
     () => composition ?? DEFAULT_COMPOSITION,
   );
   const usePanel = assistantPresentation === "panel";
+  const assistantOpen = dialog !== "closed";
+
+  useEffect(() => {
+    onAssistantOpenChange?.(assistantOpen);
+  }, [assistantOpen, onAssistantOpenChange]);
 
   const mergedGroups = useMemo(() => {
     const map = new Map<string, OptionGroupAdmin>();
@@ -211,7 +220,6 @@ export function ProductCustomizationsPanel({
   };
 
   const hasAnything = links.length > 0 || halfEnabled;
-  const assistantOpen = dialog !== "closed";
 
   const assistantTitle =
     dialog === "edit"
@@ -261,7 +269,12 @@ export function ProductCustomizationsPanel({
         priceContext="product"
         productOptionPrices={productOptionPrices}
         pending={saveMutation.isPending}
-        confirmLabel={dialog === "edit" ? "Salvar" : "Salvar e usar neste produto"}
+        confirmLabel={
+          dialog === "edit"
+            ? `Salvar ${editingGroup?.name?.toLowerCase() ?? "opções"}`
+            : "Salvar e usar neste produto"
+        }
+        cancelLabel={usePanel ? "Voltar à lista" : "Cancelar"}
         onCancel={closeDialog}
         onOpenHalfAndHalf={
           canHalf
@@ -290,12 +303,18 @@ export function ProductCustomizationsPanel({
           categories={categories}
           currentProductId={currentProductId}
         />
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div
+          className={cn(
+            "sticky bottom-0 z-20 mt-4 flex flex-col-reverse gap-2 border-t border-[hsl(var(--border))] bg-[hsl(var(--card))]/95 py-3 backdrop-blur-md",
+            "shadow-[0_-10px_28px_-16px_rgba(0,0,0,0.18)]",
+            "sm:flex-row sm:justify-end",
+          )}
+        >
           <Button type="button" variant="outline" onClick={closeDialog}>
-            Cancelar
+            {usePanel ? "Voltar à lista" : "Cancelar"}
           </Button>
           <Button type="button" className="bg-brand hover:brightness-95" onClick={saveHalf}>
-            Salvar
+            Salvar sabores
           </Button>
         </div>
       </div>
@@ -452,14 +471,17 @@ export function ProductCustomizationsPanel({
           onOpenChange={(open) => {
             if (!open) closeDialog();
           }}
-          className="max-w-2xl"
+          className="max-w-lg sm:max-w-3xl lg:max-w-4xl"
         >
-          <DialogContent onClose={closeDialog} className="max-h-[min(90vh,760px)] overflow-y-auto">
-            <DialogHeader>
+          <DialogContent
+            onClose={closeDialog}
+            className="flex max-h-[min(92vh,860px)] flex-col overflow-hidden p-0 sm:p-0"
+          >
+            <DialogHeader className="shrink-0 border-b border-[hsl(var(--border))] px-6 pb-4 pt-6">
               <DialogTitle>{assistantTitle}</DialogTitle>
               <DialogDescription>{assistantDescription}</DialogDescription>
             </DialogHeader>
-            {assistantBody}
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">{assistantBody}</div>
           </DialogContent>
         </Dialog>
       ) : null}

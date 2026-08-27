@@ -9,6 +9,7 @@ import {
   inferKindFromGroup,
   kindById,
   mergeEssentialIntoGroup,
+  normalizeOptionLabel,
   type ChoiceDraft,
   type CustomizationDraft,
   type PersonalizationKind,
@@ -31,10 +32,14 @@ export function findCanonicalGroup(
 ): OptionGroupAdmin | null {
   const matches = findReusableGroups(groups, kind, new Set());
   if (matches.length === 0) return null;
-  // prefere nome exato do kind; senão o que tem mais opções
-  const exact = matches.find((g) => g.name.toLowerCase() === kind.groupName.toLowerCase());
-  if (exact) return exact;
-  return [...matches].sort((a, b) => (b.options_count || b.options.length) - (a.options_count || a.options.length))[0];
+  // kind explícito primeiro (não mistura Tamanho de pizza com o de lanche)
+  const byKind = matches.filter((g) => g.kind === kind.id);
+  const pool = byKind.length > 0 ? byKind : matches;
+  const byCount = (a: OptionGroupAdmin, b: OptionGroupAdmin) =>
+    (b.options_count || b.options.length) - (a.options_count || a.options.length);
+  const exact = pool.filter((g) => g.name.toLowerCase() === kind.groupName.toLowerCase());
+  if (exact.length > 0) return [...exact].sort(byCount)[0];
+  return [...pool].sort(byCount)[0];
 }
 
 export function resolveKindFromDraft(draft: CustomizationDraft): PersonalizationKind | null {
@@ -133,6 +138,7 @@ async function upsertChoicesByName(
   group: OptionGroupAdmin,
   choices: ChoiceDraft[],
 ): Promise<{ group: OptionGroupAdmin; createdCount: number }> {
+  const byId = new Map(group.options.map((option) => [option.id, option]));
   const byName = new Map(
     group.options.map((option) => [option.name.trim().toLowerCase(), option]),
   );
@@ -142,7 +148,16 @@ async function upsertChoicesByName(
   for (const choice of choices) {
     const name = choice.name.trim();
     const needle = name.toLowerCase();
-    const existing = byName.get(needle);
+    const choiceNorm = normalizeOptionLabel(name);
+
+    // id primeiro — renomear "Pequena (4 fatias)" → "Pequena" não cria outro
+    let existing = choice.id ? byId.get(choice.id) : undefined;
+    if (!existing) existing = byName.get(needle);
+    if (!existing && choiceNorm) {
+      existing = group.options.find(
+        (o) => normalizeOptionLabel(o.name) === choiceNorm,
+      );
+    }
 
     if (existing) {
       const descChanged =
