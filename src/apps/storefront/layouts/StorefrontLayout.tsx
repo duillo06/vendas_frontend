@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from "react-router";
 import { toast } from "sonner";
 
 import { CartNavButton } from "@/features/cart";
-import { useCompanyPublic } from "@/features/company";
+import { useCompanyPublic, useStoreBranding } from "@/features/company";
 import { useCustomerAuth } from "@/features/customer-auth";
 import { useFavorites } from "@/features/favorites";
 import { useTenantTheme } from "@/features/settings";
@@ -67,6 +67,7 @@ export function StorefrontLayout() {
   const showBottomNav = shouldShowBottomNav(location.pathname);
 
   useTenantTheme(company?.theme);
+  useStoreBranding(company);
 
   async function handleShare() {
     const url = window.location.origin + "/";
