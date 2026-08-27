@@ -74,6 +74,7 @@ export function ProductFormPage() {
     product_option_groups: [] as ProductOptionGroupLink[],
     composition: DEFAULT_COMPOSITION as CompositionForm,
     option_prices: [] as { option_id: string; price: number }[],
+    option_exclusions: [] as string[],
     max_quantity_per_order: 10,
   });
   const [previewMode, setPreviewMode] = useState<"storefront" | "builder">("storefront");
@@ -94,6 +95,7 @@ export function ProductFormPage() {
           ? { ...DEFAULT_COMPOSITION, ...product.composition }
           : DEFAULT_COMPOSITION,
         option_prices: product.option_prices ?? [],
+        option_exclusions: product.option_exclusions ?? [],
         max_quantity_per_order: product.max_quantity_per_order ?? 10,
       });
       setPendingImages([]);
@@ -201,7 +203,8 @@ export function ProductFormPage() {
         tags: normalizeProductTags(form.tags),
         max_quantity_per_order: form.max_quantity_per_order,
         product_option_groups: serializeProductLinks(form.product_option_groups),
-        ...(form.option_prices.length ? { option_prices: form.option_prices } : {}),
+        option_prices: form.option_prices,
+        option_exclusions: form.option_exclusions,
         composition: {
           enabled: form.composition.enabled,
           source_type: form.composition.source_type,
@@ -425,6 +428,10 @@ export function ProductFormPage() {
             productOptionPrices={form.option_prices}
             onOptionPricesChange={(option_prices) =>
               setForm((current) => ({ ...current, option_prices }))
+            }
+            productOptionExclusions={form.option_exclusions}
+            onOptionExclusionsChange={(option_exclusions) =>
+              setForm((current) => ({ ...current, option_exclusions }))
             }
             composition={form.composition}
             onCompositionChange={(composition) =>

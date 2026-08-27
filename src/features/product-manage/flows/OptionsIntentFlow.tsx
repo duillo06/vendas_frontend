@@ -21,6 +21,9 @@ export function OptionsIntentFlow({ product, onClose, onSuccess }: IntentFlowPro
   const [optionPrices, setOptionPrices] = useState(
     () => product.option_prices ?? [],
   );
+  const [optionExclusions, setOptionExclusions] = useState(
+    () => product.option_exclusions ?? [],
+  );
   const [composition, setComposition] = useState<CompositionForm>(() =>
     product.composition
       ? { ...DEFAULT_COMPOSITION, ...product.composition }
@@ -44,7 +47,8 @@ export function OptionsIntentFlow({ product, onClose, onSuccess }: IntentFlowPro
       catalogAdminApi.updateProduct(product.id, {
         product_option_groups: serializeProductLinks(links),
         composition,
-        ...(optionPrices.length ? { option_prices: optionPrices } : {}),
+        option_prices: optionPrices,
+        option_exclusions: optionExclusions,
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: catalogAdminKeys.product(product.id) });
@@ -80,6 +84,8 @@ export function OptionsIntentFlow({ product, onClose, onSuccess }: IntentFlowPro
         currentProductId={product.id}
         productOptionPrices={optionPrices}
         onOptionPricesChange={setOptionPrices}
+        productOptionExclusions={optionExclusions}
+        onOptionExclusionsChange={setOptionExclusions}
         composition={composition}
         onCompositionChange={setComposition}
         assistantPresentation="panel"

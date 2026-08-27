@@ -66,23 +66,61 @@ export function resolveKindFromDraft(draft: CustomizationDraft): Personalization
 
 export type ProductOptionPriceEntry = { option_id: string; price: number };
 
-/** monta preços do produto a partir das escolhas (nome → option id) */
+/** monta preços do produto a partir das escolhas (id / nome → option id) */
 export function buildOptionPricesFromDraft(
   group: OptionGroupAdmin,
   choices: ChoiceDraft[],
 ): ProductOptionPriceEntry[] {
+  const byId = new Map(group.options.map((option) => [option.id, option]));
   const byName = new Map(
     group.options.map((option) => [option.name.trim().toLowerCase(), option]),
   );
   const out: ProductOptionPriceEntry[] = [];
+  const seen = new Set<string>();
+
   for (const choice of choices) {
     const name = choice.name.trim();
     if (!name) continue;
-    const option = byName.get(name.toLowerCase());
-    if (!option) continue;
+    const option =
+      (choice.id ? byId.get(choice.id) : undefined) ??
+      byName.get(name.toLowerCase()) ??
+      group.options.find((o) => normalizeOptionLabel(o.name) === normalizeOptionLabel(name));
+    if (!option || seen.has(option.id)) continue;
+    seen.add(option.id);
     out.push({ option_id: option.id, price: Number(choice.price) || 0 });
   }
   return out;
+}
+
+/**
+ * Troca preços só deste grupo — desmarcar Broto não deixa o preço antigo no produto.
+ */
+export function replaceGroupOptionPrices(
+  current: ProductOptionPriceEntry[],
+  group: OptionGroupAdmin,
+  nextForGroup: ProductOptionPriceEntry[],
+): ProductOptionPriceEntry[] {
+  const groupIds = new Set(group.options.map((option) => option.id));
+  const kept = current.filter((row) => !groupIds.has(row.option_id));
+  return [...kept, ...nextForGroup];
+}
+
+/**
+ * Exclusões deste grupo: o que está na biblioteca e não foi marcado no produto.
+ * Preserva exclusões de outros grupos (borda etc.).
+ */
+export function mergeExclusionsForGroup(
+  currentExclusions: string[],
+  group: OptionGroupAdmin,
+  selectedOptionIds: Iterable<string>,
+): string[] {
+  const selected = new Set(selectedOptionIds);
+  const groupIds = new Set(
+    group.options.filter((o) => o.is_active !== false).map((o) => o.id),
+  );
+  const kept = currentExclusions.filter((id) => !groupIds.has(id));
+  const newlyExcluded = [...groupIds].filter((id) => !selected.has(id));
+  return [...kept, ...newlyExcluded];
 }
 
 /** grava preços neste produto (fonte da verdade na autoria nova) */

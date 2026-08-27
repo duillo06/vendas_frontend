@@ -39,6 +39,8 @@ type CustomizationAssistantProps = {
   /** product = preço neste produto; catalog = só identidade na base */
   priceContext?: "product" | "catalog";
   productOptionPrices?: { option_id: string; price: number }[];
+  /** opções que este produto não oferece (ainda estão na biblioteca) */
+  productOptionExclusions?: string[];
   onCancel: () => void;
   onSave: (draft: CustomizationDraft, existingGroup?: OptionGroupAdmin) => void | Promise<void>;
   onReuse?: (group: OptionGroupAdmin) => void | Promise<void>;
@@ -66,6 +68,7 @@ export function CustomizationAssistant({
   categoryName,
   priceContext = "product",
   productOptionPrices = [],
+  productOptionExclusions = [],
   onCancel,
   onSave,
   onReuse,
@@ -92,9 +95,11 @@ export function CustomizationAssistant({
   });
   const [draft, setDraft] = useState<CustomizationDraft>(() =>
     initialGroup
-      ? draftFromGroup(initialGroup, Object.fromEntries(
-          productOptionPrices.map((r) => [r.option_id, r.price]),
-        ))
+      ? draftFromGroup(
+          initialGroup,
+          Object.fromEntries(productOptionPrices.map((r) => [r.option_id, r.price])),
+          productOptionExclusions,
+        )
       : emptyDraft(),
   );
   const [step, setStep] = useState<Step>(isEdit ? "library" : "hub");

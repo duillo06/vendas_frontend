@@ -288,9 +288,22 @@ export function draftFromTemplate(template: CustomizationTemplate): Customizatio
 export function draftFromGroup(
   group: OptionGroupAdmin,
   productPrices?: Record<string, number>,
+  excludedOptionIds?: Iterable<string>,
 ): CustomizationDraft {
   const selection_type = (group.selection_type === "multiple" ? "multiple" : "single") as OptionSelectionType;
   const kind = inferKindFromGroup(group);
+  const excluded = new Set(excludedOptionIds ?? []);
+  const activeOptions = group.options.filter((option) => option.is_active !== false);
+
+  // neste produto: só marca o que não foi excluído; se já há preço no grupo, prioriza quem tem preço
+  let selectedOptions = activeOptions.filter((option) => !excluded.has(option.id));
+  if (productPrices) {
+    const anyPriced = selectedOptions.some((option) => productPrices[option.id] != null);
+    if (anyPriced) {
+      selectedOptions = selectedOptions.filter((option) => productPrices[option.id] != null);
+    }
+  }
+
   return {
     name: group.name,
     description: group.description ?? "",
@@ -298,7 +311,7 @@ export function draftFromGroup(
     is_required: group.is_required,
     min_selections: group.min_selections,
     max_selections: selection_type === "single" ? 1 : group.max_selections,
-    choices: group.options.map((option) => ({
+    choices: selectedOptions.map((option) => ({
       key: option.id,
       id: option.id,
       name: option.name,

@@ -16,7 +16,7 @@ import {
   type CompositionForm,
 } from "@/features/catalog/components/ProductCompositionEditor";
 import { catalogAdminKeys } from "@/features/catalog/constants/catalog-admin-keys";
-import { saveCanonicalFromDraft, buildOptionPricesFromDraft } from "@/features/catalog/utils/canonicalLibrary";
+import { saveCanonicalFromDraft, buildOptionPricesFromDraft, mergeExclusionsForGroup, replaceGroupOptionPrices } from "@/features/catalog/utils/canonicalLibrary";
 import {
   summarizeGroup,
   type CustomizationDraft,
@@ -44,6 +44,9 @@ type ProductCustomizationsPanelProps = {
   productOptionPrices?: { option_id: string; price: number }[];
   /** acumula preços no form (create) ou atualiza após sync */
   onOptionPricesChange?: (prices: { option_id: string; price: number }[]) => void;
+  /** opções da biblioteca que este produto NÃO oferece */
+  productOptionExclusions?: string[];
+  onOptionExclusionsChange?: (ids: string[]) => void;
   composition?: CompositionForm;
   onCompositionChange?: (next: CompositionForm) => void;
   /**
@@ -66,6 +69,8 @@ export function ProductCustomizationsPanel({
   currentProductId,
   productOptionPrices = [],
   onOptionPricesChange,
+  productOptionExclusions = [],
+  onOptionExclusionsChange,
   composition,
   onCompositionChange,
   assistantPresentation = "dialog",
@@ -128,21 +133,33 @@ export function ProductCustomizationsPanel({
       const nextLinks = attachedIds.has(result.group.id)
         ? links
         : [...links, emptyProductLink(result.group.id, links.length)];
-      const nextPrices = prices.length
-        ? mergeOptionPrices(productOptionPrices, prices)
-        : productOptionPrices;
+      // desmarcar não pode deixar preço/exclusão antiga — troca só deste grupo
+      const nextPrices = replaceGroupOptionPrices(productOptionPrices, result.group, prices);
+      const selectedIds = prices.map((row) => row.option_id);
+      const nextExclusions = mergeExclusionsForGroup(
+        productOptionExclusions,
+        result.group,
+        selectedIds,
+      );
 
-      // produto existente: grava vínculo + preços já — toast “neste produto” precisa ser verdade
+      // produto existente: grava vínculo + preços + o que não oferece
       if (currentProductId) {
         await catalogAdminApi.updateProduct(currentProductId, {
           product_option_groups: serializeProductLinks(nextLinks),
-          ...(nextPrices.length ? { option_prices: nextPrices } : {}),
+          option_prices: nextPrices,
+          option_exclusions: nextExclusions,
         });
       }
 
-      return { ...result, prices: nextPrices, nextLinks, draft };
+      return {
+        ...result,
+        prices: nextPrices,
+        exclusions: nextExclusions,
+        nextLinks,
+        draft,
+      };
     },
-    onSuccess: ({ group, reused, prices, nextLinks }, variables) => {
+    onSuccess: ({ group, reused, prices, exclusions, nextLinks }, variables) => {
       invalidateGroups();
       if (currentProductId) {
         void queryClient.invalidateQueries({ queryKey: catalogAdminKeys.product(currentProductId) });
@@ -152,9 +169,8 @@ export function ProductCustomizationsPanel({
         return [...without, group];
       });
       onChange(nextLinks);
-      if (prices.length) {
-        onOptionPricesChange?.(prices);
-      }
+      onOptionPricesChange?.(prices);
+      onOptionExclusionsChange?.(exclusions);
       if (variables.existing) {
         toast.success(
           currentProductId
@@ -268,6 +284,7 @@ export function ProductCustomizationsPanel({
         categoryName={categoryName}
         priceContext="product"
         productOptionPrices={productOptionPrices}
+        productOptionExclusions={productOptionExclusions}
         pending={saveMutation.isPending}
         confirmLabel={
           dialog === "edit"
@@ -487,13 +504,4 @@ export function ProductCustomizationsPanel({
       ) : null}
     </div>
   );
-}
-
-function mergeOptionPrices(
-  current: { option_id: string; price: number }[],
-  next: { option_id: string; price: number }[],
-) {
-  const map = new Map(current.map((row) => [row.option_id, row.price]));
-  for (const row of next) map.set(row.option_id, row.price);
-  return [...map.entries()].map(([option_id, price]) => ({ option_id, price }));
 }
