@@ -92,6 +92,14 @@ export function buildOptionPricesFromDraft(
   return out;
 }
 
+/** ids das opções do grupo que batem com as escolhas do rascunho */
+export function resolveSelectedOptionIds(
+  group: OptionGroupAdmin,
+  choices: ChoiceDraft[],
+): string[] {
+  return buildOptionPricesFromDraft(group, choices).map((row) => row.option_id);
+}
+
 /**
  * Troca preços só deste grupo — desmarcar Broto não deixa o preço antigo no produto.
  */

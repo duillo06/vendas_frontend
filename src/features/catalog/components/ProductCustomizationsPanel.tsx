@@ -16,7 +16,7 @@ import {
   type CompositionForm,
 } from "@/features/catalog/components/ProductCompositionEditor";
 import { catalogAdminKeys } from "@/features/catalog/constants/catalog-admin-keys";
-import { saveCanonicalFromDraft, buildOptionPricesFromDraft, mergeExclusionsForGroup, replaceGroupOptionPrices } from "@/features/catalog/utils/canonicalLibrary";
+import { saveCanonicalFromDraft, buildOptionPricesFromDraft, mergeExclusionsForGroup, replaceGroupOptionPrices, resolveSelectedOptionIds } from "@/features/catalog/utils/canonicalLibrary";
 import {
   summarizeGroup,
   type CustomizationDraft,
@@ -135,7 +135,7 @@ export function ProductCustomizationsPanel({
         : [...links, emptyProductLink(result.group.id, links.length)];
       // desmarcar não pode deixar preço/exclusão antiga — troca só deste grupo
       const nextPrices = replaceGroupOptionPrices(productOptionPrices, result.group, prices);
-      const selectedIds = prices.map((row) => row.option_id);
+      const selectedIds = resolveSelectedOptionIds(result.group, draft.choices);
       const nextExclusions = mergeExclusionsForGroup(
         productOptionExclusions,
         result.group,

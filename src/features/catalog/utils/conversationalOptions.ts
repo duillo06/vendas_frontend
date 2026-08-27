@@ -293,16 +293,11 @@ export function draftFromGroup(
   const selection_type = (group.selection_type === "multiple" ? "multiple" : "single") as OptionSelectionType;
   const kind = inferKindFromGroup(group);
   const excluded = new Set(excludedOptionIds ?? []);
-  const activeOptions = group.options.filter((option) => option.is_active !== false);
-
-  // neste produto: só marca o que não foi excluído; se já há preço no grupo, prioriza quem tem preço
-  let selectedOptions = activeOptions.filter((option) => !excluded.has(option.id));
-  if (productPrices) {
-    const anyPriced = selectedOptions.some((option) => productPrices[option.id] != null);
-    if (anyPriced) {
-      selectedOptions = selectedOptions.filter((option) => productPrices[option.id] != null);
-    }
-  }
+  // marca tudo da biblioteca menos o que o produto excluiu — não filtrar por preço
+  // (filtrar por preço desmarcava Pequena sem preço e o save gravava exclusão)
+  const selectedOptions = group.options.filter(
+    (option) => option.is_active !== false && !excluded.has(option.id),
+  );
 
   return {
     name: group.name,
