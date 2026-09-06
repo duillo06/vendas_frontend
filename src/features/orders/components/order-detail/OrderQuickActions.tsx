@@ -1,8 +1,6 @@
 import { FileText, MessageCircle, Phone, Printer } from "lucide-react";
-import { toast } from "sonner";
 
 import type { OrderAdminDetail } from "@/features/orders/types/order-admin.types";
-import { cn } from "@/shared/lib/utils";
 
 import { phoneDigits, whatsappUrl } from "./orderDetailHelpers";
 
@@ -11,11 +9,12 @@ const actionClass =
 
 type OrderQuickActionsProps = {
   order: OrderAdminDetail;
+  onPrintComanda: () => void;
 };
 
-export function OrderQuickActions({ order }: OrderQuickActionsProps) {
+export function OrderQuickActions({ order, onPrintComanda }: OrderQuickActionsProps) {
   return (
-    <div className="flex flex-wrap gap-2" role="toolbar" aria-label="Ações rápidas">
+    <div className="flex flex-wrap gap-2 print:hidden" role="toolbar" aria-label="Ações rápidas">
       <a className={actionClass} href={`tel:${phoneDigits(order.customer.phone)}`}>
         <Phone className="h-3.5 w-3.5" />
         Ligar
@@ -29,19 +28,11 @@ export function OrderQuickActions({ order }: OrderQuickActionsProps) {
         <MessageCircle className="h-3.5 w-3.5" />
         WhatsApp
       </a>
-      <button
-        type="button"
-        className={actionClass}
-        onClick={() => window.print()}
-      >
+      <button type="button" className={actionClass} onClick={onPrintComanda}>
         <Printer className="h-3.5 w-3.5" />
-        Imprimir
+        Imprimir comanda
       </button>
-      <button
-        type="button"
-        className={cn(actionClass, "opacity-80")}
-        onClick={() => toast.message("Segunda via em breve")}
-      >
+      <button type="button" className={actionClass} onClick={onPrintComanda}>
         <FileText className="h-3.5 w-3.5" />
         Segunda via
       </button>

@@ -2,15 +2,18 @@ import { useEffect, useState } from "react";
 
 import {
   DAY_LABELS,
+  DEFAULT_PRINT_SETTINGS,
   DEFAULT_THEME,
   hasLowContrast,
   hexToHslComponents,
   hslComponentsToHex,
+  normalizePrintSettings,
   useSettings,
   useTenantTheme,
   useUpdateSettings,
   useUploadLogo,
   useUploadCover,
+  type PrintSettings,
   type SettingsData,
 } from "@/features/settings";
 import type { BusinessHoursAdmin, TenantTheme } from "@/features/settings/types/settings.types";
@@ -18,7 +21,7 @@ import { UiHint } from "@/shared/components/UiHint";
 import { PhoneInput } from "@/shared/components/PhoneInput";
 import { SearchableSelect } from "@/shared/components/SearchableSelect";
 import { Button } from "@/shared/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Card, CardContent } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Skeleton } from "@/shared/components/ui/skeleton";
@@ -28,6 +31,13 @@ import { formatPhoneMask, isBrazilianMobile } from "@/shared/lib/phone";
 import { useBrazilianCities, useBrazilianStates } from "@/shared/hooks/useLocations";
 import { cn } from "@/shared/lib/utils";
 import { toast } from "sonner";
+
+export type SettingsFormSection =
+  | "empresa"
+  | "operacao"
+  | "horarios"
+  | "impressao"
+  | "aparencia";
 
 function ToggleRow({
   label,
@@ -42,7 +52,7 @@ function ToggleRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-4 rounded-lg border border-[hsl(var(--border))] p-4">
-      <div>
+      <div className="min-w-0">
         <p className="text-sm font-medium">{label}</p>
         {description ? (
           <p className="text-xs text-[hsl(var(--muted-foreground))]">{description}</p>
@@ -52,24 +62,22 @@ function ToggleRow({
         type="button"
         role="switch"
         aria-checked={checked}
+        aria-label={label}
         className={cn(
-          "relative h-7 w-12 rounded-full transition-colors",
-          checked ? "bg-[hsl(var(--primary))]" : "bg-[hsl(var(--muted))]",
+          "inline-flex h-7 w-12 shrink-0 items-center rounded-full p-0.5 transition-colors duration-200",
+          checked
+            ? "justify-end bg-[hsl(var(--primary))]"
+            : "justify-start bg-[hsl(var(--muted))]",
         )}
         onClick={() => onChange(!checked)}
       >
-        <span
-          className={cn(
-            "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform",
-            checked ? "translate-x-5" : "translate-x-0.5",
-          )}
-        />
+        <span className="block h-6 w-6 rounded-full bg-white shadow-sm ring-1 ring-black/5" />
       </button>
     </div>
   );
 }
 
-export function SettingsForm() {
+export function SettingsForm({ section }: { section: SettingsFormSection }) {
   const { data, isLoading } = useSettings();
   const { mutate: saveSettings, isPending } = useUpdateSettings();
   const { mutate: uploadLogo, isPending: uploadingLogo } = useUploadLogo();
@@ -84,7 +92,13 @@ export function SettingsForm() {
 
   useEffect(() => {
     if (data) {
-      setForm(data);
+      setForm({
+        ...data,
+        settings: {
+          ...data.settings,
+          print_settings: normalizePrintSettings(data.settings.print_settings),
+        },
+      });
     }
   }, [data]);
 
@@ -161,7 +175,7 @@ export function SettingsForm() {
 
   const updateSettings = (
     field: keyof SettingsData["settings"],
-    value: string | number | boolean | null,
+    value: string | number | boolean | null | PrintSettings | TenantTheme,
   ) => {
     setForm((current) =>
       current
@@ -171,6 +185,20 @@ export function SettingsForm() {
           }
         : current,
     );
+  };
+
+  const patchPrintSettings = (patch: Partial<PrintSettings>) => {
+    setForm((current) => {
+      if (!current) return current;
+      const currentPrint = normalizePrintSettings(current.settings.print_settings);
+      return {
+        ...current,
+        settings: {
+          ...current.settings,
+          print_settings: { ...currentPrint, ...patch },
+        },
+      };
+    });
   };
 
   const updateHour = (day: number, patch: Partial<BusinessHoursAdmin>) => {
@@ -281,21 +309,19 @@ export function SettingsForm() {
         is_open: form.settings.is_open,
         auto_close_outside_hours: form.settings.auto_close_outside_hours,
         theme: form.settings.theme,
+        print_settings: normalizePrintSettings(form.settings.print_settings),
       },
       business_hours: form.business_hours,
     });
   };
 
+  const print = normalizePrintSettings(form.settings.print_settings);
+
   return (
     <div className="space-y-6">
+      {section === "empresa" ? (
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Empresa</CardTitle>
-          <p className="text-sm text-[hsl(var(--muted-foreground))]">
-            {adminCopy.settings.sections.company}
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             {form.company.logo_url ? (
               <img
@@ -418,15 +444,11 @@ export function SettingsForm() {
           </div>
         </CardContent>
       </Card>
+      ) : null}
 
+      {section === "operacao" ? (
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Operação</CardTitle>
-          <p className="text-sm text-[hsl(var(--muted-foreground))]">
-            {adminCopy.settings.sections.operation}
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           <ToggleRow
             label="Loja aberta"
             description="Quando fechada, novos pedidos são bloqueados"
@@ -555,15 +577,11 @@ export function SettingsForm() {
           </div>
         </CardContent>
       </Card>
+      ) : null}
 
+      {section === "horarios" ? (
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Horários</CardTitle>
-          <p className="text-sm text-[hsl(var(--muted-foreground))]">
-            {adminCopy.settings.sections.hours}
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-3 pt-6">
           {form.business_hours.map((row) => (
             <div
               key={row.day_of_week}
@@ -596,15 +614,123 @@ export function SettingsForm() {
           ))}
         </CardContent>
       </Card>
+      ) : null}
 
+      {section === "impressao" ? (
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Aparência</CardTitle>
-          <p className="text-sm text-[hsl(var(--muted-foreground))]">
-            {adminCopy.settings.sections.appearance}
+        <CardContent className="space-y-4 pt-6">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="print_paper_width">Tamanho do papel</Label>
+              <select
+                id="print_paper_width"
+                className="flex h-10 w-full rounded-md border border-[hsl(var(--border))] bg-white px-3 text-sm"
+                value={print.paper_width}
+                onChange={(event) =>
+                  patchPrintSettings({
+                    paper_width: event.target.value === "58" ? "58" : "80",
+                  })
+                }
+              >
+                <option value="80">80 mm (mais comum)</option>
+                <option value="58">58 mm (estreita)</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="print_font_size">Tamanho da letra</Label>
+              <select
+                id="print_font_size"
+                className="flex h-10 w-full rounded-md border border-[hsl(var(--border))] bg-white px-3 text-sm"
+                value={print.font_size}
+                onChange={(event) =>
+                  patchPrintSettings({
+                    font_size: event.target.value === "large" ? "large" : "normal",
+                  })
+                }
+              >
+                <option value="normal">Normal</option>
+                <option value="large">Grande</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="print_copies">Vias ao imprimir</Label>
+              <select
+                id="print_copies"
+                className="flex h-10 w-full rounded-md border border-[hsl(var(--border))] bg-white px-3 text-sm"
+                value={print.copies}
+                onChange={(event) =>
+                  patchPrintSettings({
+                    copies: event.target.value === "2" ? 2 : 1,
+                  })
+                }
+              >
+                <option value="1">1 via</option>
+                <option value="2">2 vias (cozinha + balcão)</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="print_footer">Texto no rodapé</Label>
+              <Input
+                id="print_footer"
+                maxLength={120}
+                placeholder={DEFAULT_PRINT_SETTINGS.footer_text}
+                value={print.footer_text}
+                onChange={(event) => patchPrintSettings({ footer_text: event.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <ToggleRow
+              label="Mostrar preços"
+              description="Desligue se a comanda for só para a cozinha."
+              checked={print.show_prices}
+              onChange={(value) => patchPrintSettings({ show_prices: value })}
+            />
+            <ToggleRow
+              label="Mostrar pagamento"
+              description="Forma, status e troco."
+              checked={print.show_payment}
+              onChange={(value) => patchPrintSettings({ show_payment: value })}
+            />
+            <ToggleRow
+              label="Telefone da loja"
+              checked={print.show_store_phone}
+              onChange={(value) => patchPrintSettings({ show_store_phone: value })}
+            />
+            <ToggleRow
+              label="Telefone do cliente"
+              checked={print.show_customer_phone}
+              onChange={(value) => patchPrintSettings({ show_customer_phone: value })}
+            />
+            <ToggleRow
+              label="Tempo estimado de preparo"
+              checked={print.show_prep_time}
+              onChange={(value) => patchPrintSettings({ show_prep_time: value })}
+            />
+            <ToggleRow
+              label="Observações do cliente"
+              checked={print.show_order_notes}
+              onChange={(value) => patchPrintSettings({ show_order_notes: value })}
+            />
+            <ToggleRow
+              label="Observações internas da loja"
+              checked={print.show_internal_notes}
+              onChange={(value) => patchPrintSettings({ show_internal_notes: value })}
+            />
+          </div>
+
+          <p className="text-xs text-[hsl(var(--muted-foreground))]">
+            Na hora de imprimir, escolha a impressora térmica e desmarque cabeçalho/rodapé do
+            navegador se aparecer.
           </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        </CardContent>
+      </Card>
+      ) : null}
+
+      {section === "aparencia" ? (
+      <Card>
+        <CardContent className="space-y-4 pt-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
             <div className="space-y-2">
               <Label htmlFor="primary_color">Cor principal</Label>
@@ -777,10 +903,11 @@ export function SettingsForm() {
           ) : null}
         </CardContent>
       </Card>
+      ) : null}
 
       <div className="flex justify-end">
         <Button type="button" disabled={isPending} onClick={handleSave}>
-          {isPending ? "Salvando..." : "Salvar configurações"}
+          {isPending ? "Salvando..." : "Salvar"}
         </Button>
       </div>
     </div>

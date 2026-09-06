@@ -763,3 +763,185 @@ select:disabled {
     animation: none;
   }
 }
+
+/* comanda térmica — escondida na tela, só no print */
+.order-comanda-print {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 2mm;
+  }
+
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* some browsers still pintam toast/sheet no print */
+  [data-sonner-toaster],
+  [data-radix-portal] {
+    display: none !important;
+  }
+
+  .order-comanda-print {
+    display: block !important;
+    width: 72mm;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0;
+    color: #000;
+    background: #fff;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 11px;
+    line-height: 1.35;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .order-comanda-print[data-paper="58"] {
+    width: 48mm;
+    font-size: 10px;
+  }
+
+  .order-comanda-print[data-font="large"] {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .order-comanda-print[data-paper="58"][data-font="large"] {
+    font-size: 11px;
+  }
+
+  .comanda-copy + .comanda-copy {
+    page-break-before: always;
+    break-before: page;
+    margin-top: 8px;
+  }
+
+  .comanda-header {
+    text-align: center;
+    margin-bottom: 6px;
+  }
+
+  .comanda-store {
+    font-size: 1.15em;
+    font-weight: 700;
+    text-transform: uppercase;
+    word-break: break-word;
+  }
+
+  .comanda-title {
+    margin-top: 4px;
+    font-size: 1em;
+    letter-spacing: 0.12em;
+  }
+
+  .comanda-number {
+    margin-top: 2px;
+    font-size: 1.7em;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .comanda-meta {
+    margin-top: 2px;
+    font-size: 0.95em;
+  }
+
+  .comanda-center {
+    text-align: center;
+  }
+
+  .comanda-via {
+    margin-top: 4px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+
+  .comanda-badge {
+    text-align: center;
+    font-size: 1.15em;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin: 4px 0;
+  }
+
+  .comanda-rule {
+    border-top: 1px dashed #000;
+    margin: 6px 0;
+  }
+
+  .comanda-block {
+    margin: 0;
+  }
+
+  .comanda-section-title {
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .comanda-address {
+    margin-top: 4px;
+  }
+
+  .comanda-items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .comanda-item {
+    margin-bottom: 8px;
+  }
+
+  .comanda-item-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-weight: 700;
+  }
+
+  .comanda-item-row span:last-child {
+    white-space: nowrap;
+  }
+
+  .comanda-unit {
+    padding-left: 8px;
+    font-size: 0.9em;
+    font-weight: 400;
+  }
+
+  .comanda-options {
+    list-style: none;
+    margin: 2px 0 0;
+    padding: 0 0 0 8px;
+    font-weight: 400;
+    font-size: 0.92em;
+  }
+
+  .comanda-obs {
+    margin-top: 2px;
+    padding-left: 8px;
+    font-weight: 700;
+    font-size: 0.95em;
+  }
+
+  .comanda-totals .comanda-total {
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid #000;
+    font-size: 1.15em;
+  }
+
+  .comanda-footer {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 1em;
+  }
+}

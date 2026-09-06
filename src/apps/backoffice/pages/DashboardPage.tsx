@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ClipboardList, LayoutDashboard, RefreshCw, ShoppingBag, Sparkles, TrendingUp, XCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 
+import { catalogAdminApi } from "@/features/catalog/api/catalogAdminApi";
 import { useDashboard } from "@/features/dashboard";
 import { FirstSetupAssistant } from "@/features/flow/FirstSetupAssistant";
 import { FlowEmptyState } from "@/features/flow/FlowEmptyState";
@@ -28,6 +30,11 @@ function formatTime(iso: string) {
 export function DashboardPage() {
   const { data, isLoading, isError } = useDashboard();
   const { data: settingsData } = useSettings();
+  const { data: productsPage } = useQuery({
+    queryKey: ["admin", "products", "dashboard-empty-check"],
+    queryFn: () => catalogAdminApi.listProducts({ page_size: "1" }),
+    staleTime: 1000 * 60 * 2,
+  });
   const navigate = useNavigate();
   const onboarding = useFlowOnboarding();
   const [greeting, setGreeting] = useState("Olá");
@@ -37,6 +44,7 @@ export function DashboardPage() {
   const showFirstSetup = Boolean(setupPending && firstSetupOpen);
   // tour local só se a 1ª config já passou (ou foi dispensada)
   const showFlowTour = !setupPending && onboarding.open;
+  const hasProducts = (productsPage?.count ?? productsPage?.results?.length ?? 0) > 0;
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -277,10 +285,17 @@ export function DashboardPage() {
                 mood: "idle",
               }}
               action={
-                <Button type="button" onClick={() => navigate("/produtos/novo")} className="gap-2">
-                  <ShoppingBag className="h-4 w-4" />
-                  Criar meu primeiro produto
-                </Button>
+                hasProducts ? (
+                  <Button type="button" onClick={() => navigate("/pedidos")} className="gap-2">
+                    <ClipboardList className="h-4 w-4" />
+                    {adminCopy.dashboard.emptyOrders.ctaViewOrders}
+                  </Button>
+                ) : (
+                  <Button type="button" onClick={() => navigate("/produtos/novo")} className="gap-2">
+                    <ShoppingBag className="h-4 w-4" />
+                    {adminCopy.dashboard.emptyOrders.ctaCreateProduct}
+                  </Button>
+                )
               }
             />
           )}

@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { KeyRound, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -7,7 +7,7 @@ import { z } from "zod";
 
 import { authApi } from "@/features/auth/api/authApi";
 import { Button } from "@/shared/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Card, CardContent } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { adminCopy } from "@/shared/copy/admin";
@@ -60,16 +60,7 @@ export function ChangePasswordCard() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <KeyRound className="h-4 w-4 text-brand" />
-          Sua senha
-        </CardTitle>
-        <p className="text-sm text-[hsl(var(--muted-foreground))]">
-          {adminCopy.settings.sections.password}
-        </p>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <form className="space-y-4" onSubmit={onSubmit} noValidate>
           <div className="space-y-2">
             <Label htmlFor="current_password">Senha atual</Label>

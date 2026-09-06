@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router";
 import type { OrderStatus } from "@/features/checkout/types/checkout.types";
 import { fireFlowConfetti } from "@/features/flow/FlowSuccess";
 import { OrderAlerts } from "@/features/orders/components/order-detail/OrderAlerts";
+import { OrderComandaTicket } from "@/features/orders/components/order-detail/OrderComandaTicket";
 import { OrderEventTimeline } from "@/features/orders/components/order-detail/OrderEventTimeline";
 import { OrderHeroHeader } from "@/features/orders/components/order-detail/OrderHeroHeader";
 import { OrderItemsPanel } from "@/features/orders/components/order-detail/OrderItemsPanel";
@@ -83,42 +84,61 @@ export function OrderDetailPage() {
     updateStatus({ status: "cancelled", notes: cancelNotes.trim() });
   }
 
+  function printComanda() {
+    window.print();
+  }
+
+  const storeName =
+    settings?.company.trade_name?.trim() ||
+    settings?.company.legal_name?.trim() ||
+    "Pedido";
+
   return (
-    <div className="space-y-5 pb-24 print:pb-0 md:pb-6">
-      <OrderHeroHeader order={order} now={now} isPending={isPending} onAdvance={advance} />
+    <>
+      <div className="space-y-5 pb-24 print:hidden md:pb-6">
+        <OrderHeroHeader order={order} now={now} isPending={isPending} onAdvance={advance} />
 
-      <OrderAlerts alerts={alerts} />
+        <OrderAlerts alerts={alerts} />
 
-      <OrderProgressRail order={order} />
+        <OrderProgressRail order={order} />
 
-      <OrderQuickActions order={order} />
+        <OrderQuickActions order={order} onPrintComanda={printComanda} />
 
-      <OrderNextActionCard
-        order={order}
-        isPending={isPending}
-        cancelNotes={cancelNotes}
-        onCancelNotesChange={setCancelNotes}
-        onAdvance={advance}
-        onCancel={cancelOrder}
-        canCancel={canCancel}
-      />
+        <OrderNextActionCard
+          order={order}
+          isPending={isPending}
+          cancelNotes={cancelNotes}
+          onCancelNotesChange={setCancelNotes}
+          onAdvance={advance}
+          onCancel={cancelOrder}
+          canCancel={canCancel}
+        />
 
-      <div className="grid gap-5 xl:grid-cols-12">
-        <div className="space-y-5 xl:col-span-8">
-          <OrderItemsPanel order={order} />
-          <OrderEventTimeline order={order} />
+        <div className="grid gap-5 xl:grid-cols-12">
+          <div className="space-y-5 xl:col-span-8">
+            <OrderItemsPanel order={order} />
+            <OrderEventTimeline order={order} />
+          </div>
+          <div className="xl:col-span-4">
+            <OrderSidePanel
+              order={order}
+              now={now}
+              paying={paying}
+              onMarkPaid={() => updatePayment()}
+            />
+          </div>
         </div>
-        <div className="xl:col-span-4">
-          <OrderSidePanel
-            order={order}
-            now={now}
-            paying={paying}
-            onMarkPaid={() => updatePayment()}
-          />
-        </div>
+
+        <OrderMobileStickyCta order={order} isPending={isPending} onAdvance={advance} />
       </div>
 
-      <OrderMobileStickyCta order={order} isPending={isPending} onAdvance={advance} />
-    </div>
+      <OrderComandaTicket
+        order={order}
+        storeName={storeName}
+        storePhone={settings?.company.phone}
+        estimatedPrepTime={estimatedPrep}
+        printSettings={settings?.settings.print_settings}
+      />
+    </>
   );
 }

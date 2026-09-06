@@ -31,7 +31,7 @@ Este repositório usa **portas alternativas fixas** abaixo.
 | **Health check** | `vendas_backend` | **8001** | http://localhost:8001/api/v1/health/ |
 | **Storefront** | `vendas_frontend` | **5174** | http://localhost:5174 |
 | **Backoffice** | `vendas_frontend` | **5175** | http://localhost:5175 |
-| PostgreSQL (Docker) | `vendas_backend` | **5433** | `localhost:5433` |
+| PostgreSQL (Docker) | `vendas_backend` | **5434** | `localhost:5434` |
 | Redis (Docker) | `vendas_backend` | **6380** | `localhost:6380` |
 
 ### Subdomínio em desenvolvimento (multi-tenant)
@@ -51,7 +51,7 @@ O backend resolve o tenant pelo header `Host` (middleware). Em dev, apontar o su
 ```bash
 DJANGO_ENV=development
 POSTGRES_HOST=localhost
-POSTGRES_PORT=5433
+POSTGRES_PORT=5434
 REDIS_URL=redis://localhost:6380/0
 ```
 

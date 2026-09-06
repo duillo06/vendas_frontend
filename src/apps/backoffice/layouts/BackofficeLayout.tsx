@@ -264,7 +264,7 @@ export function BackofficeLayout() {
       {/* desktop: colapsa pra só ícones */}
       <aside
         className={cn(
-          "gradient-sidebar sticky top-0 hidden h-screen shrink-0 flex-col text-white shadow-[var(--shadow-lg)] transition-[width] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] md:flex",
+          "gradient-sidebar sticky top-0 hidden h-screen shrink-0 flex-col text-white shadow-[var(--shadow-lg)] transition-[width] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] print:hidden md:flex",
           desktopCollapsed ? "w-16" : "w-60",
         )}
       >
@@ -276,7 +276,7 @@ export function BackofficeLayout() {
         open={mobileOpen}
         onOpenChange={setMobileOpen}
         side="left"
-        className="gradient-sidebar max-w-[15rem] border-0 text-white shadow-[var(--shadow-lg)]"
+        className="gradient-sidebar max-w-[15rem] border-0 text-white shadow-[var(--shadow-lg)] print:hidden"
       >
         <div className="relative flex h-full flex-col">
           <button
@@ -292,7 +292,7 @@ export function BackofficeLayout() {
       </Sheet>
 
       <div className="app-shell-backoffice flex min-h-screen min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between gap-3 border-b border-[hsl(var(--border))] bg-white/70 px-4 py-3 backdrop-blur md:px-6">
+        <header className="flex items-center justify-between gap-3 border-b border-[hsl(var(--border))] bg-white/70 px-4 py-3 backdrop-blur print:hidden md:px-6">
           <div className="flex min-w-0 items-center gap-2">
             <Button
               type="button"
@@ -357,7 +357,7 @@ export function BackofficeLayout() {
           </div>
         </header>
 
-        <main className="flex-1 p-4 md:p-6">
+        <main className="flex-1 p-4 print:p-0 md:p-6">
           <Outlet />
         </main>
       </div>

@@ -1,3 +1,5 @@
+import type { PrintSettings } from "../constants/printDefaults";
+
 export interface StorefrontThemeConfig {
   slogan?: string;
   show_rating?: boolean;
@@ -43,6 +45,7 @@ export interface CompanySettingsAdmin {
   auto_close_outside_hours: boolean;
   payment_methods: string[];
   theme: TenantTheme | null;
+  print_settings?: PrintSettings | null;
   setup?: CompanySetupState | null;
 }
 

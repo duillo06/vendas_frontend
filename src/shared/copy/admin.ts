@@ -179,6 +179,8 @@ export const adminCopy = {
     emptyOrders: {
       title: "Dia tranquilo por aqui",
       description: "Quando chegar o primeiro pedido, ele aparece nesta lista automaticamente.",
+      ctaCreateProduct: "Criar meu primeiro produto",
+      ctaViewOrders: "Ver fila de pedidos",
     },
     metrics: {
       ordersToday: "Total de pedidos recebidos hoje.",
@@ -189,14 +191,18 @@ export const adminCopy = {
   },
   settings: {
     subtitle: "Dados da loja, horários, taxas e aparência do cardápio para seus clientes.",
+    hubSubtitle: "Escolha o que deseja ajustar. Tudo fica organizado por assunto.",
     guidance:
       "Alterações aqui refletem no storefront. Revise horários e taxas antes de abrir a loja.",
+    hubGuidance: "Toque em uma opção para abrir só o que você precisa — sem rolar a página inteira.",
     sections: {
       company: "Nome e contato aparecem no cardápio e nas confirmações de pedido.",
       operation: "Defina quando aceitar pedidos e as regras de entrega.",
       hours: "Marque os dias fechados ou ajuste abertura e fechamento.",
       appearance:
         "Cor principal e destaque personalizam o cardápio e o painel. As mudanças aparecem ao vivo antes de salvar.",
+      print:
+        "Ajuste o tamanho do papel e o que sai na comanda da impressora térmica.",
       password: "Troque a senha de acesso ao painel. Use pelo menos 8 caracteres.",
     },
     contrastWarning: "Contraste baixo entre cor principal e texto — pode prejudicar a leitura.",

@@ -15,7 +15,7 @@ description: >-
 | API Django | **8001** | `python manage.py runserver 8001` |
 | Storefront | **5174** | `npm run dev` |
 | Backoffice | **5175** | `npm run dev:admin` |
-| PostgreSQL | **5433** | Docker (`docker-compose.dev.yml`) |
+| PostgreSQL | **5434** | Docker (`docker-compose.dev.yml`) |
 | Redis | **6380** | Docker (`docker-compose.dev.yml`) |
 
 Reservadas para o **projeto principal**: Django `8000`, Vite `5173`, Postgres `5432`, Redis `6379`.
@@ -81,5 +81,5 @@ Padrão: `{tenant}.localhost:5174` (ex: `pizzaria-joao.localhost:5174`)
 | Porta 5173 em uso | Storefront já está em **5174** via `vite.config.ts` |
 | CORS bloqueado | Conferir `config/settings/development.py` (5174, 5175) |
 | `ERR_CONNECTION_REFUSED` em `:8001` | Front deve usar `VITE_API_BASE_URL=/api/v1` (proxy Vite). Hard refresh. |
-| Postgres 5432 em uso | Food Service usa **5433** — conferir `POSTGRES_PORT` no `.env` |
+| Postgres 5432/5433 em uso | Food Service usa **5434** — conferir `POSTGRES_PORT` no `.env` |
 | Redis 6379 em uso | Food Service usa **6380** — conferir `REDIS_URL` no `.env` |
