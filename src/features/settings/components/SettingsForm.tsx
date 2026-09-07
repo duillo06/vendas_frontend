@@ -24,6 +24,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
+import { Textarea } from "@/shared/components/ui/textarea";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { adminCopy } from "@/shared/copy/admin";
 import { resolveMediaUrl } from "@/shared/lib/media";
@@ -309,7 +310,10 @@ export function SettingsForm({ section }: { section: SettingsFormSection }) {
         is_open: form.settings.is_open,
         auto_close_outside_hours: form.settings.auto_close_outside_hours,
         theme: form.settings.theme,
-        print_settings: normalizePrintSettings(form.settings.print_settings),
+        print_settings: {
+          ...normalizePrintSettings(form.settings.print_settings),
+          verse_text: (form.settings.print_settings?.verse_text ?? "").trim().slice(0, 280),
+        },
       },
       business_hours: form.business_hours,
     });
@@ -677,6 +681,21 @@ export function SettingsForm({ section }: { section: SettingsFormSection }) {
                 value={print.footer_text}
                 onChange={(event) => patchPrintSettings({ footer_text: event.target.value })}
               />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="print_verse">Versículo (opcional)</Label>
+              <Textarea
+                id="print_verse"
+                rows={3}
+                maxLength={280}
+                placeholder='Ex.: "Tudo posso naquele que me fortalece." — Filipenses 4:13'
+                className="min-h-[4.5rem]"
+                value={print.verse_text}
+                onChange={(event) => patchPrintSettings({ verse_text: event.target.value })}
+              />
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                Aparece abaixo do &quot;Obrigado&quot;. Se deixar vazio, não sai na comanda.
+              </p>
             </div>
           </div>
 

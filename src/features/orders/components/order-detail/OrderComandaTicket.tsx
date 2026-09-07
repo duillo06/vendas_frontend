@@ -234,10 +234,13 @@ function ComandaBody({
         </>
       ) : null}
 
-      {settings.footer_text ? (
+      {settings.footer_text || settings.verse_text.trim() ? (
         <>
           <div className="comanda-rule" />
-          <p className="comanda-footer">{settings.footer_text}</p>
+          {settings.footer_text ? <p className="comanda-footer">{settings.footer_text}</p> : null}
+          {settings.verse_text.trim() ? (
+            <p className="comanda-verse">{settings.verse_text.trim()}</p>
+          ) : null}
         </>
       ) : null}
     </article>

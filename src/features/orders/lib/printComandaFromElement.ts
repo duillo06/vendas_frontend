@@ -105,6 +105,14 @@ const COMANDA_IFRAME_CSS = `
     font-size: 1.15em;
   }
   .comanda-footer { text-align: center; margin-top: 8px; font-size: 1em; }
+  .comanda-verse {
+    text-align: center;
+    margin-top: 6px;
+    font-size: 0.92em;
+    font-style: italic;
+    line-height: 1.35;
+    white-space: pre-wrap;
+  }
   p { margin: 0; }
 `;
 

@@ -13,6 +13,8 @@ export type PrintSettings = {
   show_prep_time: boolean;
   copies: 1 | 2;
   footer_text: string;
+  /** versículo opcional — vazio = não imprime */
+  verse_text: string;
 };
 
 export const DEFAULT_PRINT_SETTINGS: PrintSettings = {
@@ -27,6 +29,7 @@ export const DEFAULT_PRINT_SETTINGS: PrintSettings = {
   show_prep_time: true,
   copies: 1,
   footer_text: "Obrigado!",
+  verse_text: "",
 };
 
 export function normalizePrintSettings(raw?: Partial<PrintSettings> | null): PrintSettings {
@@ -48,5 +51,7 @@ export function normalizePrintSettings(raw?: Partial<PrintSettings> | null): Pri
     show_prep_time: raw.show_prep_time ?? true,
     copies,
     footer_text: (raw.footer_text ?? DEFAULT_PRINT_SETTINGS.footer_text).slice(0, 120),
+    // sem trim aqui — senão espaço no fim some enquanto digita
+    verse_text: (raw.verse_text ?? "").slice(0, 280),
   };
 }
