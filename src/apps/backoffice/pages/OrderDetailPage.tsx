@@ -19,6 +19,7 @@ import { useNow } from "@/features/orders/components/order-detail/useNow";
 import { useAdminOrder } from "@/features/orders/hooks/useAdminOrder";
 import { useUpdateOrderPayment } from "@/features/orders/hooks/useUpdateOrderPayment";
 import { useUpdateOrderStatus } from "@/features/orders/hooks/useUpdateOrderStatus";
+import { printComandaFromElement } from "@/features/orders/lib/printComandaFromElement";
 import { ORDER_NEXT_STATUS } from "@/features/orders/types/order-admin.types";
 import { useSettings } from "@/features/settings";
 import { Button } from "@/shared/components/ui/button";
@@ -85,7 +86,7 @@ export function OrderDetailPage() {
   }
 
   function printComanda() {
-    window.print();
+    printComandaFromElement(document.getElementById("order-comanda-print"));
   }
 
   const storeName =

@@ -770,15 +770,20 @@ select:disabled {
 }
 
 @media print {
+  /* Chrome ignora bem "80mm auto" e herda altura do layout — vira fita longa em branco */
   @page {
-    size: 80mm auto;
-    margin: 2mm;
+    margin: 0;
+    size: auto;
   }
 
   html,
-  body {
+  body,
+  #root {
     margin: 0 !important;
     padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
     background: #fff !important;
     color: #000 !important;
   }
@@ -789,12 +794,25 @@ select:disabled {
     display: none !important;
   }
 
+  /* some browsers still pintam toast/sheet no print — e o shell do painel */
+  body * {
+    visibility: hidden !important;
+  }
+
+  .order-comanda-print,
+  .order-comanda-print * {
+    visibility: visible !important;
+  }
+
   .order-comanda-print {
     display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
     width: 72mm;
     max-width: 100%;
-    margin: 0 auto;
-    padding: 0;
+    margin: 0 !important;
+    padding: 2mm !important;
     color: #000;
     background: #fff;
     font-family: "Courier New", Courier, monospace;

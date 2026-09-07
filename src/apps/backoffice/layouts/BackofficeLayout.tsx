@@ -260,7 +260,7 @@ export function BackofficeLayout() {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen print:min-h-0">
       {/* desktop: colapsa pra só ícones */}
       <aside
         className={cn(
@@ -291,7 +291,7 @@ export function BackofficeLayout() {
         </div>
       </Sheet>
 
-      <div className="app-shell-backoffice flex min-h-screen min-w-0 flex-1 flex-col">
+      <div className="app-shell-backoffice flex min-h-screen min-w-0 flex-1 flex-col print:min-h-0">
         <header className="flex items-center justify-between gap-3 border-b border-[hsl(var(--border))] bg-white/70 px-4 py-3 backdrop-blur print:hidden md:px-6">
           <div className="flex min-w-0 items-center gap-2">
             <Button

@@ -721,8 +721,9 @@ export function SettingsForm({ section }: { section: SettingsFormSection }) {
           </div>
 
           <p className="text-xs text-[hsl(var(--muted-foreground))]">
-            Na hora de imprimir, escolha a impressora térmica e desmarque cabeçalho/rodapé do
-            navegador se aparecer.
+            Na hora de imprimir: escolha a POS-80, margens em &quot;Nenhuma&quot; e desmarque
+            cabeçalho/rodapé do navegador se aparecer. A prévia deve ficar curta, só com o
+            texto da comanda.
           </p>
         </CardContent>
       </Card>
