@@ -6,6 +6,14 @@ export type ConnectionStatus =
   | "disconnected"
   | "error";
 
+export type WhatsAppActiveAlert = {
+  kind: string;
+  severity: string;
+  title: string;
+  body: string;
+  action_hint: string;
+};
+
 export type WhatsAppConnection = {
   id?: string;
   connected: boolean;
@@ -21,6 +29,7 @@ export type WhatsAppConnection = {
   } | null;
   last_error_code?: string;
   last_error_message?: string;
+  active_alert?: WhatsAppActiveAlert | null;
 };
 
 export type WhatsAppConnectOptions = {

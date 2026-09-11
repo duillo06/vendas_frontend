@@ -76,17 +76,13 @@ function LoginForm() {
 
         <div className="space-y-2">
           <Label htmlFor="subdomain">Subdomínio</Label>
-          <Input id="subdomain" placeholder="demo" {...register("subdomain")} />
+          <Input id="subdomain" placeholder="sua-loja" {...register("subdomain")} />
           {errors.subdomain ? <p className="text-xs text-red-600">{errors.subdomain.message}</p> : null}
         </div>
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? "Entrando..." : "Entrar"}
         </Button>
-
-        <p className="text-center text-xs text-[hsl(var(--muted-foreground))]">
-          Dev: admin@demo.com / demo1234
-        </p>
       </form>
     </AuthLayout>
   );

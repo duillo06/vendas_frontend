@@ -49,8 +49,14 @@ export function WhatsAppPanel({ onReconnect }: Props) {
 
   const testMutation = useMutation({
     mutationFn: () => conexoesApi.sendConnectionTest(),
-    onSuccess: (res) => toast.success(res.message),
-    onError: (err) => toast.error(normalizeApiError(err).message),
+    onSuccess: (res) => {
+      void queryClient.invalidateQueries({ queryKey: ["admin", "comms", "whatsapp"] });
+      toast.success(res.message);
+    },
+    onError: (err) => {
+      void queryClient.invalidateQueries({ queryKey: ["admin", "comms", "whatsapp"] });
+      toast.error(normalizeApiError(err).message);
+    },
   });
 
   const disconnectMutation = useMutation({
@@ -68,22 +74,42 @@ export function WhatsAppPanel({ onReconnect }: Props) {
 
   const steps = connection.last_health?.steps ?? [];
   const online = connection.status === "connected";
+  const alert = connection.active_alert;
+  const showUnstableHelp = Boolean(alert?.kind === "whatsapp_session_unstable");
+  const showDisconnectedHelp = !online && !showUnstableHelp;
 
   return (
     <div className="space-y-5">
-      {!online ? (
+      {showDisconnectedHelp ? (
         <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex gap-3">
             <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
             <div>
-              <p className="font-medium text-amber-950">Seu WhatsApp foi desconectado.</p>
+              <p className="font-medium text-amber-950">
+                {alert?.title || "Seu WhatsApp foi desconectado."}
+              </p>
               <p className="text-sm text-amber-900/80">
-                Os pedidos continuam no sistema — só as mensagens automáticas pausam até
-                reconectar.
+                {alert?.body ||
+                  "Os pedidos continuam no sistema — só as mensagens automáticas pausam até reconectar."}
               </p>
             </div>
           </div>
-          <Button onClick={onReconnect}>Reconectar WhatsApp</Button>
+          <Button onClick={onReconnect}>{alert?.action_hint || "Reconectar WhatsApp"}</Button>
+        </div>
+      ) : null}
+
+      {showUnstableHelp && alert ? (
+        <div className="flex flex-col gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex gap-3">
+            <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+            <div className="space-y-2">
+              <p className="font-medium text-amber-950">{alert.title}</p>
+              <p className="whitespace-pre-line text-sm text-amber-900/85">{alert.body}</p>
+            </div>
+          </div>
+          <Button className="shrink-0" onClick={onReconnect}>
+            {alert.action_hint || "Reconectar WhatsApp"}
+          </Button>
         </div>
       ) : null}
 
