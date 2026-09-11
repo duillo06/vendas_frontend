@@ -6,10 +6,17 @@ import { AuthContext, type AuthContextValue } from "../hooks/useAuth";
 import type { Employee, Tenant } from "../types/auth.types";
 
 import { authStorage } from "@/shared/lib/auth-storage";
+import { queryClient } from "@/shared/lib/query-client";
+import { resetTenantTheme } from "@/features/settings/utils/theme";
 
 type AuthProviderProps = {
   children: ReactNode;
 };
+
+function clearSessionCache() {
+  queryClient.clear();
+  resetTenantTheme();
+}
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<Employee | null>(null);
@@ -29,6 +36,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setTenant(data.tenant);
     } catch {
       authStorage.clear();
+      clearSessionCache();
       setUser(null);
       setTenant(null);
     } finally {
@@ -42,6 +50,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = useCallback(async (email: string, password: string, subdomain?: string) => {
     const data = await authApi.login({ email, password, subdomain });
+    // login ok — joga fora cache da sessão anterior (evita misturar loja/usuário)
+    clearSessionCache();
     authStorage.setSession(data.access, data.refresh, data.tenant.id);
     setUser(data.user);
     setTenant(data.tenant);
@@ -57,6 +67,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // sessão já expirou — limpa local mesmo assim
     } finally {
       authStorage.clear();
+      clearSessionCache();
       setUser(null);
       setTenant(null);
       toast.success("Sessão encerrada");

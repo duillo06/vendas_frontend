@@ -6,10 +6,17 @@ import { CustomerAuthContext, type CustomerAuthContextValue } from "../hooks/use
 import type { Customer, CustomerTenant } from "../types/customer-auth.types";
 
 import { authStorage } from "@/shared/lib/auth-storage";
+import { queryClient } from "@/shared/lib/query-client";
+import { resetTenantTheme } from "@/features/settings/utils/theme";
 
 type CustomerAuthProviderProps = {
   children: ReactNode;
 };
+
+function clearSessionCache() {
+  queryClient.clear();
+  resetTenantTheme();
+}
 
 export function CustomerAuthProvider({ children }: CustomerAuthProviderProps) {
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -29,6 +36,7 @@ export function CustomerAuthProvider({ children }: CustomerAuthProviderProps) {
       setTenant(data.tenant);
     } catch {
       authStorage.clear();
+      clearSessionCache();
       setCustomer(null);
       setTenant(null);
     } finally {
@@ -41,6 +49,7 @@ export function CustomerAuthProvider({ children }: CustomerAuthProviderProps) {
   }, [restoreSession]);
 
   const persistSession = useCallback((access: string, refresh: string, tenantId: string, nextCustomer: Customer, nextTenant: CustomerTenant) => {
+    clearSessionCache();
     authStorage.setSession(access, refresh, tenantId);
     setCustomer(nextCustomer);
     setTenant(nextTenant);
@@ -75,6 +84,7 @@ export function CustomerAuthProvider({ children }: CustomerAuthProviderProps) {
       // sessão já expirou
     } finally {
       authStorage.clear();
+      clearSessionCache();
       setCustomer(null);
       setTenant(null);
       toast.success("Você saiu da conta");
