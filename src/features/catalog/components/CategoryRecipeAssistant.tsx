@@ -20,6 +20,7 @@ import {
   isCategoryPricedKind,
   kindById,
   newChoice,
+  normalizeOptionLabel,
   suggestedKindIds,
   type CustomizationDraft,
   type LibraryItem,
@@ -176,8 +177,25 @@ export function CategoryRecipeAssistant({
 
   const libraryItems = useMemo(() => {
     if (!currentKind || currentKind.opensComposition) return [];
-    return buildLibraryItems(mergedGroups, currentKind, new Set());
-  }, [currentKind, mergedGroups]);
+    const base = buildLibraryItems(mergedGroups, currentKind, new Set());
+    const byNorm = new Map(base.map((item) => [normalizeOptionLabel(item.name), item]));
+    // tamanho/borda acabados de criar — precisam aparecer na lista na hora
+    for (const choice of draft?.choices ?? []) {
+      const name = choice.name.trim();
+      if (!name) continue;
+      const norm = normalizeOptionLabel(name);
+      if (norm && byNorm.has(norm)) continue;
+      byNorm.set(norm || choice.key, {
+        key: choice.key,
+        name,
+        price: choice.price,
+        description: choice.description || undefined,
+        fromLibrary: false,
+        optionId: choice.id,
+      });
+    }
+    return [...byNorm.values()];
+  }, [currentKind, mergedGroups, draft?.choices]);
 
   const choiceForItem = (item: LibraryItem) =>
     draft?.choices.find((c) => choiceMatchesLibraryItem(c, item));
