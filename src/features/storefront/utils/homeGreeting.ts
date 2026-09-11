@@ -140,7 +140,7 @@ export function getMoodLine(dayPart: DayPart): string {
     case "morning":
       return "Feito com carinho pela nossa cozinha.";
     case "lunch":
-      return "Esse lanche está fazendo sucesso hoje.";
+      return "Tem pedida boa pra essa hora.";
     case "afternoon":
       return "Uma pausa que vale cada pedaço.";
     case "evening":
