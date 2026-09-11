@@ -292,7 +292,8 @@ export function BackofficeLayout() {
       </Sheet>
 
       <div className="app-shell-backoffice flex min-h-screen min-w-0 flex-1 flex-col print:min-h-0">
-        <header className="flex items-center justify-between gap-3 border-b border-[hsl(var(--border))] bg-white/70 px-4 py-3 backdrop-blur print:hidden md:px-6">
+        {/* z-50: backdrop-blur cria stacking context — sem isso o painel de notificação fica atrás do pedido */}
+        <header className="relative z-50 flex items-center justify-between gap-3 border-b border-[hsl(var(--border))] bg-white/70 px-4 py-3 backdrop-blur print:hidden md:px-6">
           <div className="flex min-w-0 items-center gap-2">
             <Button
               type="button"
