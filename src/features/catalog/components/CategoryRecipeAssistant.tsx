@@ -885,8 +885,9 @@ export function CategoryRecipeAssistant({
               <h3 className="text-base font-semibold sm:text-lg">Como deseja aplicar?</h3>
               <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
                 Esta categoria já tem{" "}
-                {productCount === 1 ? "1 produto" : `${productCount} produtos`}. Preços e
-                escolhas especiais de cada um ficam.
+                {productCount === 1 ? "1 produto" : `${productCount} produtos`}. Itens que
+                saírem da receita deixam de aparecer nos produtos; preços do que continua
+                ficam.
               </p>
             </div>
             <div className="space-y-2">
@@ -900,7 +901,7 @@ export function CategoryRecipeAssistant({
                   {
                     value: "all" as const,
                     label: "Atualizar os produtos que já existem",
-                    hint: "Eles passam a seguir o novo jeito (preços ficam).",
+                    hint: "Seguem a receita nova; preços dos itens que ainda oferecem ficam.",
                   },
                   {
                     value: "later" as const,
