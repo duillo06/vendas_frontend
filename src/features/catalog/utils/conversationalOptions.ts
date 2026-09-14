@@ -289,15 +289,20 @@ export function draftFromGroup(
   group: OptionGroupAdmin,
   productPrices?: Record<string, number>,
   excludedOptionIds?: Iterable<string>,
+  /** ids da receita da categoria — null/omitido = biblioteca inteira (menos exclusões) */
+  offeredOptionIds?: Iterable<string> | null,
 ): CustomizationDraft {
   const selection_type = (group.selection_type === "multiple" ? "multiple" : "single") as OptionSelectionType;
   const kind = inferKindFromGroup(group);
   const excluded = new Set(excludedOptionIds ?? []);
-  // marca tudo da biblioteca menos o que o produto excluiu — não filtrar por preço
-  // (filtrar por preço desmarcava Pequena sem preço e o save gravava exclusão)
-  const selectedOptions = group.options.filter(
-    (option) => option.is_active !== false && !excluded.has(option.id),
-  );
+  const offered = offeredOptionIds != null ? new Set(offeredOptionIds) : null;
+  // marca o que a categoria oferece (ou a biblioteca toda se sem receita), menos exclusões
+  const selectedOptions = group.options.filter((option) => {
+    if (option.is_active === false) return false;
+    if (excluded.has(option.id)) return false;
+    if (offered && !offered.has(option.id)) return false;
+    return true;
+  });
 
   return {
     name: group.name,
@@ -318,6 +323,20 @@ export function draftFromGroup(
     })),
     kindId: kind?.id,
   };
+}
+
+/** ids oferecidos na receita pra este grupo — null = sem filtro (sem library) */
+export function offeredOptionIdsForGroup(
+  recipe: { libraries?: { option_group_id: string; option_ids?: string[]; options?: { id: string }[] }[] } | undefined,
+  optionGroupId: string,
+): Set<string> | null {
+  if (!recipe?.libraries?.length) return null;
+  const lib = recipe.libraries.find((row) => row.option_group_id === optionGroupId);
+  if (!lib) return null;
+  const ids = new Set<string>();
+  for (const id of lib.option_ids ?? []) ids.add(id);
+  for (const opt of lib.options ?? []) ids.add(opt.id);
+  return ids.size > 0 ? ids : null;
 }
 
 export function inferKindFromGroup(group: OptionGroupAdmin): PersonalizationKind | undefined {
@@ -789,6 +808,16 @@ export function selfCheckConversationalOptions(): void {
   const pequena = sizeItems.find((i) => normalizeOptionLabel(i.name) === "pequena");
   if (!pequena?.optionId || pequena.optionId !== "o1") {
     throw new Error("buildLibraryItems deveria reaproveitar id da base");
+  }
+
+  const pizzaGroup = fakeGroups[0];
+  const draftAll = draftFromGroup(pizzaGroup);
+  if (draftAll.choices.length !== 2) {
+    throw new Error("draftFromGroup sem receita deveria marcar a biblioteca");
+  }
+  const draftRecipe = draftFromGroup(pizzaGroup, undefined, undefined, ["o1"]);
+  if (draftRecipe.choices.length !== 1 || draftRecipe.choices[0]?.id !== "o1") {
+    throw new Error("draftFromGroup com receita deveria marcar só o oferecido");
   }
 
   const legacy = {

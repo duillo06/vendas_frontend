@@ -423,6 +423,7 @@ export function ProductFormPage() {
             links={form.product_option_groups}
             availableGroups={optionGroups ?? []}
             categoryName={categories?.find((c) => c.id === form.category_id)?.name}
+            categoryId={form.category_id || null}
             categories={categories}
             currentProductId={product?.id}
             productOptionPrices={form.option_prices}

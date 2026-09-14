@@ -80,6 +80,7 @@ export function OptionsIntentFlow({ product, onClose, onSuccess }: IntentFlowPro
         links={links}
         onChange={setLinks}
         categoryName={product.category?.name}
+        categoryId={product.category_id}
         categories={categories}
         currentProductId={product.id}
         productOptionPrices={optionPrices}

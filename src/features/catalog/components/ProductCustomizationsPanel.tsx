@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ import {
 import { catalogAdminKeys } from "@/features/catalog/constants/catalog-admin-keys";
 import { saveCanonicalFromDraft, buildOptionPricesFromDraft, mergeExclusionsForGroup, replaceGroupOptionPrices, resolveSelectedOptionIds } from "@/features/catalog/utils/canonicalLibrary";
 import {
+  offeredOptionIdsForGroup,
   summarizeGroup,
   type CustomizationDraft,
 } from "@/features/catalog/utils/conversationalOptions";
@@ -38,6 +39,8 @@ type ProductCustomizationsPanelProps = {
   availableGroups: OptionGroupAdmin[];
   onChange: (links: ProductOptionGroupLink[]) => void;
   categoryName?: string | null;
+  /** receita da categoria — filtra o que vem marcado no assistente */
+  categoryId?: string | null;
   categories?: CategoryAdmin[];
   currentProductId?: string;
   /** preços já salvos neste produto — alimenta o assistente */
@@ -65,6 +68,7 @@ export function ProductCustomizationsPanel({
   availableGroups,
   onChange,
   categoryName,
+  categoryId,
   categories,
   currentProductId,
   productOptionPrices = [],
@@ -85,6 +89,20 @@ export function ProductCustomizationsPanel({
   );
   const usePanel = assistantPresentation === "panel";
   const assistantOpen = dialog !== "closed";
+
+  const recipeQuery = useQuery({
+    queryKey: catalogAdminKeys.categoryRecipe(categoryId ?? ""),
+    queryFn: () => catalogAdminApi.getCategoryRecipe(categoryId!),
+    enabled: Boolean(categoryId),
+  });
+
+  const offeredOptionIds = useMemo(() => {
+    if (!editingGroup || !recipeQuery.data) return null;
+    const ids = offeredOptionIdsForGroup(recipeQuery.data, editingGroup.id);
+    return ids ? [...ids] : null;
+  }, [editingGroup, recipeQuery.data]);
+
+  const offeredIdsLoading = Boolean(categoryId) && dialog === "edit" && recipeQuery.isPending;
 
   useEffect(() => {
     onAssistantOpenChange?.(assistantOpen);
@@ -285,6 +303,8 @@ export function ProductCustomizationsPanel({
         priceContext="product"
         productOptionPrices={productOptionPrices}
         productOptionExclusions={productOptionExclusions}
+        offeredOptionIds={dialog === "edit" ? offeredOptionIds : null}
+        offeredIdsLoading={offeredIdsLoading}
         pending={saveMutation.isPending}
         confirmLabel={
           dialog === "edit"

@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Check, Plus, Sparkles } from "lucide-react";
-import { useMemo, useState, type ReactNode } from "react";
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import type { OptionGroupAdmin } from "@/features/catalog/api/catalogAdminApi";
 import {
@@ -41,6 +41,10 @@ type CustomizationAssistantProps = {
   productOptionPrices?: { option_id: string; price: number }[];
   /** opções que este produto não oferece (ainda estão na biblioteca) */
   productOptionExclusions?: string[];
+  /** ids da receita da categoria pra este grupo — null = biblioteca inteira */
+  offeredOptionIds?: string[] | null;
+  /** true enquanto busca a receita — evita marcar a biblioteca toda por engano */
+  offeredIdsLoading?: boolean;
   onCancel: () => void;
   onSave: (draft: CustomizationDraft, existingGroup?: OptionGroupAdmin) => void | Promise<void>;
   onReuse?: (group: OptionGroupAdmin) => void | Promise<void>;
@@ -69,6 +73,8 @@ export function CustomizationAssistant({
   priceContext = "product",
   productOptionPrices = [],
   productOptionExclusions = [],
+  offeredOptionIds = null,
+  offeredIdsLoading = false,
   onCancel,
   onSave,
   onReuse,
@@ -88,22 +94,60 @@ export function CustomizationAssistant({
     return map;
   }, [productOptionPrices]);
 
+  const priceMap = useMemo(
+    () => Object.fromEntries(productOptionPrices.map((r) => [r.option_id, r.price])),
+    [productOptionPrices],
+  );
+
   const [kind, setKind] = useState<PersonalizationKind | null>(() => {
     if (!initialGroup) return null;
     const inferred = kindById(draftFromGroup(initialGroup).kindId ?? "other");
     return inferred ?? kindById("other") ?? null;
   });
   const [draft, setDraft] = useState<CustomizationDraft>(() =>
-    initialGroup
-      ? draftFromGroup(
-          initialGroup,
-          Object.fromEntries(productOptionPrices.map((r) => [r.option_id, r.price])),
-          productOptionExclusions,
-        )
+    initialGroup && !offeredIdsLoading
+      ? draftFromGroup(initialGroup, priceMap, productOptionExclusions, offeredOptionIds)
       : emptyDraft(),
   );
   const [step, setStep] = useState<Step>(isEdit ? "library" : "hub");
   const [error, setError] = useState<string | null>(null);
+  const [draftReady, setDraftReady] = useState(() => !isEdit || !offeredIdsLoading);
+  const seededKeyRef = useRef<string | null>(null);
+
+  const offeredKey = offeredOptionIds ? [...offeredOptionIds].sort().join(",") : "";
+
+  // espera a receita pra não marcar 1 litro etc. por engano
+  useLayoutEffect(() => {
+    if (!isEdit || !initialGroup) {
+      setDraftReady(true);
+      return;
+    }
+    if (offeredIdsLoading) {
+      setDraftReady(false);
+      return;
+    }
+    const seedKey = `${initialGroup.id}:${offeredKey}`;
+    if (seededKeyRef.current === seedKey) {
+      setDraftReady(true);
+      return;
+    }
+    seededKeyRef.current = seedKey;
+    setDraft(draftFromGroup(initialGroup, priceMap, productOptionExclusions, offeredOptionIds));
+    setDraftReady(true);
+  }, [
+    isEdit,
+    initialGroup,
+    offeredIdsLoading,
+    offeredKey,
+    offeredOptionIds,
+    priceMap,
+    productOptionExclusions,
+  ]);
+
+  // formulário rápido de novo item
+  const [newName, setNewName] = useState("");
+  const [newPrice, setNewPrice] = useState(0);
+  const [newDescription, setNewDescription] = useState("");
 
   // formulário rápido de novo item
   const [newName, setNewName] = useState("");
@@ -285,7 +329,13 @@ export function CustomizationAssistant({
 
   return (
     <div className="space-y-5">
-      {step !== "hub" ? (
+      {!draftReady ? (
+        <p className="py-8 text-center text-sm text-[hsl(var(--muted-foreground))]">
+          Carregando opções da categoria…
+        </p>
+      ) : null}
+
+      {draftReady && step !== "hub" ? (
         <button
           type="button"
           className="inline-flex items-center gap-1 text-sm text-[hsl(var(--muted-foreground))] hover:text-foreground"
@@ -296,6 +346,7 @@ export function CustomizationAssistant({
         </button>
       ) : null}
 
+      {draftReady ? (
       <AnimatePresence mode="wait">
         {step === "hub" ? (
           <motion.div key="hub" {...stepMotion}>
@@ -627,6 +678,7 @@ export function CustomizationAssistant({
             {cancelLabel}
           </Button>
         </div>
+      ) : null}
       ) : null}
     </div>
   );
