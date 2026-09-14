@@ -149,11 +149,6 @@ export function CustomizationAssistant({
   const [newPrice, setNewPrice] = useState(0);
   const [newDescription, setNewDescription] = useState("");
 
-  // formulário rápido de novo item
-  const [newName, setNewName] = useState("");
-  const [newPrice, setNewPrice] = useState(0);
-  const [newDescription, setNewDescription] = useState("");
-
   const recommended = useMemo(() => suggestedKindIds(categoryName), [categoryName]);
 
   const reusable = useMemo(() => {
@@ -347,6 +342,7 @@ export function CustomizationAssistant({
       ) : null}
 
       {draftReady ? (
+      <>
       <AnimatePresence mode="wait">
         {step === "hub" ? (
           <motion.div key="hub" {...stepMotion}>
@@ -679,6 +675,7 @@ export function CustomizationAssistant({
           </Button>
         </div>
       ) : null}
+      </>
       ) : null}
     </div>
   );
