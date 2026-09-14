@@ -2,9 +2,9 @@
 
 > **Documento:** Arquitetura de Autoria — Receita da Categoria, Catálogo Reutilizável e Produto  
 > **Produto:** Food Service *(nome comercial provisório)*  
-> **Versão:** 1.6  
+> **Versão:** 1.7  
 > **Status:** Aprovado  
-> **Última atualização:** Julho/2026  
+> **Última atualização:** Setembro/2026  
 > **Depende de:** `00-product-philosophy.md`, `02-arquitetura.md`, `03-modelagem-do-banco.md`, `16-product-builder-engine.md`, `18-domain-rules.md`  
 > **Filosofia:** Toda UI descrita aqui é **conversacional**. Nomes de tabelas/campos abaixo são **internos** — jamais exibidos ao comerciante.
 
@@ -294,10 +294,13 @@ Modo tamanho absoluto: preços de tamanho **sempre** no passo 1 (produto). Não 
 1. Lê capabilities + libraries + items (+ composition settings).  
 2. Garante `ProductOptionGroup` por library vinculada.  
 3. Opções visíveis = items da receita − exclusions do produto.  
+   Exceção: opção com `product_option_prices` neste produto também entra (oferta explícita só nele).  
 4. Preços **efetivos** pela §8 (produto → categoria → legado) e serializados no public API como o storefront já espera.  
 5. Meio a meio → `ProductComposition`.
 
-Storefront e checkout **não** precisam conhecer a receita nem a distinção categoria/produto — só o preço efetivo.
+`apply_mode=all` rematerializa vínculos **e** poda preço/vínculo de item que saiu da receita (preços dos que continuam ficam).
+
+Storefront e checkout **não** precisam conhecer a receita nem a distinção categoria/produto — só o preço efetivo. O checkout valida seleções com a mesma regra de visibilidade (§3).
 
 ---
 
@@ -370,8 +373,8 @@ Como deseja aplicar?
 | Escolha | Comportamento |
 |---------|----------------|
 | Apenas novos | Materializa só em creates futuros |
-| Atualizar todos | Rematerializa, **preservando** exclusões e **overrides** de preço do produto |
-| Depois | Pendência (já suportada na receita) |
+| Atualizar todos | Rematerializa: cria vínculos faltantes; **poda** preço/vínculo fora da receita; **preserva** exclusões e preços dos itens que continuam |
+| Depois | Igual a “Apenas novos” — salva a receita agora; produtos atuais ficam como estão (sem fila de pendência) |
 
 ### 12.2 Mudança só de preço padrão (Tipo 2)
 
@@ -450,6 +453,7 @@ Ver `15-futuras-funcionalidades.md` e `19-future-ideas.md`.
 
 | Versão | Data | Descrição |
 |--------|------|-----------|
+| 1.7 | Set/2026 | Visibilidade = receita ∪ preço do produto − exclusões; apply_mode later = new_only; rematerialize poda órfãos |
 | 1.6 | Jul/2026 | **Aprovado** — herança inteligente de preços; Fase 5 em código |
 | 1.5 | Jul/2026 | Fase 4 — 1ª configuração (presets) + stub `/admin/ai/suggestions/` |
 | 1.4 | Jul/2026 | Fase 3 — materialize no create, exclusões, apply_mode, copiar preços |

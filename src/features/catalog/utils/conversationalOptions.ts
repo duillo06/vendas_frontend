@@ -512,19 +512,31 @@ export function buildPreviewLines(draft: CustomizationDraft): string[] {
   return lines;
 }
 
-export function summarizeGroup(group: OptionGroupAdmin): string {
-  const names = group.options
-    .filter((o) => o.is_active !== false)
-    .map((o) => o.name)
-    .slice(0, 4);
+export function summarizeGroup(
+  group: OptionGroupAdmin,
+  opts?: {
+    /** ids da receita — null/omitido = biblioteca inteira */
+    offeredIds?: Iterable<string> | null;
+    excludedIds?: Iterable<string>;
+  },
+): string {
+  const offered = opts?.offeredIds != null ? new Set(opts.offeredIds) : null;
+  const excluded = new Set(opts?.excludedIds ?? []);
+  const active = group.options.filter((o) => {
+    if (o.is_active === false) return false;
+    if (excluded.has(o.id)) return false;
+    if (offered && !offered.has(o.id)) return false;
+    return true;
+  });
+  const names = active.map((o) => o.name).slice(0, 4);
   if (names.length === 0) {
-    const count = group.options_count || group.options.length;
+    const count = offered
+      ? active.length
+      : group.options_count || group.options.length;
     return `${count} escolha${count === 1 ? "" : "s"}`;
   }
-  const extra =
-    (group.options_count || group.options.length) > names.length
-      ? ` +${(group.options_count || group.options.length) - names.length}`
-      : "";
+  const total = offered ? active.length : group.options_count || group.options.length;
+  const extra = total > names.length ? ` +${total - names.length}` : "";
   return `${names.join(" · ")}${extra}`;
 }
 

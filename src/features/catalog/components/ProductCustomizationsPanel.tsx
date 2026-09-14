@@ -429,7 +429,13 @@ export function ProductCustomizationsPanel({
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold">{group.name}</p>
                         <p className="mt-0.5 text-xs text-[hsl(var(--muted-foreground))]">
-                          {summarizeGroup(group)}
+                          {summarizeGroup(group, {
+                            offeredIds: offeredOptionIdsForGroup(
+                              recipeQuery.data,
+                              group.id,
+                            ),
+                            excludedIds: productOptionExclusions,
+                          })}
                         </p>
                       </div>
                       <div className="flex shrink-0 gap-0.5">

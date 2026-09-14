@@ -906,7 +906,7 @@ export function CategoryRecipeAssistant({
                   {
                     value: "later" as const,
                     label: "Decido depois",
-                    hint: "Salva a receita; você aplica quando quiser.",
+                    hint: "Só salva a receita — produtos atuais ficam como estão.",
                   },
                 ] as const
               ).map((opt) => (
