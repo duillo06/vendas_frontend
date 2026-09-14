@@ -1,8 +1,12 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLayoutEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { catalogAdminApi, type ProductAdminDetail } from "@/features/catalog/api/catalogAdminApi";
+import {
+  catalogAdminApi,
+  type CategoryRecipe,
+  type ProductAdminDetail,
+} from "@/features/catalog/api/catalogAdminApi";
 import { catalogAdminKeys } from "@/features/catalog/constants/catalog-admin-keys";
 import { isProductPricedKind } from "@/features/catalog/utils/conversationalOptions";
 import { CurrencyInput } from "@/shared/components/CurrencyInput";
@@ -21,8 +25,25 @@ type SizePriceRow = {
   original: number;
 };
 
-/** tamanhos/volumes ligados ao produto — preço absoluto neste item */
-function sizeRowsFromProduct(product: ProductAdminDetail): SizePriceRow[] {
+/** ids marcados na receita da categoria (só tamanho/volume) — null = sem filtro */
+function offeredSizeIdsFromRecipe(recipe: CategoryRecipe | undefined): Set<string> | null {
+  if (!recipe?.libraries?.length) return null;
+  const ids = new Set<string>();
+  let hasSizedLib = false;
+  for (const lib of recipe.libraries) {
+    if (!isProductPricedKind(lib.kind)) continue;
+    hasSizedLib = true;
+    for (const id of lib.option_ids ?? []) ids.add(id);
+    for (const opt of lib.options ?? []) ids.add(opt.id);
+  }
+  return hasSizedLib ? ids : null;
+}
+
+/** tamanhos/volumes da receita — não lista o grupo inteiro da biblioteca */
+function sizeRowsFromProduct(
+  product: ProductAdminDetail,
+  offeredIds: Set<string> | null,
+): SizePriceRow[] {
   const priceMap = new Map(
     (product.option_prices ?? []).map((row) => [row.option_id, Number(row.price)]),
   );
@@ -36,6 +57,7 @@ function sizeRowsFromProduct(product: ProductAdminDetail): SizePriceRow[] {
     for (const option of options) {
       if (option.is_active === false) continue;
       if (excluded.has(option.id)) continue;
+      if (offeredIds && !offeredIds.has(option.id)) continue;
       const price = priceMap.get(option.id) ?? 0;
       rows.push({
         optionId: option.id,
@@ -49,14 +71,49 @@ function sizeRowsFromProduct(product: ProductAdminDetail): SizePriceRow[] {
   return rows;
 }
 
+/** todos os ids de tamanho/volume no produto — pra limpar preço órfão */
+function allSizeOptionIds(product: ProductAdminDetail): Set<string> {
+  const ids = new Set<string>();
+  for (const link of product.product_option_groups ?? []) {
+    const group = link.group;
+    if (!group?.kind || !isProductPricedKind(group.kind)) continue;
+    for (const option of group.options ?? []) ids.add(option.id);
+  }
+  return ids;
+}
+
 export function PriceIntentFlow({ product, onClose, onSuccess }: IntentFlowProps) {
   const queryClient = useQueryClient();
-  const initialSizes = useMemo(() => sizeRowsFromProduct(product), [product]);
+
+  const recipeQuery = useQuery({
+    queryKey: catalogAdminKeys.categoryRecipe(product.category_id),
+    queryFn: () => catalogAdminApi.getCategoryRecipe(product.category_id),
+  });
+
+  const offeredIds = useMemo(
+    () => offeredSizeIdsFromRecipe(recipeQuery.data),
+    [recipeQuery.data],
+  );
+
+  const initialSizes = useMemo(
+    () => (recipeQuery.isSuccess ? sizeRowsFromProduct(product, offeredIds) : []),
+    [product, offeredIds, recipeQuery.isSuccess],
+  );
   const hasSizes = initialSizes.length > 0;
 
   const [step, setStep] = useState<"ask" | "confirm">("ask");
   const [price, setPrice] = useState(product.base_price);
-  const [sizes, setSizes] = useState<SizePriceRow[]>(initialSizes);
+  const [sizes, setSizes] = useState<SizePriceRow[]>([]);
+
+  useLayoutEffect(() => {
+    if (!recipeQuery.isSuccess) return;
+    setSizes(initialSizes);
+  }, [initialSizes, recipeQuery.isSuccess]);
+
+  useLayoutEffect(() => {
+    if (!recipeQuery.isError) return;
+    toast.error("Não deu pra carregar os tamanhos da categoria.");
+  }, [recipeQuery.isError]);
 
   const baseChanged = price !== product.base_price;
   const sizesChanged = sizes.some((row) => row.price !== row.original);
@@ -67,15 +124,18 @@ export function PriceIntentFlow({ product, onClose, onSuccess }: IntentFlowProps
 
   const save = useMutation({
     mutationFn: () => {
-      const sizeIds = new Set(sizes.map((row) => row.optionId));
-      const kept = (product.option_prices ?? []).filter((row) => !sizeIds.has(row.option_id));
+      const sizeIdsInGroup = allSizeOptionIds(product);
+      // borda/adicional fica; tamanho fora da receita some (evita vazar no cardápio)
+      const kept = (product.option_prices ?? []).filter(
+        (row) => !sizeIdsInGroup.has(row.option_id),
+      );
       const option_prices = [
         ...kept,
         ...sizes.map((row) => ({ option_id: row.optionId, price: row.price })),
       ];
       return catalogAdminApi.updateProduct(product.id, {
         base_price: price,
-        ...(hasSizes ? { option_prices } : {}),
+        ...(hasSizes || sizeIdsInGroup.size > 0 ? { option_prices } : {}),
       });
     },
     onSuccess: () => {
@@ -97,23 +157,42 @@ export function PriceIntentFlow({ product, onClose, onSuccess }: IntentFlowProps
       open
       onClose={onClose}
       emoji="💰"
-      wide={hasSizes}
+      wide={hasSizes || !recipeQuery.isSuccess}
       title={
-        step === "ask"
-          ? hasSizes
-            ? "Qual o preço de cada tamanho?"
-            : "Qual será o novo preço?"
-          : "Confirmar novos preços"
+        recipeQuery.isPending
+          ? "Carregando tamanhos…"
+          : recipeQuery.isError
+            ? "Não foi possível carregar"
+            : step === "ask"
+              ? hasSizes
+                ? "Qual o preço de cada tamanho?"
+                : "Qual será o novo preço?"
+              : "Confirmar novos preços"
       }
       description={
-        step === "ask"
-          ? hasSizes
-            ? "Valor de cada tamanho neste produto. Bordas e adicionais continuam à parte."
-            : "Só o valor base. Adicionais continuam à parte."
-          : "Revise antes de publicar no cardápio."
+        recipeQuery.isPending
+          ? "Só os tamanhos que a categoria oferece."
+          : recipeQuery.isError
+            ? "Tente fechar e abrir de novo."
+            : step === "ask"
+              ? hasSizes
+                ? "Valor de cada tamanho neste produto. Bordas e adicionais continuam à parte."
+                : "Só o valor base. Adicionais continuam à parte."
+              : "Revise antes de publicar no cardápio."
       }
     >
-      {step === "ask" ? (
+      {recipeQuery.isPending ? (
+        <div className="py-8 text-center text-sm text-[hsl(var(--muted-foreground))]">
+          Carregando…
+        </div>
+      ) : recipeQuery.isError ? (
+        <div className="space-y-4">
+          <p className="text-sm text-[hsl(var(--muted-foreground))]">
+            Sem a receita da categoria não dá pra saber quais tamanhos oferecer.
+          </p>
+          <FlowActions onCancel={onClose} confirmLabel="Fechar" onConfirm={onClose} />
+        </div>
+      ) : step === "ask" ? (
         <div className="space-y-4">
           {hasSizes ? (
             <>
