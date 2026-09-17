@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/lib/utils";
@@ -13,20 +14,49 @@ type SheetProps = {
 };
 
 export function Sheet({ open, onOpenChange, children, side = "right", className }: SheetProps) {
+  // trava o fundo — no mobile o toque vazava pro produto atrás
+  useEffect(() => {
+    if (!open) return;
+
+    const scrollY = window.scrollY;
+    const { style } = document.body;
+    const prev = {
+      overflow: style.overflow,
+      position: style.position,
+      top: style.top,
+      width: style.width,
+    };
+
+    style.overflow = "hidden";
+    style.position = "fixed";
+    style.top = `-${scrollY}px`;
+    style.width = "100%";
+
+    return () => {
+      style.overflow = prev.overflow;
+      style.position = prev.position;
+      style.top = prev.top;
+      style.width = prev.width;
+      window.scrollTo(0, scrollY);
+    };
+  }, [open]);
+
   if (!open) return null;
 
-  return (
-    {/* z acima da ProductPurchaseBar (z-50) senão a barra come a lista */}
+  // portal no body — senão ancestral com overflow/transform prende o fixed
+  return createPortal(
     <div className="fixed inset-0 z-[60]">
       <button
         type="button"
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 touch-none bg-black/50"
         aria-label="Fechar painel"
         onClick={() => onOpenChange(false)}
       />
       <div
+        role="dialog"
+        aria-modal="true"
         className={cn(
-          "absolute flex min-h-0 flex-col overflow-hidden border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-[var(--shadow-lg)] animate-fade-up",
+          "absolute flex min-h-0 flex-col overflow-hidden overscroll-contain border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-[var(--shadow-lg)] animate-fade-up",
           side === "right" && "top-0 right-0 h-full w-full max-w-sm border-l",
           side === "left" && "top-0 left-0 h-full w-full max-w-sm border-r",
           side === "bottom" &&
@@ -36,7 +66,8 @@ export function Sheet({ open, onOpenChange, children, side = "right", className 
       >
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -57,8 +88,10 @@ export function SheetContent({ children, title, onClose }: SheetContentProps) {
           </Button>
         ) : null}
       </div>
-      {/* min-h-0 pra o flex respeitar max-h do sheet e o filho poder scrollar */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">{children}</div>
+      {/* scroll fica aqui — lista longa não empurra o sheet nem vaza pro fundo */}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 [-webkit-overflow-scrolling:touch]">
+        {children}
+      </div>
     </>
   );
 }
