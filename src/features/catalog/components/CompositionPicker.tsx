@@ -56,12 +56,14 @@ export function CompositionPicker({ product, selected, onChange }: CompositionPi
 
     if (selected.length < maxAdditional) {
       onChange([...selected, part]);
+      setOpen(false); // escolheu — fecha o sheet
       return;
     }
 
     // quando só cabe 1 (meio a meio), trocar direto pelo novo
     if (maxAdditional === 1) {
       onChange([part]);
+      setOpen(false);
       return;
     }
 
@@ -112,60 +114,57 @@ export function CompositionPicker({ product, selected, onChange }: CompositionPi
               Nenhum sabor disponível para combinar agora.
             </p>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {(candidates ?? []).map((item) => {
-                const isSelected = selected.some((c) => c.productId === item.id);
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => toggle(item.id)}
-                    className={cn(
-                      "flex items-center gap-3 rounded-xl border p-3 text-left transition",
-                      isSelected
-                        ? "border-[hsl(var(--primary)/0.45)] bg-[hsl(var(--primary-soft))] ring-1 ring-[hsl(var(--primary)/0.2)]"
-                        : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.3)] hover:bg-[hsl(var(--muted))]",
-                    )}
-                  >
-                    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-[hsl(var(--muted))]">
-                      {item.image_url ? (
-                        <img src={item.image_url} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-[10px] text-[hsl(var(--muted-foreground))]">
-                          Sem foto
-                        </div>
+            // overflow aqui — senão a lista corta e some pizza
+            <div className="-mx-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1 pb-2">
+              <div className="grid gap-3 sm:grid-cols-2">
+                {(candidates ?? []).map((item) => {
+                  const isSelected = selected.some((c) => c.productId === item.id);
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => toggle(item.id)}
+                      className={cn(
+                        "flex items-center gap-3 rounded-xl border p-3 text-left transition",
+                        isSelected
+                          ? "border-[hsl(var(--primary)/0.45)] bg-[hsl(var(--primary-soft))] ring-1 ring-[hsl(var(--primary)/0.2)]"
+                          : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.3)] hover:bg-[hsl(var(--muted))]",
                       )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <p className="truncate font-medium">{item.name}</p>
-                        {isSelected ? <Check className="h-4 w-4 shrink-0 text-brand" /> : null}
+                    >
+                      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-[hsl(var(--muted))]">
+                        {item.image_url ? (
+                          <img src={item.image_url} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-[10px] text-[hsl(var(--muted-foreground))]">
+                            Sem foto
+                          </div>
+                        )}
                       </div>
-                      {item.description ? (
-                        <p className="line-clamp-1 text-xs text-[hsl(var(--muted-foreground))]">
-                          {item.description}
-                        </p>
-                      ) : null}
-                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                        <PriceDisplay value={item.base_price} className="text-sm font-semibold text-brand" />
-                        {item.tags.slice(0, 2).map((tag) => (
-                          <Badge key={tag} className="border-0 bg-brand-soft text-[10px] text-brand">
-                            {tag}
-                          </Badge>
-                        ))}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <p className="truncate font-medium">{item.name}</p>
+                          {isSelected ? <Check className="h-4 w-4 shrink-0 text-brand" /> : null}
+                        </div>
+                        {item.description ? (
+                          <p className="line-clamp-1 text-xs text-[hsl(var(--muted-foreground))]">
+                            {item.description}
+                          </p>
+                        ) : null}
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                          <PriceDisplay value={item.base_price} className="text-sm font-semibold text-brand" />
+                          {item.tags.slice(0, 2).map((tag) => (
+                            <Badge key={tag} className="border-0 bg-brand-soft text-[10px] text-brand">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  </button>
-                );
-              })}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
-
-          <div className="sticky bottom-0 mt-4 bg-[hsl(var(--background))] pt-2">
-            <Button type="button" className="h-11 w-full" onClick={() => setOpen(false)}>
-              Confirmar
-            </Button>
-          </div>
         </SheetContent>
       </Sheet>
     </div>

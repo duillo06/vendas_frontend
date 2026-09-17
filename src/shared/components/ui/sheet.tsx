@@ -16,7 +16,8 @@ export function Sheet({ open, onOpenChange, children, side = "right", className 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
+    {/* z acima da ProductPurchaseBar (z-50) senão a barra come a lista */}
+    <div className="fixed inset-0 z-[60]">
       <button
         type="button"
         className="absolute inset-0 bg-black/50"
