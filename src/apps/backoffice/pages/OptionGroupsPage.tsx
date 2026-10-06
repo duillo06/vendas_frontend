@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Copy, Layers, Pencil, Plus, Search, Sparkles, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 
@@ -14,7 +14,7 @@ import {
 } from "@/features/catalog/utils/canonicalLibrary";
 import type { CustomizationDraft } from "@/features/catalog/utils/conversationalOptions";
 import { UiHint } from "@/shared/components/UiHint";
-import { BackLink, PageHeader } from "@/shared/components/visual";
+import { AdminPagination, BackLink, PageHeader, slicePage } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import {
@@ -37,6 +37,7 @@ export function OptionGroupsPage() {
   const queryClient = useQueryClient();
   const { confirm } = useConfirm();
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [dialog, setDialog] = useState<DialogMode>("closed");
   const [editing, setEditing] = useState<OptionGroupAdmin | null>(null);
 
@@ -53,6 +54,11 @@ export function OptionGroupsPage() {
     return groups.filter((group) => group.name.toLowerCase().includes(q));
   }, [groups, search]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
+  const paged = useMemo(() => slicePage(filtered, page), [filtered, page]);
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: catalogAdminKeys.optionGroups() });
   };
@@ -168,8 +174,9 @@ export function OptionGroupsPage() {
           ) : null}
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {filtered.map((group) => {
+        <div className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+          {paged.map((group) => {
             const count = group.options_count || group.options.length;
             return (
               <Card
@@ -237,6 +244,8 @@ export function OptionGroupsPage() {
               </Card>
             );
           })}
+          </div>
+          <AdminPagination page={page} total={filtered.length} onPageChange={setPage} />
         </div>
       )}
 

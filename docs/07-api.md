@@ -2,10 +2,11 @@
 
 > **Documento:** Contrato da API REST  
 > **Produto:** Food Service *(nome comercial provisório)*  
-> **Versão:** 1.0  
+> **Versão:** 1.1  
 > **Status:** Aprovado  
-> **Última atualização:** Julho/2026  
+> **Última atualização:** Outubro/2026  
 > **Depende de:** `03-modelagem-do-banco.md`, `05-frontend.md`, `06-backend.md` (aprovados)  
+> **Relacionados:** `11-guia-ui-ux.md` §10.2 (Dashboard V1)  
 > **Base URL:** `https://api.foodservice.app/api/v1` *(produção)* | `http://localhost:8001/api/v1` *(dev — ver `00-portas-locais.md`)*
 
 ---
@@ -263,7 +264,7 @@ X-Tenant-ID: 550e8400-e29b-41d4-a716-446655440000
 ### 6.1 Paginação
 
 ```
-GET /api/v1/admin/orders/?page=2&page_size=20
+GET /api/v1/admin/orders/?page=2&page_size=30
 ```
 
 **Resposta:**
@@ -271,8 +272,8 @@ GET /api/v1/admin/orders/?page=2&page_size=20
 ```json
 {
   "count": 156,
-  "next": "https://api.foodservice.app/api/v1/admin/orders/?page=3&page_size=20",
-  "previous": "https://api.foodservice.app/api/v1/admin/orders/?page=1&page_size=20",
+  "next": "https://api.foodservice.app/api/v1/admin/orders/?page=3&page_size=30",
+  "previous": "https://api.foodservice.app/api/v1/admin/orders/?page=1&page_size=30",
   "results": [ ... ]
 }
 ```
@@ -280,7 +281,7 @@ GET /api/v1/admin/orders/?page=2&page_size=20
 | Parâmetro | Default | Máximo |
 |-----------|---------|--------|
 | `page` | 1 | — |
-| `page_size` | 20 | 100 |
+| `page_size` | 30 | 100 |
 
 ### 6.2 Filtros
 
@@ -539,6 +540,53 @@ Altera a senha do funcionário autenticado (própria conta).
 ```
 
 **Erros comuns:** senha atual incorreta (`400`), senhas não coincidem (`400`), sem JWT (`401`).
+
+---
+
+### 9.5 Preferências do funcionário (layout do dashboard)
+
+**Auth:** Bearer (employee)  
+**Também em:** `GET|PATCH /api/v1/admin/me/preferences/`
+
+#### `GET /api/v1/auth/me/preferences/`
+
+**Response `200`:**
+
+```json
+{
+  "dashboard": {
+    "widget_order": [
+      "top_products",
+      "hours",
+      "days",
+      "payments",
+      "slow_products",
+      "delivery",
+      "customers"
+    ],
+    "hidden_widgets": []
+  }
+}
+```
+
+`GET /api/v1/auth/me/` e `GET /api/v1/admin/me/` também devolvem `preferences` no mesmo formato.
+
+#### `PATCH /api/v1/auth/me/preferences/`
+
+Atualização parcial (merge). Widgets desconhecidos são ignorados; ids faltantes são completados com o padrão. Não permite ocultar todos os widgets.
+
+**Request:**
+
+```json
+{
+  "dashboard": {
+    "widget_order": ["top_products", "hours", "customers"],
+    "hidden_widgets": ["slow_products"]
+  }
+}
+```
+
+**Response `200`:** preferências normalizadas (mesmo shape do GET).
 
 ---
 
@@ -1585,25 +1633,113 @@ Statuses: `pending` | `completed` | `dismissed`.
 
 ## 18. API Admin — Dashboard
 
-**Permissão:** `dashboard.view`
+**Permissão:** `dashboard.view`  
+**UI:** `11-guia-ui-ux.md` §10.2 (Dashboard V1 — zona Agora + Padrão)
 
 ### 18.1 `GET /api/v1/admin/dashboard/`
 
-KPIs do dia atual.
+Painel auxiliar do backoffice: KPIs do período + agregações + fila ao vivo.
 
-**Response `200`:**
+#### Query
+
+| Param | Valores | Default | Efeito |
+|-------|---------|---------|--------|
+| `period` | `today` \| `7d` \| `30d` \| `custom` | `today` | Janela de KPIs e Zona B |
+| `from` | `YYYY-MM-DD` | — | Obrigatório se `period=custom` |
+| `to` | `YYYY-MM-DD` | — | Obrigatório se `period=custom` (máx. 90 dias) |
+
+**Comparativo automático**
+
+| `period` | Compara com |
+|----------|-------------|
+| `today` | Ontem (mesmo timezone da empresa) |
+| `7d` | 7 dias imediatamente anteriores |
+| `30d` | 30 dias imediatamente anteriores |
+| `custom` | Janela anterior de mesma duração logo antes de `from` |
+
+#### Response `200` (V1)
 
 ```json
 {
-  "today": {
-    "date": "2026-07-06",
-    "total_orders": 23,
+  "period": "today",
+  "compare_period": {
+    "label": "yesterday",
+    "start": "2026-10-05",
+    "end": "2026-10-05"
+  },
+  "period_range": {
+    "start": "2026-10-06",
+    "end": "2026-10-06"
+  },
+  "kpis": {
+    "orders": { "value": 23, "previous": 18, "delta_pct": 27.78 },
+    "revenue": { "value": 1847.50, "previous": 1667.20, "delta_pct": 10.81 },
+    "average_ticket": { "value": 80.33, "previous": 92.62, "delta_pct": -13.27 },
+    "cancelled": { "value": 1, "previous": 0, "delta_pct": null },
+    "cancellation_rate": { "value": 4.35, "previous": 0, "delta_pct": null }
+  },
+  "operational": {
     "pending_orders": 3,
     "preparing_orders": 5,
-    "completed_orders": 14,
-    "cancelled_orders": 1,
-    "revenue": 1847.50,
-    "average_ticket": 80.33
+    "completed_orders": 14
+  },
+  "series": {
+    "granularity": "hour",
+    "metric_keys": ["orders", "revenue", "average_ticket"],
+    "current": [
+      { "label": "10:00", "orders": 1, "revenue": 78.0, "average_ticket": 78.0 },
+      { "label": "18:00", "orders": 5, "revenue": 410.0, "average_ticket": 82.0 }
+    ],
+    "previous": [
+      { "label": "10:00", "orders": 0, "revenue": 0, "average_ticket": 0 },
+      { "label": "18:00", "orders": 4, "revenue": 320.0, "average_ticket": 80.0 }
+    ]
+  },
+  "by_hour": {
+    "weekday": [
+      { "slot": "10-12", "orders": 4 },
+      { "slot": "18-20", "orders": 18 }
+    ],
+    "weekend": [
+      { "slot": "10-12", "orders": 6 },
+      { "slot": "18-20", "orders": 22 }
+    ],
+    "peak_slot": "18-20",
+    "peak_orders": 18
+  },
+  "by_weekday": {
+    "days": [
+      { "weekday": 0, "label": "Seg", "orders": 16 },
+      { "weekday": 6, "label": "Dom", "orders": 43 }
+    ],
+    "best_weekday": 6,
+    "best_orders": 43
+  },
+  "by_payment_method": [
+    { "method": "credit", "label": "Crédito", "orders": 61 },
+    { "method": "pix", "label": "Pix", "orders": 38 },
+    { "method": "debit", "label": "Débito", "orders": 30 },
+    { "method": "cash", "label": "Dinheiro", "orders": 11 }
+  ],
+  "top_products": [
+    { "product_id": "…", "name": "Pizza Calabresa", "quantity": 48, "revenue": 2395.20, "orders": 40 }
+  ],
+  "slow_products": [
+    { "product_id": "…", "name": "Suco Detox", "quantity": 0, "revenue": 0, "orders": 0 }
+  ],
+  "by_delivery_type": {
+    "total": 375,
+    "items": [
+      { "method": "delivery", "label": "Entrega", "orders": 252, "pct": 67.2 },
+      { "method": "pickup", "label": "Retirada", "orders": 123, "pct": 32.8 }
+    ]
+  },
+  "customers": {
+    "new": 8,
+    "returning": 16,
+    "total": 24,
+    "new_pct": 33.3,
+    "returning_pct": 66.7
   },
   "recent_orders": [
     {
@@ -1614,9 +1750,53 @@ KPIs do dia atual.
       "total": 78.00,
       "created_at": "2026-07-06T18:30:00Z"
     }
-  ]
+  ],
+  "today": {
+    "date": "2026-10-06",
+    "total_orders": 23,
+    "pending_orders": 3,
+    "preparing_orders": 5,
+    "completed_orders": 14,
+    "cancelled_orders": 1,
+    "revenue": 1847.50,
+    "average_ticket": 80.33
+  },
+  "yesterday": {
+    "date": "2026-10-05",
+    "total_orders": 18,
+    "revenue": 1667.20
+  }
 }
 ```
+
+#### Regras de payload
+
+| Campo | Regra |
+|-------|--------|
+| `series.granularity` | `hour` quando `period=today`; `day` quando `7d` ou `30d` |
+| `kpis.*.delta_pct` | `((value - previous) / previous) * 100`, 2 casas; `null` se `previous = 0` |
+| `by_payment_method` | Só métodos com `orders > 0`; ordenado desc |
+| `by_hour` / `by_weekday` | Agregam pedidos **concluídos** do `period` (não o compare) |
+| `recent_orders` | Sempre “agora” (últimos N do tenant), **independe** de `period` |
+| `operational` | Contagens ao vivo do dia civil atual (fila), independente do chip |
+| `today` / `yesterday` | **Compat MVP** — manter até o front migrar para `kpis` + `operational` |
+
+#### Empty / cold start
+
+Se não houver pedidos concluídos no `period`, ainda assim retornar:
+
+- `kpis` com zeros / `delta_pct` null conforme regra  
+- `series.current` / `previous` como arrays (podem ser vazios ou pontos zero)  
+- `by_hour`, `by_weekday`, `by_payment_method` como listas vazias ou zeros  
+- Front **não** desenha Zona B com eixos vazios — usa empty state (UI)
+
+#### Erros
+
+| Status | Quando |
+|--------|--------|
+| `400` | `period` inválido |
+| `401` | Sem JWT |
+| `403` | Sem `dashboard.view` |
 
 ---
 
@@ -1648,10 +1828,12 @@ KPIs do dia atual.
 
 ### 19.4 V1 — Relatórios
 
+> **Nota Dashboard V1:** agregações de vendas por período, horário, dia e pagamento passam a viver em `GET /admin/dashboard/?period=` (§18). Página/endpoints dedicados de reports ficam para P1+ (ex.: export CSV, top produtos).
+
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| GET | `/api/v1/admin/reports/sales/` | Vendas por período |
-| GET | `/api/v1/admin/reports/products/` | Produtos mais vendidos |
+| GET | `/api/v1/admin/reports/sales/` | *(P1+)* Vendas detalhadas / export |
+| GET | `/api/v1/admin/reports/products/` | *(P1)* Produtos mais vendidos |
 
 ### 19.5 V2 — Entrega
 
@@ -1714,6 +1896,7 @@ GET /api/v1/redoc/           # ReDoc
 
 | Versão | Data | Alterações |
 |--------|------|------------|
+| v1.1 | Out/2026 | Dashboard V1: `?period=` + kpis/series/by_hour/by_weekday/by_payment |
 | v1.0 | Jul/2026 | Versão inicial MVP |
 
 ---
@@ -1732,6 +1915,7 @@ GET /api/v1/redoc/           # ReDoc
 
 | Versão | Data | Autor | Alterações |
 |--------|------|-------|------------|
+| 1.1 | Out/2026 | — | §18 Dashboard V1; §9.5 preferências de layout do funcionário |
 | 1.0 | Jul/2026 | — | Versão inicial — aprovado |
 
 ---
@@ -1751,7 +1935,7 @@ GET /api/v1/redoc/           # ReDoc
 | 9 | POST | `/public/orders/checkout/` | — | — |
 | 9a | GET | `/public/promotions/offers/` | — | — |
 | 10 | GET | `/public/orders/{id}/` | — | — |
-| 11 | GET | `/admin/dashboard/` | JWT | `dashboard.view` |
+| 11 | GET | `/admin/dashboard/?period=` | JWT | `dashboard.view` |
 | 12 | GET | `/admin/orders/` | JWT | `orders.view` |
 | 13 | GET | `/admin/orders/{id}/` | JWT | `orders.view` |
 | 14 | PATCH | `/admin/orders/{id}/status/` | JWT | `orders.manage` |

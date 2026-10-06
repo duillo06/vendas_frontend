@@ -1,20 +1,33 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ClipboardList, LayoutDashboard, RefreshCw, ShoppingBag, Sparkles, TrendingUp, XCircle } from "lucide-react";
+import {
+  ClipboardList,
+  LayoutDashboard,
+  ShoppingBag,
+  TrendingUp,
+  XCircle,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router";
 
 import { catalogAdminApi } from "@/features/catalog/api/catalogAdminApi";
+import { DashboardPeriodToolbar } from "@/features/dashboard/components/DashboardPeriodToolbar";
+import { DashboardWidgetsBoard } from "@/features/dashboard/components/DashboardWidgetsBoard";
+import { DeltaStatCard } from "@/features/dashboard/components/DeltaStatCard";
+import { InsightStrip } from "@/features/dashboard/components/InsightStrip";
+import { DashboardPanel } from "@/features/dashboard/components/DashboardPanel";
+import { RecentOrderRow } from "@/features/dashboard/components/RecentOrderRow";
+import { SalesTrendChart } from "@/features/dashboard/components/SalesTrendChart";
 import { useDashboard } from "@/features/dashboard";
+import type { DashboardPeriod, DashboardQuery } from "@/features/dashboard";
 import { FirstSetupAssistant } from "@/features/flow/FirstSetupAssistant";
 import { FlowEmptyState } from "@/features/flow/FlowEmptyState";
 import { FlowOnboarding } from "@/features/flow/FlowOnboarding";
 import { useFlowOnboarding } from "@/features/flow/useFlowOnboarding";
 import { useSettings } from "@/features/settings";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
-import { UiHint } from "@/shared/components/UiHint";
-import { AdminOrderCard, PageHeader, StatCard } from "@/shared/components/visual";
+import { PageHeader } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Card, CardContent } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { adminCopy } from "@/shared/copy/admin";
 import { formatCurrency } from "@/shared/lib/format";
@@ -27,8 +40,50 @@ function formatTime(iso: string) {
   }).format(new Date(iso));
 }
 
+function todayIso() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function daysAgoIso(days: number) {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function trendInsight(deltaPct: number | null, period: DashboardPeriod): string | undefined {
+  if (deltaPct === null) return undefined;
+  const abs = Math.abs(deltaPct);
+  if (abs < 0.5) return "Pedidos estáveis vs período anterior";
+  const dir = deltaPct > 0 ? "acima" : "abaixo";
+  const vs =
+    period === "today"
+      ? "ontem"
+      : period === "7d"
+        ? "7 dias anteriores"
+        : period === "30d"
+          ? "30 dias anteriores"
+          : "período anterior";
+  return `Pedidos ${abs.toFixed(0)}% ${dir} de ${vs}`;
+}
+
 export function DashboardPage() {
-  const { data, isLoading, isError } = useDashboard();
+  const [period, setPeriod] = useState<DashboardPeriod>("30d");
+  const [rangeFrom, setRangeFrom] = useState(() => daysAgoIso(29));
+  const [rangeTo, setRangeTo] = useState(() => todayIso());
+
+  const query: DashboardQuery =
+    period === "custom"
+      ? { period: "custom", from: rangeFrom, to: rangeTo }
+      : { period };
+
+  const { data, isLoading, isError } = useDashboard(query);
   const { data: settingsData } = useSettings();
   const { data: productsPage } = useQuery({
     queryKey: ["admin", "products", "dashboard-empty-check"],
@@ -42,7 +97,6 @@ export function DashboardPage() {
 
   const setupPending = settingsData?.settings.setup?.status === "pending";
   const showFirstSetup = Boolean(setupPending && firstSetupOpen);
-  // tour local só se a 1ª config já passou (ou foi dispensada)
   const showFlowTour = !setupPending && onboarding.open;
   const hasProducts = (productsPage?.count ?? productsPage?.results?.length ?? 0) > 0;
 
@@ -53,52 +107,70 @@ export function DashboardPage() {
     else setGreeting("Boa noite");
   }, []);
 
-  const pendingOrders = data?.today.pending_orders ?? 0;
-  const totalOrders = data?.today.total_orders ?? 0;
-  const progressPercent = totalOrders > 0 ? Math.round(((totalOrders - pendingOrders) / totalOrders) * 100) : 0;
+  const pendingOrders = data?.operational?.pending_orders ?? data?.today.pending_orders ?? 0;
+  const preparingOrders = data?.operational?.preparing_orders ?? data?.today.preparing_orders ?? 0;
+  const kpis = data?.kpis;
 
   const insightLines = useMemo(() => {
-    if (!data) return [];
+    if (!data || !kpis) return [];
     const lines: string[] = [];
-    const { today, yesterday } = data;
+    const copy = adminCopy.dashboard.insights;
 
-    if (today.total_orders === 0) {
-      lines.push(adminCopy.dashboard.insights.noOrdersYet);
+    if (pendingOrders > 0) lines.push(copy.pending(pendingOrders));
+
+    if (kpis.orders.value === 0) {
+      lines.push(period === "today" ? copy.noOrdersYet : copy.noOrdersPeriod);
     } else {
-      lines.push(adminCopy.dashboard.insights.ordersToday(today.total_orders));
+      lines.push(copy.ordersInPeriod(kpis.orders.value, period));
     }
 
-    if (today.pending_orders > 0) {
-      lines.push(adminCopy.dashboard.insights.pending(today.pending_orders));
+    if (kpis.average_ticket.value > 0) {
+      lines.push(copy.ticket(formatCurrency(kpis.average_ticket.value)));
     }
 
-    if (today.completed_orders > 0 && today.average_ticket > 0) {
-      lines.push(adminCopy.dashboard.insights.ticket(formatCurrency(today.average_ticket)));
+    const revDelta = kpis.revenue.delta_pct;
+    if (revDelta !== null && Math.abs(kpis.revenue.value - kpis.revenue.previous) >= 0.01) {
+      const diff = Math.abs(kpis.revenue.value - kpis.revenue.previous);
+      if (revDelta > 0) lines.push(copy.revenueUp(formatCurrency(diff), period));
+      else lines.push(copy.revenueDown(formatCurrency(diff), period));
     }
 
-    if (yesterday) {
-      const revenueDiff = today.revenue - yesterday.revenue;
-      if (Math.abs(revenueDiff) < 0.01) {
-        if (today.total_orders > 0 || yesterday.total_orders > 0) {
-          lines.push(adminCopy.dashboard.insights.revenueSame);
-        }
-      } else if (revenueDiff > 0) {
-        lines.push(adminCopy.dashboard.insights.revenueUp(formatCurrency(revenueDiff)));
-      } else {
-        lines.push(adminCopy.dashboard.insights.revenueDown(formatCurrency(Math.abs(revenueDiff))));
-      }
+    return lines.slice(0, 3);
+  }, [data, kpis, pendingOrders, period]);
 
-      const orderDiff = today.total_orders - yesterday.total_orders;
-      if (orderDiff !== 0) {
-        lines.push(adminCopy.dashboard.insights.vsYesterdayOrders(orderDiff));
-      }
+  const hasPatternData = Boolean(
+    data &&
+      (data.kpis.revenue.value > 0 ||
+        data.by_weekday.best_orders > 0 ||
+        data.by_payment_method.length > 0),
+  );
+
+  const recentOrders = data?.recent_orders.slice(0, 8) ?? [];
+  const seriesInsight = data ? trendInsight(data.kpis.orders.delta_pct, period) : undefined;
+  const kpiLabels = adminCopy.dashboard.kpiLabels(period);
+
+  function handlePreset(next: Exclude<DashboardPeriod, "custom">) {
+    setPeriod(next);
+    if (next === "today") {
+      setRangeFrom(todayIso());
+      setRangeTo(todayIso());
+    } else if (next === "7d") {
+      setRangeFrom(daysAgoIso(6));
+      setRangeTo(todayIso());
+    } else {
+      setRangeFrom(daysAgoIso(29));
+      setRangeTo(todayIso());
     }
+  }
 
-    return lines.slice(0, 4);
-  }, [data]);
+  function handleCustomChange(from: string, to: string) {
+    setRangeFrom(from);
+    setRangeTo(to);
+    if (from && to) setPeriod("custom");
+  }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-3 sm:space-y-4">
       <FirstSetupAssistant
         open={showFirstSetup}
         onClose={() => setFirstSetupOpen(false)}
@@ -118,189 +190,194 @@ export function DashboardPage() {
         }}
       />
 
-      <PageHeader
-        title="Dashboard"
-        subtitle={adminCopy.dashboard.subtitle(greeting)}
-        icon={LayoutDashboard}
-        action={
-          <Link to="/pedidos">
-            <Button size="lg" className="gap-2">
-              <ShoppingBag className="h-4 w-4" />
-              Ver pedidos
-            </Button>
-          </Link>
-        }
-      />
+      <div className="space-y-2">
+        <PageHeader
+          title="Dashboard"
+          subtitle={adminCopy.dashboard.subtitle(greeting, period)}
+          icon={LayoutDashboard}
+          density="compact"
+        />
+        <DashboardPeriodToolbar
+          period={period}
+          from={rangeFrom}
+          to={rangeTo}
+          onPreset={handlePreset}
+          onCustomChange={handleCustomChange}
+        />
+      </div>
 
       {isError ? (
-        <p className="text-sm text-red-600">Não foi possível carregar o dashboard.</p>
+        <p className="text-sm text-red-600">Não foi possível carregar o dashboard. Tente atualizar a página.</p>
       ) : null}
 
       {!isLoading && insightLines.length > 0 ? (
-        <Card className="overflow-hidden border-[hsl(var(--border))]">
-          <CardHeader className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]/35 pb-4">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Sparkles className="h-4 w-4 text-brand" />
-              {adminCopy.dashboard.insights.title}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 p-5">
-            {insightLines.map((line) => (
-              <p key={line} className="type-body text-[hsl(var(--foreground))]">
-                {line}
-              </p>
-            ))}
-          </CardContent>
-        </Card>
+        <InsightStrip lines={insightLines} pendingOrders={pendingOrders} />
       ) : null}
 
-      <UiHint icon={RefreshCw} tone="info">
-        {adminCopy.dashboard.guidance}
-      </UiHint>
-
-      {!isLoading && pendingOrders > 0 ? (
-        <UiHint icon={ClipboardList} tone="warm" title="Atenção">
-          {adminCopy.dashboard.pendingAlert(pendingOrders)}
-          <Link to="/pedidos?status=pending" className="ml-1 font-medium text-brand underline">
-            Ver pendentes
-          </Link>
-        </UiHint>
-      ) : null}
-
-      {!isLoading && totalOrders > 0 ? (
-        <div className="glass-panel rounded-2xl p-4">
-          <div className="mb-2 flex items-center justify-between text-sm">
-            <span className="font-medium">{adminCopy.dashboard.progressLabel}</span>
-            <span className="text-[hsl(var(--muted-foreground))]">
-              {totalOrders - pendingOrders}/{totalOrders} fora da fila
-            </span>
-          </div>
-          <div className="h-2 overflow-hidden rounded-full bg-[hsl(var(--muted))]">
-            <div
-              className="h-full rounded-full bg-brand transition-all duration-500"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-        </div>
-      ) : null}
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Pedidos hoje"
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        <DeltaStatCard
+          label={kpiLabels.orders}
           icon={ShoppingBag}
           accent="chart-1"
           highlight={pendingOrders > 0}
-          value={isLoading ? <Skeleton className="h-9 w-16" /> : totalOrders}
+          deltaPct={kpis?.orders.delta_pct ?? null}
+          value={isLoading || !kpis ? <Skeleton className="h-7 w-12" /> : kpis.orders.value}
           hint={
             isLoading ? (
-              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-3 w-20" />
             ) : (
-              <>
-                {pendingOrders} pendentes · {data?.today.preparing_orders ?? 0} em preparo
-                <p className="mt-1">{adminCopy.dashboard.metrics.ordersToday}</p>
-              </>
+              `${pendingOrders} pend. · ${preparingOrders} preparo`
             )
           }
         />
-        <StatCard
-          label="Faturamento"
+        <DeltaStatCard
+          label={kpiLabels.revenue}
           icon={TrendingUp}
           accent="chart-3"
           highlight
+          deltaPct={kpis?.revenue.delta_pct ?? null}
           value={
-            isLoading ? <Skeleton className="h-9 w-28" /> : <PriceDisplay value={data?.today.revenue ?? 0} />
+            isLoading || !kpis ? <Skeleton className="h-7 w-20" /> : <PriceDisplay value={kpis.revenue.value} />
           }
-          hint={
-            isLoading ? (
-              <Skeleton className="h-4 w-20" />
-            ) : (
-              <>
-                {(data?.today.completed_orders ?? 0) === 1
-                  ? "1 concluído"
-                  : `${data?.today.completed_orders ?? 0} concluídos`}
-                <p className="mt-1">{adminCopy.dashboard.metrics.revenue}</p>
-              </>
-            )
-          }
+          hint={adminCopy.dashboard.metrics.revenue}
         />
-        <StatCard
-          label="Ticket médio"
+        <DeltaStatCard
+          label={kpiLabels.ticket}
           icon={TrendingUp}
           accent="chart-4"
+          deltaPct={kpis?.average_ticket.delta_pct ?? null}
           value={
-            isLoading ? (
-              <Skeleton className="h-9 w-24" />
+            isLoading || !kpis ? (
+              <Skeleton className="h-7 w-16" />
             ) : (
-              <PriceDisplay value={data?.today.average_ticket ?? 0} />
+              <PriceDisplay value={kpis.average_ticket.value} />
             )
           }
           hint={adminCopy.dashboard.metrics.ticket}
         />
-        <StatCard
-          label="Cancelados"
+        <DeltaStatCard
+          label={kpiLabels.cancelled}
           icon={XCircle}
           accent="chart-2"
-          value={isLoading ? <Skeleton className="h-9 w-12" /> : (data?.today.cancelled_orders ?? 0)}
-          hint={adminCopy.dashboard.metrics.cancelled}
+          neutralDelta
+          deltaPct={kpis?.cancellation_rate?.delta_pct ?? kpis?.cancelled.delta_pct ?? null}
+          value={
+            isLoading || !kpis ? (
+              <Skeleton className="h-7 w-10" />
+            ) : (
+              `${(kpis.cancellation_rate?.value ?? 0).toFixed(1)}%`
+            )
+          }
+          hint={
+            isLoading || !kpis
+              ? adminCopy.dashboard.metrics.cancelled
+              : `${kpis.cancelled.value} cancelados · ${adminCopy.dashboard.metrics.cancelled}`
+          }
         />
       </div>
 
-      <Card className="overflow-hidden border-[hsl(var(--border))] shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between gap-2 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40">
-          <CardTitle className="text-base">Pedidos recentes</CardTitle>
-          <Link to="/pedidos">
-            <Button type="button" variant="outline" size="sm">
-              Ver todos
-            </Button>
-          </Link>
-        </CardHeader>
-        <CardContent className="p-4">
+      {/* fila + vendas na mesma linha */}
+      <div className="grid gap-3 md:grid-cols-3">
+        <DashboardPanel
+          className="md:col-span-1"
+          title="Pedidos recentes"
+          contentClassName="px-0 pb-2 pt-1"
+          action={
+            <Link to="/pedidos">
+              <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs">
+                Ver todos
+              </Button>
+            </Link>
+          }
+        >
           {isLoading ? (
-            <div className="space-y-3">
-              <Skeleton className="h-20 w-full rounded-2xl" />
-              <Skeleton className="h-20 w-full rounded-2xl" />
+            <div className="space-y-2 px-4 py-2">
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-9 w-full" />
             </div>
-          ) : data?.recent_orders.length ? (
-            <ul className="space-y-3">
-              {data.recent_orders.map((order) => (
+          ) : recentOrders.length ? (
+            <ul>
+              {recentOrders.map((order) => (
                 <li key={order.id}>
-                  <AdminOrderCard
+                  <RecentOrderRow
                     id={order.id}
                     orderNumber={order.order_number}
                     customerName={order.customer_name}
                     createdAt={formatTime(order.created_at)}
                     status={order.status as OrderStatus}
                     total={order.total}
-                    compact
                   />
                 </li>
               ))}
             </ul>
           ) : (
+            <div className="px-4 pb-2">
+              <FlowEmptyState
+                line={{
+                  emoji: "🌱",
+                  title: adminCopy.dashboard.emptyOrders.title,
+                  text: adminCopy.dashboard.emptyOrders.description,
+                  mood: "idle",
+                }}
+                action={
+                  hasProducts ? (
+                    <Button type="button" size="sm" onClick={() => navigate("/pedidos")} className="gap-2">
+                      <ClipboardList className="h-4 w-4" />
+                      {adminCopy.dashboard.emptyOrders.ctaViewOrders}
+                    </Button>
+                  ) : (
+                    <Button type="button" size="sm" onClick={() => navigate("/produtos/novo")} className="gap-2">
+                      <ShoppingBag className="h-4 w-4" />
+                      {adminCopy.dashboard.emptyOrders.ctaCreateProduct}
+                    </Button>
+                  )
+                }
+              />
+            </div>
+          )}
+        </DashboardPanel>
+
+        <DashboardPanel className="md:col-span-2" title={adminCopy.dashboard.pattern.salesTitle}>
+          {isLoading ? (
+            <Skeleton className="h-44 w-full" />
+          ) : !hasPatternData ? (
+            <p className="py-10 text-center text-xs text-[hsl(var(--muted-foreground))]">
+              {adminCopy.dashboard.pattern.emptyDescription}
+            </p>
+          ) : (
+            <SalesTrendChart
+              current={data!.series.current}
+              previous={data!.series.previous}
+              insight={seriesInsight}
+            />
+          )}
+        </DashboardPanel>
+      </div>
+
+      {isLoading ? (
+        <Skeleton className="h-56 w-full rounded-xl" />
+      ) : !hasPatternData ? (
+        <Card className="border-dashed">
+          <CardContent className="p-4">
             <FlowEmptyState
               line={{
-                emoji: "🌱",
-                title: adminCopy.dashboard.emptyOrders.title,
-                text: adminCopy.dashboard.emptyOrders.description,
+                emoji: "📈",
+                title: adminCopy.dashboard.pattern.emptyTitle,
+                text: adminCopy.dashboard.pattern.emptyDescription,
                 mood: "idle",
               }}
               action={
-                hasProducts ? (
-                  <Button type="button" onClick={() => navigate("/pedidos")} className="gap-2">
-                    <ClipboardList className="h-4 w-4" />
-                    {adminCopy.dashboard.emptyOrders.ctaViewOrders}
-                  </Button>
-                ) : (
-                  <Button type="button" onClick={() => navigate("/produtos/novo")} className="gap-2">
-                    <ShoppingBag className="h-4 w-4" />
-                    {adminCopy.dashboard.emptyOrders.ctaCreateProduct}
-                  </Button>
-                )
+                <Button type="button" variant="outline" size="sm" onClick={() => navigate("/pedidos")}>
+                  {adminCopy.dashboard.pattern.emptyCta}
+                </Button>
               }
             />
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : (
+        <DashboardWidgetsBoard data={data!} />
+      )}
     </div>
   );
 }

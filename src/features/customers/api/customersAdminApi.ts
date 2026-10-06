@@ -4,7 +4,7 @@ import type { CustomerAdminDetail, CustomerAdminListItem } from "@/features/cust
 import type { PaginatedResponse } from "@/shared/types/api.types";
 
 export const customersAdminApi = {
-  list: (params?: { search?: string; page?: number }) =>
+  list: (params?: { search?: string; page?: number; page_size?: number }) =>
     apiClient
       .get<PaginatedResponse<CustomerAdminListItem>>("/admin/customers/", { params })
       .then((r) => r.data),

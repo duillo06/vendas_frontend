@@ -1,5 +1,6 @@
 export { AdminFilterPills } from "./AdminFilterPills";
 export { AdminOrderCard } from "./AdminOrderCard";
+export { AdminPagination, slicePage } from "./AdminPagination";
 export { BackLink } from "./BackLink";
 export { OrderStatusTimeline } from "./OrderStatusTimeline";
 export { PageHeader, type VisualAccent } from "./PageHeader";

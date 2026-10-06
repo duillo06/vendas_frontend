@@ -42,6 +42,9 @@ export function PageHeader({
   className,
 }: PageHeaderProps) {
   const compact = density === "compact";
+  // ícone na mesma linha do título (altura próxima do type-title)
+  const iconBox = compact ? "h-8 w-8" : "h-9 w-9";
+  const subtitlePad = Icon ? (compact ? "sm:pl-11" : "sm:pl-12") : undefined;
 
   return (
     <div
@@ -51,26 +54,33 @@ export function PageHeader({
         className,
       )}
     >
-      <div className="flex min-w-0 items-start gap-3">
-        {Icon ? (
-          <span
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-3">
+          {Icon ? (
+            <span
+              className={cn(
+                "flex shrink-0 items-center justify-center rounded-xl",
+                iconBox,
+                tileClass[accent],
+              )}
+            >
+              <Icon className={cn(compact ? "h-3.5 w-3.5" : "h-4 w-4")} />
+            </span>
+          ) : null}
+          <h1
             className={cn(
-              "flex shrink-0 items-center justify-center rounded-xl",
-              compact ? "h-9 w-9" : "h-11 w-11",
-              tileClass[accent],
+              "min-w-0 truncate tracking-tight text-[hsl(var(--foreground))]",
+              compact ? "type-subtitle" : "type-title",
             )}
           >
-            <Icon className={cn(compact ? "h-4 w-4" : "h-5 w-5")} />
-          </span>
-        ) : null}
-        <div className="min-w-0 space-y-0.5">
-          <h1 className={cn("truncate tracking-tight text-[hsl(var(--foreground))]", compact ? "type-subtitle" : "type-title")}>
             {title}
           </h1>
-          {subtitle ? (
-            <p className={cn("max-w-2xl type-caption", !compact && "sm:text-sm")}>{subtitle}</p>
-          ) : null}
         </div>
+        {subtitle ? (
+          <p className={cn("mt-1 max-w-2xl type-caption", !compact && "sm:text-sm", subtitlePad)}>
+            {subtitle}
+          </p>
+        ) : null}
       </div>
       {action ? <div className="shrink-0 sm:pt-0.5">{action}</div> : null}
     </div>

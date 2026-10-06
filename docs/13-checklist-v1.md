@@ -2,10 +2,11 @@
 
 > **Documento:** Checklist de Escopo Fechado da V1  
 > **Produto:** Food Service *(nome comercial provisório)*  
-> **Versão:** 1.0  
+> **Versão:** 1.1  
 > **Status:** Aprovado  
-> **Última atualização:** Julho/2026  
-> **Depende de:** `12-checklist-mvp.md` (aprovado), documentos 01–11
+> **Última atualização:** Outubro/2026  
+> **Depende de:** `12-checklist-mvp.md` (aprovado), documentos 01–11  
+> **Relacionados:** `11-guia-ui-ux.md` §10.2, `07-api.md` §18 (Dashboard V1)
 
 ---
 
@@ -367,12 +368,13 @@ Itens **explicitamente excluídos** da V1. Implementar qualquer um **invalida** 
 
 ### 9.6 Feature: Reports (Backoffice)
 
-- [ ] **P0** Página relatórios com filtro de período
-- [ ] **P0** Gráfico ou tabela de vendas por dia
-- [ ] **P0** Ranking produtos mais vendidos
-- [ ] **P0** KPIs: ticket médio, total período
+> **Dashboard V1:** vendas por período, gráfico, KPIs com Δ% e rankings de horário/dia/pagamento entram na **home** (`11-guia-ui-ux.md` §10.2, `07-api.md` §18) — não exigem página separada de Relatórios na V1.
+
+- [x] **P0** Dashboard V1 — chips período + KPIs com Δ% + linha dual + horários + dias + pagamentos
+- [x] **P0** `GET /admin/dashboard/?period=` estendido (agregações)
+- [ ] **P1** Página relatórios dedicada (se ainda fizer sentido após V1)
+- [x] **P1** Ranking produtos mais vendidos (P1 do painel)
 - [ ] **P1** Botão exportar CSV
-- [ ] **P1** Dashboard enriquecido (comparativo vs. período anterior)
 
 ### 9.7 Feature: Search e Favoritos (Storefront)
 
@@ -649,6 +651,7 @@ gantt
 
 | Versão | Data | Autor | Alterações |
 |--------|------|-------|------------|
+| 1.1 | Out/2026 | — | §9.6 Reports alinhado ao Dashboard V1 (home + `?period=`) |
 | 1.0 | Jul/2026 | — | Versão inicial — aprovado |
 
 ---

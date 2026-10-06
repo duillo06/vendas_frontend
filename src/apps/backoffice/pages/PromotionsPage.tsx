@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Percent, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { CampaignAssistant } from "@/features/promotions/components/CampaignAssistant";
 import { promotionsAdminApi, type CampaignAdmin } from "@/features/promotions";
@@ -8,21 +8,41 @@ import { Can } from "@/features/auth";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { UiHint } from "@/shared/components/UiHint";
-import { BackLink, PageHeader } from "@/shared/components/visual";
+import {
+  AdminFilterPills,
+  AdminPagination,
+  BackLink,
+  PageHeader,
+  slicePage,
+} from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { formatCurrency } from "@/shared/lib/format";
 
+const STATUS_FILTERS: Array<{ value: string; label: string }> = [
+  { value: "", label: "Todas" },
+  { value: "active", label: "Ativas" },
+  { value: "paused", label: "Pausadas" },
+  { value: "ended", label: "Encerradas" },
+  { value: "draft", label: "Rascunho" },
+];
+
 export function PromotionsPage() {
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<CampaignAdmin | null>(null);
+  const [status, setStatus] = useState("");
+  const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
 
   const { data: campaigns, isLoading } = useQuery({
-    queryKey: ["admin", "campaigns"],
-    queryFn: () => promotionsAdminApi.list(),
+    queryKey: ["admin", "campaigns", status],
+    queryFn: () => promotionsAdminApi.list(status ? { status } : undefined),
   });
+
+  useEffect(() => {
+    setPage(1);
+  }, [status]);
 
   const pauseMutation = useMutation({
     mutationFn: (campaign: CampaignAdmin) =>
@@ -41,6 +61,9 @@ export function PromotionsPage() {
     void queryClient.invalidateQueries({ queryKey: ["admin", "campaigns"] });
     closeForm();
   };
+
+  const list = campaigns ?? [];
+  const paged = useMemo(() => slicePage(list, page), [list, page]);
 
   if (creating || editing) {
     return (
@@ -66,10 +89,8 @@ export function PromotionsPage() {
     );
   }
 
-  const list = campaigns ?? [];
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-5">
       <BackLink to="/" label="Dashboard" />
       <PageHeader
         title="Promoções"
@@ -88,6 +109,8 @@ export function PromotionsPage() {
         Comece pelo que você quer aumentar (vendas, ticket, um produto…). O sistema monta a oferta.
       </UiHint>
 
+      <AdminFilterPills options={STATUS_FILTERS} value={status} onChange={setStatus} />
+
       {isLoading ? (
         <div className="space-y-3">
           <Skeleton className="h-20 w-full" />
@@ -97,61 +120,70 @@ export function PromotionsPage() {
         <EmptyState
           icon={Percent}
           title="Nenhuma promoção ainda"
-          description="Crie a primeira em menos de um minuto — preço especial em um produto, com destaque na Home."
+          description={
+            status
+              ? "Nada nesse status. Troque o filtro ou crie uma nova."
+              : "Crie a primeira em menos de um minuto — preço especial em um produto, com destaque na Home."
+          }
           action={
-            <Can permission="promotions.manage">
-              <Button type="button" className="bg-brand" onClick={() => setCreating(true)}>
-                Criar promoção
-              </Button>
-            </Can>
+            status ? undefined : (
+              <Can permission="promotions.manage">
+                <Button type="button" className="bg-brand" onClick={() => setCreating(true)}>
+                  Criar promoção
+                </Button>
+              </Can>
+            )
           }
         />
       ) : (
-        <ul className="space-y-3">
-          {list.map((campaign) => (
-            <li key={campaign.id}>
-              <Card className="interactive-card">
-                <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <p className="font-semibold">{campaign.title || campaign.product_name}</p>
-                    <p className="text-sm text-[hsl(var(--muted-foreground))]">
-                      De {formatCurrency(campaign.reference_price)} · Por{" "}
-                      <PriceDisplay value={campaign.promo_price} className="font-medium text-brand" />
-                      {campaign.discount_percent != null
-                        ? ` · −${campaign.discount_percent}%`
-                        : ""}
-                    </p>
-                    <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">
-                      {statusLabel(campaign.status)}
-                      {campaign.badges?.length ? ` · ${campaign.badges.slice(0, 2).join(" · ")}` : ""}
-                    </p>
-                  </div>
-                  <Can permission="promotions.manage">
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditing(campaign)}
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={pauseMutation.isPending}
-                        onClick={() => pauseMutation.mutate(campaign)}
-                      >
-                        {campaign.status === "active" ? "Pausar" : "Reativar"}
-                      </Button>
+        <div className="space-y-3">
+          <ul className="space-y-3">
+            {paged.map((campaign) => (
+              <li key={campaign.id}>
+                <Card className="interactive-card">
+                  <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="font-semibold">{campaign.title || campaign.product_name}</p>
+                      <p className="text-sm text-[hsl(var(--muted-foreground))]">
+                        De {formatCurrency(campaign.reference_price)} · Por{" "}
+                        <PriceDisplay value={campaign.promo_price} className="font-medium text-brand" />
+                        {campaign.discount_percent != null
+                          ? ` · −${campaign.discount_percent}%`
+                          : ""}
+                      </p>
+                      <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">
+                        {statusLabel(campaign.status)}
+                        {campaign.badges?.length ? ` · ${campaign.badges.slice(0, 2).join(" · ")}` : ""}
+                      </p>
                     </div>
-                  </Can>
-                </CardContent>
-              </Card>
-            </li>
-          ))}
-        </ul>
+                    <Can permission="promotions.manage">
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditing(campaign)}
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={pauseMutation.isPending}
+                          onClick={() => pauseMutation.mutate(campaign)}
+                        >
+                          {campaign.status === "active" ? "Pausar" : "Reativar"}
+                        </Button>
+                      </div>
+                    </Can>
+                  </CardContent>
+                </Card>
+              </li>
+            ))}
+          </ul>
+          <AdminPagination page={page} total={list.length} onPageChange={setPage} />
+        </div>
       )}
     </div>
   );

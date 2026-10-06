@@ -2,10 +2,11 @@
 
 > **Documento:** Guia de Interface e Experiência do Usuário  
 > **Produto:** Food Service *(nome comercial provisório)*  
-> **Versão:** 1.0  
+> **Versão:** 1.1  
 > **Status:** Aprovado  
-> **Última atualização:** Julho/2026  
-> **Depende de:** `01-visao-do-produto.md`, `04-design-system.md`, `08-regras-de-negocio.md` (aprovados)
+> **Última atualização:** Outubro/2026  
+> **Depende de:** `01-visao-do-produto.md`, `04-design-system.md`, `08-regras-de-negocio.md` (aprovados)  
+> **Relacionados:** `07-api.md` §18 (Dashboard V1)
 
 ---
 
@@ -652,27 +653,73 @@ graph TD
 
 ---
 
-### 10.2 Dashboard
+### 10.2 Dashboard (V1 — painel auxiliar)
+
+Uma página só (scroll). Operação do dia + padrão de vendas no mesmo lugar — assistente, não BI.  
+Contrato: `07-api.md` §18. Período padrão: **Hoje**. Chips: `Hoje | 7 dias | 30 dias`.
+
+**Fora da V1:** funil storefront, metas, motivos de cancelamento, top produtos (P1).
+
+#### Desktop
 
 ```
-┌──────────┬──────────────────────────────────────────┐
-│ [Logo]   │  Dashboard          [🔔] [Avatar ▼]     │
-│          ├──────────────────────────────────────────┤
-│ Dashboard│  Bom dia, Ricardo! 👋                    │
-│ Pedidos 3│                                          │
-│ Catálogo │  ┌────────┐┌────────┐┌────────┐┌────────┐│
-│ Config   │  │ 23     ││ 3      ││ R$1.847││ R$80  ││
-│          │  │Pedidos ││Pendent.││Receita ││Ticket ││
-│          │  └────────┘└────────┘└────────┘└────────┘│
-│          │                                          │
-│          │  Pedidos recentes                        │
-│          │  ┌──────────────────────────────────────┐│
-│          │  │ #0023 · Maria · R$78 · 🟡 Pendente  ││
-│          │  │ #0022 · João  · R$45 · 🟢 Preparo   ││
-│          │  │ #0021 · Ana   · R$92 · ✅ Concluído ││
-│          │  └──────────────────────────────────────┘│
-└──────────┴──────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│ Dashboard · Bom dia!          [Hoje] [7 dias] [30 dias] [Pedidos]│
+├─────────────────────────────────────────────────────────────────┤
+│ ZONA A — AGORA                                                  │
+│ ┌─ Resumo inteligente ────────────────────────────────────────┐ │
+│ │ 1–3 frases (padrão + alerta se houver pendentes)            │ │
+│ │ CTA opcional: Ver pendentes                                 │ │
+│ └─────────────────────────────────────────────────────────────┘ │
+│ ┌ Pedidos ┐ ┌ Fat. ┐ ┌ Ticket ┐ ┌ Canc. ┐   cada um com Δ%    │
+│ │ 23 ↑12% │ │R$1,8k│ │ R$80  │ │  1   │   vs período anterior│
+│ └─────────┘ └──────┘ └────────┘ └───────┘                      │
+│ ┌─ Pedidos recentes ────────────────────────────── [Ver todos]┐ │
+│ │ #0023 · Maria · R$78 · Pendente                             │ │
+│ │ #0022 · João  · R$45 · Em preparo                           │ │
+│ └─────────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────────┤
+│ ZONA B — PADRÃO (empty único se período sem concluídos)         │
+│ ┌─ Como estão as vendas ──────────────────────────────────────┐ │
+│ │ [Pedidos] [Faturamento] [Ticket]                            │ │
+│ │ linha dual: período atual vs anterior                       │ │
+│ │ legenda + 1 frase sob o gráfico                             │ │
+│ └─────────────────────────────────────────────────────────────┘ │
+│ ┌─ Horários ──────────────┐ ┌─ Dias da semana ───────────────┐ │
+│ │ [Semana] [Fim de semana]│ │ barras Seg–Dom                 │ │
+│ │ barras faixas 2h        │ │ “Domingo costuma ser o melhor” │ │
+│ │ “Seu pico: 18h–20h”     │ │                                │ │
+│ └─────────────────────────┘ └────────────────────────────────┘ │
+│ ┌─ Formas de pagamento ───────────────────────────────────────┐ │
+│ │ ranking horizontal (só meios com volume > 0)                │ │
+│ └─────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
 ```
+
+#### Mobile (320px primeiro — ordem empilhada)
+
+1. Header + chips de período (scroll horizontal)  
+2. Resumo inteligente  
+3. KPIs em grid 2×2  
+4. Pedidos recentes (3 itens + Ver todos)  
+5. Gráfico de linha (full width)  
+6. Horários → Dias → Pagamentos  
+
+#### Comportamento por bloco
+
+| Bloco | Comportamento |
+|-------|---------------|
+| Chips período | Sem date-picker na V1. Comparativo: Hoje→ontem; 7d→7 anteriores; 30d→30 anteriores |
+| Resumo | Até 3 linhas; se pendentes > 0, 1ª linha é alerta |
+| KPIs | Valor + subtexto + Δ%; ↑ verde, ↓ vermelho, igual neutro; cancelados sem semântica de “bom/ruim” |
+| Pedidos recentes | Sempre “agora” (independe do chip); máx. 5 desktop / 3 mobile |
+| Linha | Hoje = série por hora; 7d/30d = série diária. Toggle só troca a métrica |
+| Horários | Faixas 2h; toggle semana/fds; frase obrigatória de pico |
+| Dias | 7 barras + frase do melhor dia |
+| Pagamentos | Ranking horizontal; sem pizza chart |
+| Empty Zona B | Um empty com CTA — não renderizar eixos zerados |
+
+**Removido na V1 visual:** progress bar “fora da fila”, hint genérico de “tempo real” (a fila já comunica).
 
 ---
 
@@ -1143,6 +1190,7 @@ Meta: ≥ 7/10 em todas
 
 | Versão | Data | Autor | Alterações |
 |--------|------|-------|------------|
+| 1.1 | Out/2026 | — | §10.2 Dashboard V1 — zona Agora + Padrão, período, wire desktop/mobile |
 | 1.0 | Jul/2026 | — | Versão inicial — aprovado |
 
 ---

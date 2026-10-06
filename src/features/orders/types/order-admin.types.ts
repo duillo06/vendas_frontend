@@ -5,7 +5,10 @@ export interface OrderFilters {
   delivery_type?: string;
   search?: string;
   active?: boolean;
+  created_after?: string;
+  created_before?: string;
   page?: number;
+  page_size?: number;
 }
 
 export interface OrderListItem {

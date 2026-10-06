@@ -149,32 +149,38 @@ export const adminCopy = {
     },
   },
   dashboard: {
-    subtitle: (greeting: string) => `${greeting}! Aqui está o resumo do dia.`,
-    guidance: "Pedidos novos aparecem em tempo real. Clique em um card para ir direto ao detalhe.",
-    pendingAlert: (count: number) =>
-      count === 1
-        ? "Você tem 1 pedido aguardando confirmação."
-        : `Você tem ${count} pedidos aguardando confirmação.`,
-    progressLabel: "Progresso do dia",
+    subtitle: (greeting: string, period: "today" | "7d" | "30d" | "custom" = "today") => {
+      if (period === "7d") return `${greeting}! Últimos 7 dias.`;
+      if (period === "30d") return `${greeting}! Últimos 30 dias.`;
+      if (period === "custom") return `${greeting}! Período personalizado.`;
+      return `${greeting}! Resumo do dia.`;
+    },
     insights: {
-      title: "Resumo inteligente",
-      noOrdersYet: "Ainda não chegou pedido hoje — tudo pronto para quando a fila começar.",
-      ordersToday: (count: number) =>
-        count === 1 ? "Hoje já entrou 1 pedido." : `Hoje já entraram ${count} pedidos.`,
+      title: "Resumo",
+      noOrdersYet: "Ainda sem pedidos hoje",
+      noOrdersPeriod: "Nenhum pedido neste período",
+      ordersInPeriod: (count: number, period: "today" | "7d" | "30d" | "custom") => {
+        const unit = count === 1 ? "pedido" : "pedidos";
+        if (period === "today") {
+          return count === 1 ? "1 pedido hoje" : `${count} pedidos hoje`;
+        }
+        if (period === "7d") return `${count} ${unit} em 7 dias`;
+        if (period === "30d") return `${count} ${unit} em 30 dias`;
+        return `${count} ${unit} no período`;
+      },
       pending: (count: number) =>
-        count === 1
-          ? "1 pedido em atraso de confirmação precisa de atenção."
-          : `${count} pedidos pendentes precisam de atenção.`,
-      ticket: (value: string) => `Ticket médio de ${value} nos pedidos concluídos.`,
-      revenueUp: (diff: string) => `Você faturou ${diff} a mais que ontem.`,
-      revenueDown: (diff: string) => `Faturamento ${diff} abaixo de ontem — vale revisar o ritmo.`,
-      revenueSame: "Faturamento no mesmo patamar de ontem.",
-      vsYesterdayOrders: (diff: number) =>
-        diff > 0
-          ? `${diff} pedido${diff === 1 ? "" : "s"} a mais que ontem.`
-          : diff < 0
-            ? `${Math.abs(diff)} pedido${Math.abs(diff) === 1 ? "" : "s"} a menos que ontem.`
-            : "Mesmo volume de pedidos que ontem.",
+        count === 1 ? "1 pendente precisa de atenção" : `${count} pendentes precisam de atenção`,
+      ticket: (value: string) => `Ticket médio ${value}`,
+      revenueUp: (diff: string, period: "today" | "7d" | "30d" | "custom" = "today") => {
+        const vs = period === "today" ? "ontem" : "o período anterior";
+        return `+${diff} vs ${vs}`;
+      },
+      revenueDown: (diff: string, period: "today" | "7d" | "30d" | "custom" = "today") => {
+        const vs = period === "today" ? "ontem" : "o período anterior";
+        return `−${diff} vs ${vs}`;
+      },
+      revenueSame: (period: "today" | "7d" | "30d" | "custom" = "today") =>
+        period === "today" ? "Faturamento igual a ontem" : "Faturamento estável vs período anterior",
     },
     emptyOrders: {
       title: "Dia tranquilo por aqui",
@@ -183,10 +189,32 @@ export const adminCopy = {
       ctaViewOrders: "Ver fila de pedidos",
     },
     metrics: {
-      ordersToday: "Total de pedidos recebidos hoje.",
-      revenue: "Soma dos pedidos concluídos hoje.",
-      ticket: "Valor médio por pedido concluído.",
-      cancelled: "Cancelamentos do dia — vale revisar se subir.",
+      orders: "Fila ao vivo abaixo",
+      revenue: "Concluídos no período",
+      ticket: "Por pedido concluído",
+      cancelled: "Taxa sobre o total de pedidos",
+    },
+    kpiLabels: (period: "today" | "7d" | "30d" | "custom") => ({
+      orders: period === "today" ? "Pedidos hoje" : "Pedidos",
+      revenue: "Faturamento",
+      ticket: "Ticket médio",
+      cancelled: "Cancelamento",
+    }),
+    pattern: {
+      title: "Padrão de vendas",
+      subtitle: "Tendência, cardápio, clientes e canais",
+      salesTitle: "Vendas",
+      hoursTitle: "Horários",
+      daysTitle: "Dias da semana",
+      paymentsTitle: "Pagamentos",
+      topProductsTitle: "Mais vendidos",
+      slowProductsTitle: "Quase não vende",
+      deliveryTitle: "Entrega × retirada",
+      customersTitle: "Clientes",
+      emptyTitle: "Ainda sem padrão para mostrar",
+      emptyDescription:
+        "Quando os pedidos começarem, mostramos horários, tendência e formas de pagamento.",
+      emptyCta: "Ver fila de pedidos",
     },
   },
   settings: {

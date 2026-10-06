@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FolderOpen, Layers, Link2, Pencil, Plus, Sparkles, Wand2, X } from "lucide-react";
 import { Link } from "react-router";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -14,7 +14,7 @@ import { CategoryRecipeTree } from "@/features/catalog/components/CategoryRecipe
 import { catalogAdminKeys } from "@/features/catalog/constants/catalog-admin-keys";
 import { formatCategoryLabel } from "@/features/catalog/utils/categoryLabel";
 import { UiHint } from "@/shared/components/UiHint";
-import { BackLink, PageHeader } from "@/shared/components/visual";
+import { AdminPagination, BackLink, PageHeader, slicePage } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import {
@@ -45,12 +45,26 @@ export function CategoriesPage() {
   const [editEmoji, setEditEmoji] = useState("");
   const [recipeDialog, setRecipeDialog] = useState<RecipeDialog>({ mode: "closed" });
   const [recipeLoading, setRecipeLoading] = useState(false);
+  const [listSearch, setListSearch] = useState("");
+  const [page, setPage] = useState(1);
 
   const { data, isLoading } = useQuery({
     queryKey: catalogAdminKeys.categories(),
     queryFn: () => catalogAdminApi.listCategories(),
   });
 
+  const categories = data ?? [];
+  const filteredCategories = useMemo(() => {
+    const q = listSearch.trim().toLowerCase();
+    if (!q) return categories;
+    return categories.filter((c) => c.name.toLowerCase().includes(q));
+  }, [categories, listSearch]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [listSearch]);
+
+  const pagedCategories = slicePage(filteredCategories, page);
   const resetForm = () => {
     setName("");
     setEmoji("");
@@ -105,8 +119,6 @@ export function CategoriesPage() {
     });
     if (confirmed) deleteCategory.mutate(categoryId);
   };
-
-  const categories = data ?? [];
 
   const applyExample = (example: (typeof adminCopy.categories.examples)[number]) => {
     setName(example.name);
@@ -284,6 +296,15 @@ export function CategoriesPage() {
         </div>
       ) : (
         <>
+          <div className="rounded-xl border border-[hsl(var(--border))] bg-white p-3 shadow-[var(--shadow-sm)] sm:max-w-md">
+            <Input
+              placeholder="Buscar categoria…"
+              value={listSearch}
+              onChange={(event) => setListSearch(event.target.value)}
+              className="h-9"
+            />
+          </div>
+
           <UiHint tone="neutral">
             {adminCopy.categories.linkProducts}
             <Link to="/produtos" className="ml-1 inline-flex items-center gap-1 font-medium text-brand underline">
@@ -292,8 +313,14 @@ export function CategoriesPage() {
             </Link>
           </UiHint>
 
-          <ul className="space-y-2">
-            {categories.map((category) => (
+          {filteredCategories.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-[hsl(var(--border))] px-4 py-8 text-center text-sm text-[hsl(var(--muted-foreground))]">
+              Nenhuma categoria com esse nome.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              <ul className="space-y-2">
+                {pagedCategories.map((category) => (
               <li
                 key={category.id}
                 className="interactive-card rounded-xl border border-[hsl(var(--border))] p-4"
@@ -414,6 +441,13 @@ export function CategoriesPage() {
               </li>
             ))}
           </ul>
+              <AdminPagination
+                page={page}
+                total={filteredCategories.length}
+                onPageChange={setPage}
+              />
+            </div>
+          )}
         </>
       )}
 
