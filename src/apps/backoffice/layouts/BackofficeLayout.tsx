@@ -14,7 +14,7 @@ import {
   VolumeX,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router";
 
 import { Can, useAuth } from "@/features/auth";
@@ -203,6 +203,9 @@ export function BackofficeLayout() {
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [desktopCollapsed, setDesktopCollapsed] = useState(readCollapsedPreference);
+  // peek: menu colapsado abre no hover sem empurrar o conteúdo
+  const [hoverPeek, setHoverPeek] = useState(false);
+  const leaveTimer = useRef<number | null>(null);
 
   useTenantTheme(settings?.settings.theme);
 
@@ -210,6 +213,12 @@ export function BackofficeLayout() {
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    return () => {
+      if (leaveTimer.current) window.clearTimeout(leaveTimer.current);
+    };
+  }, []);
 
   // browser só libera áudio depois de gesto — destrava no primeiro toque
   useEffect(() => {
@@ -226,6 +235,26 @@ export function BackofficeLayout() {
   const pendingOrders = dashboard?.today.pending_orders ?? 0;
   const userName = user ? `${user.first_name} ${user.last_name}` : "";
   const userEmail = user?.email ?? "";
+  const peeking = desktopCollapsed && hoverPeek;
+  const sidebarCollapsed = desktopCollapsed && !hoverPeek;
+
+  function openPeek() {
+    if (!desktopCollapsed) return;
+    if (leaveTimer.current) {
+      window.clearTimeout(leaveTimer.current);
+      leaveTimer.current = null;
+    }
+    setHoverPeek(true);
+  }
+
+  function scheduleClosePeek() {
+    if (!desktopCollapsed) return;
+    if (leaveTimer.current) window.clearTimeout(leaveTimer.current);
+    leaveTimer.current = window.setTimeout(() => {
+      setHoverPeek(false);
+      leaveTimer.current = null;
+    }, 120);
+  }
 
   async function handleSoundToggle() {
     const next = !soundEnabled;
@@ -237,6 +266,7 @@ export function BackofficeLayout() {
   }
 
   function toggleDesktopSidebar() {
+    setHoverPeek(false);
     setDesktopCollapsed((prev) => {
       const next = !prev;
       try {
@@ -260,15 +290,27 @@ export function BackofficeLayout() {
   };
 
   return (
-    <div className="flex min-h-screen print:min-h-0">
-      {/* desktop: colapsa pra só ícones */}
+    <div className="flex h-dvh overflow-hidden print:h-auto print:min-h-0 print:overflow-visible">
+      {/* desktop: colapsado = ícones; hover expande por cima do conteúdo */}
       <aside
         className={cn(
-          "gradient-sidebar sticky top-0 hidden h-screen shrink-0 flex-col text-white shadow-[var(--shadow-lg)] transition-[width] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] print:hidden md:flex",
+          "relative hidden h-full shrink-0 print:hidden md:block",
           desktopCollapsed ? "w-16" : "w-60",
+          peeking && "z-[60]",
         )}
+        onMouseEnter={openPeek}
+        onMouseLeave={scheduleClosePeek}
       >
-        <SidebarBody collapsed={desktopCollapsed} {...sidebarProps} />
+        <div
+          className={cn(
+            "gradient-sidebar flex h-full flex-col text-white shadow-[var(--shadow-lg)] transition-[width,box-shadow] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
+            peeking
+              ? "absolute inset-y-0 left-0 z-[60] w-60 shadow-[0_12px_40px_-8px_rgb(0_0_0/0.45)]"
+              : "w-full",
+          )}
+        >
+          <SidebarBody collapsed={sidebarCollapsed} {...sidebarProps} />
+        </div>
       </aside>
 
       {/* mobile: drawer pelo hambúrguer */}
@@ -291,9 +333,9 @@ export function BackofficeLayout() {
         </div>
       </Sheet>
 
-      <div className="app-shell-backoffice flex min-h-screen min-w-0 flex-1 flex-col print:min-h-0">
-        {/* z-50: backdrop-blur cria stacking context — sem isso o painel de notificação fica atrás do pedido */}
-        <header className="relative z-50 flex items-center justify-between gap-3 border-b border-[hsl(var(--border))] bg-white/70 px-4 py-3 backdrop-blur print:hidden md:px-6">
+      <div className="app-shell-backoffice flex min-h-0 min-w-0 flex-1 flex-col print:min-h-0">
+        {/* cabeçalho fixo — só o main rola */}
+        <header className="relative z-50 flex shrink-0 items-center justify-between gap-3 border-b border-[hsl(var(--border))] bg-white/90 px-4 py-3 backdrop-blur print:hidden md:px-6">
           <div className="flex min-w-0 items-center gap-2">
             <Button
               type="button"
@@ -358,7 +400,7 @@ export function BackofficeLayout() {
           </div>
         </header>
 
-        <main className="flex-1 p-4 print:p-0 md:p-6">
+        <main className="flex-1 overflow-y-auto overscroll-contain p-4 print:overflow-visible print:p-0 md:p-6">
           <Outlet />
         </main>
       </div>

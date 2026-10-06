@@ -215,11 +215,7 @@ export function ProductDetailView({
 
   const handleContinueShopping = () => {
     setAddedToCart(false);
-    if (relatedProducts.length > 0 && suggestionsRef.current) {
-      suggestionsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-      return;
-    }
-    navigate("/cardapio");
+    navigate("/");
   };
 
   // pb + scroll-mb: barra fixa ~5–7rem; opções não podem ficar sob o CTA

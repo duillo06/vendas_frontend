@@ -28,7 +28,15 @@ export function getPrimaryNextStatus(order: OrderAdminDetail): OrderStatus | nul
 
 export function getSecondaryNextStatuses(order: OrderAdminDetail): OrderStatus[] {
   const primary = getPrimaryNextStatus(order);
-  return (ORDER_NEXT_STATUS[order.status] ?? []).filter((s) => s !== primary);
+  return (ORDER_NEXT_STATUS[order.status] ?? []).filter((s) => {
+    if (s === primary || s === "cancelled") return false;
+    // ready: entrega só sai pra entrega; retirada só conclui
+    if (order.status === "ready") {
+      if (order.delivery_type === "delivery" && s === "completed") return false;
+      if (order.delivery_type !== "delivery" && s === "out_for_delivery") return false;
+    }
+    return true;
+  });
 }
 
 export function getPipelineSteps(deliveryType: string): OrderStatus[] {
@@ -112,6 +120,19 @@ export type OrderAlert = {
   tone: OrderAlertTone;
   message: string;
 };
+
+const TONE_PRIORITY: Record<OrderAlertTone, number> = {
+  danger: 0,
+  warning: 1,
+  info: 2,
+  success: 3,
+};
+
+/** um aviso só — o que mais importa agora */
+export function pickPrimaryAlert(alerts: OrderAlert[]): OrderAlert | null {
+  if (!alerts.length) return null;
+  return [...alerts].sort((a, b) => TONE_PRIORITY[a.tone] - TONE_PRIORITY[b.tone])[0] ?? null;
+}
 
 export function buildOrderAlerts(
   order: OrderAdminDetail,

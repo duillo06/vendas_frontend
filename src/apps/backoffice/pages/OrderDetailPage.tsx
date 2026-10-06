@@ -4,16 +4,11 @@ import { useNavigate, useParams } from "react-router";
 
 import type { OrderStatus } from "@/features/checkout/types/checkout.types";
 import { fireFlowConfetti } from "@/features/flow/FlowSuccess";
-import { OrderAlerts } from "@/features/orders/components/order-detail/OrderAlerts";
+import { OrderActionPanel } from "@/features/orders/components/order-detail/OrderActionPanel";
 import { OrderComandaTicket } from "@/features/orders/components/order-detail/OrderComandaTicket";
-import { OrderEventTimeline } from "@/features/orders/components/order-detail/OrderEventTimeline";
 import { OrderHeroHeader } from "@/features/orders/components/order-detail/OrderHeroHeader";
 import { OrderItemsPanel } from "@/features/orders/components/order-detail/OrderItemsPanel";
 import { OrderMobileStickyCta } from "@/features/orders/components/order-detail/OrderMobileStickyCta";
-import { OrderNextActionCard } from "@/features/orders/components/order-detail/OrderNextActionCard";
-import { OrderProgressRail } from "@/features/orders/components/order-detail/OrderProgressRail";
-import { OrderQuickActions } from "@/features/orders/components/order-detail/OrderQuickActions";
-import { OrderSidePanel } from "@/features/orders/components/order-detail/OrderSidePanel";
 import { buildOrderAlerts } from "@/features/orders/components/order-detail/orderDetailHelpers";
 import { useNow } from "@/features/orders/components/order-detail/useNow";
 import { useAdminOrder } from "@/features/orders/hooks/useAdminOrder";
@@ -39,11 +34,10 @@ export function OrderDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-36 w-full rounded-2xl" />
-        <Skeleton className="h-20 w-full rounded-2xl" />
-        <div className="grid gap-4 xl:grid-cols-12">
-          <Skeleton className="h-64 rounded-2xl xl:col-span-8" />
-          <Skeleton className="h-64 rounded-2xl xl:col-span-4" />
+        <Skeleton className="h-8 w-64 rounded-lg" />
+        <div className="grid gap-4 lg:grid-cols-12">
+          <Skeleton className="h-72 rounded-2xl lg:col-span-7" />
+          <Skeleton className="h-72 rounded-2xl lg:col-span-5" />
         </div>
       </div>
     );
@@ -96,37 +90,31 @@ export function OrderDetailPage() {
 
   return (
     <>
-      <div className="space-y-5 pb-24 print:hidden md:pb-6">
-        <OrderHeroHeader order={order} now={now} isPending={isPending} onAdvance={advance} />
+      <div className="space-y-4 pb-24 print:hidden md:pb-6">
+        <OrderHeroHeader order={order} />
 
-        <OrderAlerts alerts={alerts} />
-
-        <OrderProgressRail order={order} />
-
-        <OrderQuickActions order={order} onPrintComanda={printComanda} />
-
-        <OrderNextActionCard
-          order={order}
-          isPending={isPending}
-          cancelNotes={cancelNotes}
-          onCancelNotesChange={setCancelNotes}
-          onAdvance={advance}
-          onCancel={cancelOrder}
-          canCancel={canCancel}
-        />
-
-        <div className="grid gap-5 xl:grid-cols-12">
-          <div className="space-y-5 xl:col-span-8">
-            <OrderItemsPanel order={order} />
-            <OrderEventTimeline order={order} />
-          </div>
-          <div className="xl:col-span-4">
-            <OrderSidePanel
+        {/* estação: comanda ~58% | ação ~42% */}
+        <div className="grid items-start gap-4 lg:grid-cols-12 lg:gap-5">
+          {/* mobile: ação primeiro */}
+          <div className="order-1 lg:order-2 lg:col-span-5">
+            <OrderActionPanel
               order={order}
               now={now}
+              alerts={alerts}
+              isPending={isPending}
               paying={paying}
+              cancelNotes={cancelNotes}
+              canCancel={canCancel}
+              onCancelNotesChange={setCancelNotes}
+              onAdvance={advance}
+              onCancel={cancelOrder}
               onMarkPaid={() => updatePayment()}
+              onPrintComanda={printComanda}
             />
+          </div>
+
+          <div className="order-2 lg:order-1 lg:col-span-7">
+            <OrderItemsPanel order={order} />
           </div>
         </div>
 

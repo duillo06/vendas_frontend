@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImageIcon, Lightbulb, Package, Plus, Sparkles } from "lucide-react";
+import { ImageIcon, Package, Plus, Search, X } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 
 import { catalogAdminApi } from "@/features/catalog/api/catalogAdminApi";
 import { catalogAdminKeys } from "@/features/catalog/constants/catalog-admin-keys";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
-import { UiHint } from "@/shared/components/UiHint";
 import {
   AdminFilterPills,
   AdminPagination,
@@ -15,7 +14,6 @@ import {
   PageHeader,
 } from "@/shared/components/visual";
 import { Button } from "@/shared/components/ui/button";
-import { Input } from "@/shared/components/ui/input";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { ADMIN_PAGE_SIZE } from "@/shared/constants/adminList";
 import { adminCopy } from "@/shared/copy/admin";
@@ -31,23 +29,30 @@ export function ProductsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [availability, setAvailability] = useState("");
   const [page, setPage] = useState(1);
 
   useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedSearch(search.trim()), 280);
+    return () => window.clearTimeout(t);
+  }, [search]);
+
+  useEffect(() => {
     setPage(1);
-  }, [search, availability]);
+  }, [debouncedSearch, availability]);
 
   const listParams = {
     page: String(page),
     page_size: String(ADMIN_PAGE_SIZE),
-    ...(search.trim() ? { search: search.trim() } : {}),
+    ...(debouncedSearch ? { search: debouncedSearch } : {}),
     ...(availability ? { is_available: availability } : {}),
   };
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: [...catalogAdminKeys.products(), listParams],
     queryFn: () => catalogAdminApi.listProducts(listParams),
+    placeholderData: (prev) => prev,
   });
 
   const toggleAvailable = useMutation({
@@ -60,70 +65,87 @@ export function ProductsPage() {
 
   const products = data?.results ?? [];
   const total = data?.count ?? 0;
-  const availableCount = products.filter((p) => p.is_available).length;
-  const hasFilters = Boolean(search.trim() || availability);
+  const hasFilters = Boolean(debouncedSearch || availability);
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      <BackLink to="/" label="Dashboard" />
-
-      <PageHeader
-        title="Produtos"
-        subtitle={adminCopy.products.subtitle}
-        icon={Package}
-        action={
-          <Button
-            type="button"
-            size="lg"
-            className="w-full gap-2 bg-white text-brand shadow-lg hover:bg-[hsl(var(--primary-soft))] sm:w-auto"
-            onClick={() => navigate("/produtos/novo")}
-          >
-            <Plus className="h-4 w-4" />
-            Novo produto
-          </Button>
-        }
-      />
-
-      <UiHint icon={Lightbulb} tone="warm">
-        {adminCopy.products.tip}
-      </UiHint>
-
-      <div className="rounded-xl border border-[hsl(var(--border))] bg-white p-3 shadow-[var(--shadow-sm)] sm:p-3.5">
-        <div className="min-w-0 space-y-1 sm:max-w-md">
-          <Input
-            placeholder="Buscar por nome do produto"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            className="h-9 border-[hsl(var(--border))] bg-[hsl(var(--background))]"
-          />
-          <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
-            Filtra pelo nome — combine com os chips de disponibilidade.
-          </p>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <BackLink to="/" label="Dashboard" />
+        <Button
+          type="button"
+          size="sm"
+          className="h-9 gap-1.5"
+          onClick={() => navigate("/produtos/novo")}
+        >
+          <Plus className="h-4 w-4" />
+          Novo produto
+        </Button>
       </div>
 
-      <AdminFilterPills options={AVAILABILITY_FILTERS} value={availability} onChange={setAvailability} />
+      <div className="flex flex-col gap-4 border-b border-[hsl(var(--border))] pb-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+          <PageHeader
+            title="Produtos"
+            subtitle={adminCopy.products.subtitle}
+            icon={Package}
+            className="min-w-0 flex-1 border-0 pb-0"
+          />
 
-      {!isLoading && total > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-white px-3 py-1.5 text-xs font-medium shadow-[var(--shadow-xs)]">
-            <Sparkles className="h-3.5 w-3.5 text-brand" />
-            {total} no total
-          </span>
-          <span className="inline-flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-white px-3 py-1.5 text-xs font-medium shadow-[var(--shadow-xs)]">
-            <Package className="h-3.5 w-3.5 text-brand" />
-            {availableCount} nesta página disponíveis
-          </span>
+          <div className="flex w-full shrink-0 flex-col gap-1.5 sm:w-[min(100%,20rem)]">
+            <label className="group relative flex items-center">
+              <Search className="pointer-events-none absolute left-0 h-4 w-4 text-[hsl(var(--muted-foreground))] transition group-focus-within:text-brand" />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Buscar produto…"
+                aria-label="Buscar produtos"
+                className={cn(
+                  "h-10 w-full border-0 border-b border-[hsl(var(--border))] bg-transparent py-2 pl-7 pr-8 text-sm outline-none transition",
+                  "placeholder:text-[hsl(var(--muted-foreground))]",
+                  "focus:border-brand",
+                )}
+              />
+              {search ? (
+                <button
+                  type="button"
+                  aria-label="Limpar busca"
+                  className="absolute right-0 flex h-7 w-7 items-center justify-center rounded-full text-[hsl(var(--muted-foreground))] transition hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]"
+                  onClick={() => setSearch("")}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              ) : null}
+            </label>
+            <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
+              {total > 0 ? (
+                <>
+                  <span className="font-semibold text-[hsl(var(--foreground))]">{total}</span>
+                  {total === 1 ? " produto" : " produtos"}
+                  {hasFilters ? " encontrados" : " no cardápio"}
+                </>
+              ) : (
+                "Filtre por nome ou disponibilidade"
+              )}
+            </p>
+          </div>
         </div>
-      ) : null}
 
-      {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Skeleton className="h-32 w-full rounded-2xl" />
-          <Skeleton className="h-32 w-full rounded-2xl" />
+        <AdminFilterPills
+          options={AVAILABILITY_FILTERS}
+          value={availability}
+          onChange={setAvailability}
+          size="sm"
+        />
+      </div>
+
+      {isLoading && !data ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <Skeleton className="aspect-[16/10] w-full rounded-2xl" />
+          <Skeleton className="aspect-[16/10] w-full rounded-2xl" />
+          <Skeleton className="aspect-[16/10] w-full rounded-2xl" />
         </div>
       ) : products.length ? (
-        <div className="space-y-3">
+        <div className={cn("space-y-4", isFetching && "opacity-80 transition-opacity")}>
           <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {products.map((product) => (
               <li key={product.id}>
@@ -190,6 +212,7 @@ export function ProductsPage() {
               </li>
             ))}
           </ul>
+
           <AdminPagination page={page} total={total} onPageChange={setPage} />
         </div>
       ) : (

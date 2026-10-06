@@ -18,9 +18,11 @@ const EVENT_ICONS: Record<string, typeof Clock> = {
 
 type OrderEventTimelineProps = {
   order: OrderAdminDetail;
+  /** dentro do accordion da comanda */
+  embedded?: boolean;
 };
 
-export function OrderEventTimeline({ order }: OrderEventTimelineProps) {
+export function OrderEventTimeline({ order, embedded = false }: OrderEventTimelineProps) {
   const events =
     order.status_history?.length > 0
       ? order.status_history
@@ -35,46 +37,46 @@ export function OrderEventTimeline({ order }: OrderEventTimelineProps) {
         ];
 
   return (
-    <section className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 shadow-[var(--shadow-sm)] md:p-5">
-      <h2 className="text-base font-semibold">Histórico de eventos</h2>
-      <p className="mt-0.5 text-xs text-[hsl(var(--muted-foreground))]">
-        Cada mudança de status fica registrada aqui.
-      </p>
+    <section className={cn(!embedded && "space-y-2.5")}>
+      {!embedded ? <h2 className="text-sm font-semibold tracking-tight">Histórico</h2> : null}
 
-      <ol className="mt-4 space-y-0">
+      <ol className="space-y-0">
         {events.map((event, index) => {
           const Icon = EVENT_ICONS[event.to_status] ?? Clock;
           const isLast = index === events.length - 1;
 
           return (
-            <li key={`${event.to_status}-${event.created_at}-${index}`} className="relative flex gap-3 pb-5 last:pb-0">
+            <li
+              key={`${event.to_status}-${event.created_at}-${index}`}
+              className="relative flex gap-2.5 pb-3 last:pb-0"
+            >
               {!isLast ? (
-                <span className="absolute top-8 left-[15px] h-[calc(100%-20px)] w-px bg-[hsl(var(--border))]" />
+                <span className="absolute top-6 left-[11px] h-[calc(100%-14px)] w-px bg-[hsl(var(--border))]" />
               ) : null}
               <span
                 className={cn(
-                  "relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border",
+                  "relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
                   isLast
-                    ? "border-[hsl(var(--primary)/0.35)] bg-[hsl(var(--primary)/0.12)] text-brand"
-                    : "border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40 text-[hsl(var(--muted-foreground))]",
+                    ? "bg-brand/12 text-brand"
+                    : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]",
                 )}
               >
-                <Icon className="h-3.5 w-3.5" />
+                <Icon className="h-3 w-3" />
               </span>
               <div className="min-w-0 pt-0.5">
                 <div className="flex flex-wrap items-baseline gap-2">
                   <p className="text-sm font-medium">{eventLabel(event.to_status)}</p>
-                  <time className="text-xs tabular-nums text-[hsl(var(--muted-foreground))]">
+                  <time className="text-[11px] tabular-nums text-[hsl(var(--muted-foreground))]">
                     {formatClock(event.created_at)}
                   </time>
                 </div>
                 {event.changed_by ? (
-                  <p className="mt-0.5 text-xs text-[hsl(var(--muted-foreground))]">
+                  <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
                     por {event.changed_by}
                   </p>
                 ) : null}
                 {event.notes ? (
-                  <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">{event.notes}</p>
+                  <p className="mt-0.5 text-[11px] text-[hsl(var(--muted-foreground))]">{event.notes}</p>
                 ) : null}
               </div>
             </li>

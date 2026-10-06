@@ -1,8 +1,10 @@
 export { CartNavButton } from "./components/CartNavButton";
 export { CartPanel } from "./components/CartPanel";
 export { CartItemRow } from "./components/CartItemRow";
+export { CompositionHighlight } from "./components/CompositionHighlight";
 export { QuantitySelector } from "./components/QuantitySelector";
 export { useAddToCart } from "./hooks/useAddToCart";
 export { useCart } from "./hooks/useCart";
 export { useCartStore } from "./store/cartStore";
+export { formatCompositionLabel } from "./utils/formatComposition";
 export type { AddToCartPayload, CartItem, CartSelectedOption } from "./types/cart.types";

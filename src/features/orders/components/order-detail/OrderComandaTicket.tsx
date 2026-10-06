@@ -1,6 +1,7 @@
 import type { OrderAdminDetail } from "@/features/orders/types/order-admin.types";
 import type { PrintSettings } from "@/features/settings";
 import { normalizePrintSettings } from "@/features/settings";
+import { formatCompositionLabel } from "@/features/cart";
 import { formatCurrency } from "@/shared/lib/format";
 
 import { PAYMENT_METHOD_LABELS } from "./orderDetailCopy";
@@ -130,7 +131,12 @@ function ComandaBody({
           ITENS ({itemsCount} {itemsCount === 1 ? "un." : "un."})
         </p>
         <ul className="comanda-items">
-          {order.items.map((item) => (
+          {order.items.map((item) => {
+            const composition = formatCompositionLabel(
+              item.product_name,
+              (item.components ?? []).map((c) => c.product_name),
+            );
+            return (
             <li key={`${copyIndex}-${item.id}`} className="comanda-item">
               <div className="comanda-item-row">
                 <span>
@@ -138,6 +144,11 @@ function ComandaBody({
                 </span>
                 {settings.show_prices ? <span>{formatCurrency(item.total_price)}</span> : null}
               </div>
+              {composition ? (
+                <p className="comanda-obs" style={{ fontWeight: 700 }}>
+                  *** SABORES: {composition} ***
+                </p>
+              ) : null}
               {settings.show_prices ? (
                 <p className="comanda-unit">
                   Unit. {formatCurrency(item.unit_price)}
@@ -157,7 +168,8 @@ function ComandaBody({
               ) : null}
               {item.notes ? <p className="comanda-obs">Obs item: {item.notes}</p> : null}
             </li>
-          ))}
+            );
+          })}
         </ul>
       </section>
 

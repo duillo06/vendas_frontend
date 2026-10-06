@@ -1,20 +1,13 @@
 import { Link } from "react-router";
 import { Trash2 } from "lucide-react";
 
-import type { CartComponent, CartItem } from "../types/cart.types";
+import type { CartItem } from "../types/cart.types";
+import { CompositionHighlight } from "./CompositionHighlight";
 import { QuantitySelector } from "./QuantitySelector";
+import { formatCompositionLabel } from "../utils/formatComposition";
 
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { Button } from "@/shared/components/ui/button";
-
-// mostra as partes tipo "50% Calabresa · 50% Portuguesa"
-function formatCompositionParts(mainName: string, components: CartComponent[]): string {
-  const totalParts = components.length + 1;
-  const pct = Math.round(100 / totalParts);
-  return [mainName, ...components.map((c) => c.productName)]
-    .map((name) => `${pct}% ${name}`)
-    .join(" · ");
-}
 
 type CartItemRowProps = {
   item: CartItem;
@@ -25,6 +18,10 @@ type CartItemRowProps = {
 
 export function CartItemRow({ item, max, onQuantityChange, onRemove }: CartItemRowProps) {
   const lineTotal = item.unitPrice * item.quantity;
+  const composition = formatCompositionLabel(
+    item.productName,
+    (item.components ?? []).map((c) => c.productName),
+  );
 
   return (
     <article className="flex gap-3 rounded-lg border border-[hsl(var(--border))] p-3">
@@ -46,11 +43,7 @@ export function CartItemRow({ item, max, onQuantityChange, onRemove }: CartItemR
             <Link to={`/produto/${item.productSlug}`} className="font-medium hover:underline">
               {item.productName}
             </Link>
-            {item.components && item.components.length > 0 ? (
-              <p className="mt-0.5 text-xs font-medium text-brand">
-                {formatCompositionParts(item.productName, item.components)}
-              </p>
-            ) : null}
+            {composition ? <CompositionHighlight label={composition} /> : null}
             {item.selectedOptions.length > 0 ? (
               <ul className="mt-1 space-y-0.5 text-xs text-[hsl(var(--muted-foreground))]">
                 {item.selectedOptions.map((option) => (

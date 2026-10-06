@@ -12,10 +12,17 @@ export const PRIMARY_ACTION_LABELS: Partial<Record<OrderStatus, string>> = {
 };
 
 export const SECONDARY_ACTION_LABELS: Partial<Record<OrderStatus, string>> = {
-  completed: "Concluir (retirada)",
+  completed: "Concluir retirada",
   out_for_delivery: "Saiu para entrega",
   cancelled: "Cancelar",
 };
+
+export function getPrimaryActionLabel(order: OrderAdminDetail, status: OrderStatus): string {
+  if (status === "completed" && order.delivery_type !== "delivery") {
+    return "Concluir retirada";
+  }
+  return PRIMARY_ACTION_LABELS[status] ?? status;
+}
 
 type NowCard = {
   title: string;

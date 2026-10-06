@@ -1,10 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Banknote, CreditCard, MapPin, Smartphone, Store, User } from "lucide-react";
+import { Banknote, CreditCard, MapPin, Smartphone, Store, Trash2, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm, Controller, type FieldPath } from "react-hook-form";
 import type { ZodIssue } from "zod";
 
-import { useCart } from "@/features/cart";
+import { useCart, formatCompositionLabel, CompositionHighlight } from "@/features/cart";
 import { useCompanyPublic } from "@/features/company";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { MessageTicker } from "@/shared/components/MessageTicker";
@@ -39,7 +39,7 @@ const PAYMENT_LABELS: Record<string, string> = {
 export function CheckoutForm() {
   const [step, setStep] = useState(1);
   const prefillApplied = useRef(false);
-  const { items, subtotal } = useCart();
+  const { items, subtotal, removeItem } = useCart();
   const { data: company } = useCompanyPublic();
   const { mutate: createOrder, isPending } = useCreateOrder();
   const { prefillValues, isPrefillReady, customer, isAuthenticated, authLoading } =
@@ -433,47 +433,66 @@ export function CheckoutForm() {
         <Card className="border-[hsl(var(--border))] shadow-sm">
           <CardHeader className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30">
             <CardTitle>Revisão do pedido</CardTitle>
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">
+              Confira os itens. Pode tirar o que não quiser antes de confirmar.
+            </p>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <ul className="space-y-2 text-sm">
-              {items.map((item) => (
+          <CardContent className="space-y-4 pt-4">
+            <ul className="space-y-2">
+              {items.map((item) => {
+                const composition = formatCompositionLabel(
+                  item.productName,
+                  (item.components ?? []).map((c) => c.productName),
+                );
+                return (
                 <li
                   key={item.id}
-                  className="flex justify-between gap-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/20 p-3"
+                  className="flex items-start gap-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/20 p-3"
                 >
-                  <span>
-                    {item.quantity}x {item.productName}
-                  </span>
-                  <PriceDisplay value={item.unitPrice * item.quantity} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold leading-snug">
+                      <span className="tabular-nums text-brand">{item.quantity}×</span>{" "}
+                      {item.productName}
+                    </p>
+                    {composition ? <CompositionHighlight label={composition} /> : null}
+                    {item.selectedOptions.length > 0 ? (
+                      <ul className="mt-1 space-y-0.5 text-xs text-[hsl(var(--muted-foreground))]">
+                        {item.selectedOptions.map((option) => (
+                          <li key={`${option.optionId}-${option.quantity}`}>
+                            {option.optionGroupName}:{" "}
+                            {option.quantity > 1 ? `${option.quantity}× ` : ""}
+                            {option.name}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <PriceDisplay
+                      value={item.unitPrice * item.quantity}
+                      className="text-sm font-semibold tabular-nums"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-[hsl(var(--muted-foreground))] hover:bg-red-50 hover:text-red-600"
+                      aria-label={`Remover ${item.productName}`}
+                      onClick={() => removeItem(item.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </li>
-              ))}
+                );
+              })}
             </ul>
-            <div className="space-y-1 border-t border-[hsl(var(--border))] pt-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-[hsl(var(--muted-foreground))]">Subtotal</span>
-                <PriceDisplay value={subtotal} />
-              </div>
-              {deliveryFee > 0 ? (
-                <div className="flex justify-between">
-                  <span className="text-[hsl(var(--muted-foreground))]">Entrega</span>
-                  <PriceDisplay value={deliveryFee} />
-                </div>
-              ) : deliveryType === "delivery" ? (
-                <div className="flex justify-between">
-                  <span className="text-[hsl(var(--muted-foreground))]">Entrega</span>
-                  <span className="font-medium text-brand">Grátis</span>
-                </div>
-              ) : null}
-              <div className="flex justify-between text-base font-semibold">
-                <span>Total estimado</span>
-                <PriceDisplay value={estimatedTotal} className="text-brand" />
-              </div>
-            </div>
+
             <div className="rounded-xl bg-[hsl(var(--muted))]/50 p-4 text-sm">
               <p>
                 <strong>{formValues.customerName}</strong> — {formValues.customerPhone}
               </p>
-              <p className="text-[hsl(var(--muted-foreground))]">
+              <p className="mt-0.5 text-[hsl(var(--muted-foreground))]">
                 {deliveryType === "delivery" ? "Entrega" : "Retirada"} ·{" "}
                 {PAYMENT_LABELS[paymentMethod] ?? paymentMethod}
               </p>
@@ -492,7 +511,7 @@ export function CheckoutForm() {
             deliveryType={deliveryType}
             freeDeliveryAbove={company?.settings.free_delivery_above}
             baseDeliveryFee={company?.settings.delivery_fee ?? 0}
-            compact={step < 4}
+            compact
           />
         </div>
       </div>

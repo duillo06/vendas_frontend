@@ -62,6 +62,12 @@ export interface OrderAdminDetail {
       option_name: string;
       price_modifier: number;
     }>;
+    components: Array<{
+      product_id: string | null;
+      product_name: string;
+      base_price: number;
+      sort_order: number;
+    }>;
   }>;
   status_history: Array<{
     from_status: string | null;

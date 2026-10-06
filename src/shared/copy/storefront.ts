@@ -36,7 +36,7 @@ export const storefrontCopy = {
     addedToCartTitle: "Pronto — já está no carrinho",
     addedToCartHint: "Quer fechar o pedido ou continuar olhando?",
     goToCart: "Ver carrinho",
-    continueShopping: "Continuar",
+    continueShopping: "Continuar comprando",
     favoriteSaved: "Salvo nos favoritos",
     favoriteRemoved: "Removido dos favoritos",
     maxPerOrder: (max: number, name: string) =>

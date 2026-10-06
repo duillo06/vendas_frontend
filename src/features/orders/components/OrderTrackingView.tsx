@@ -3,6 +3,7 @@ import { MessageTicker } from "@/shared/components/MessageTicker";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { storefrontCopy } from "@/shared/copy/storefront";
+import { formatCompositionLabel, CompositionHighlight } from "@/features/cart";
 
 import type { Order } from "@/features/checkout/types/checkout.types";
 
@@ -68,12 +69,18 @@ export function OrderTrackingView({ order }: OrderTrackingViewProps) {
           <CardTitle className="text-base">Itens</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {order.items.map((item) => (
+          {order.items.map((item) => {
+            const composition = formatCompositionLabel(
+              item.product_name,
+              (item.components ?? []).map((c) => c.product_name),
+            );
+            return (
             <div key={item.id} className="flex justify-between gap-2 text-sm">
               <div>
                 <p className="font-medium">
                   {item.quantity}x {item.product_name}
                 </p>
+                {composition ? <CompositionHighlight label={composition} /> : null}
                 {item.options.length > 0 ? (
                   <ul className="text-xs text-[hsl(var(--muted-foreground))]">
                     {item.options.map((opt) => (
@@ -86,7 +93,8 @@ export function OrderTrackingView({ order }: OrderTrackingViewProps) {
               </div>
               <PriceDisplay value={item.total_price} />
             </div>
-          ))}
+            );
+          })}
           <div className="flex justify-between border-t border-[hsl(var(--border))] pt-3 font-semibold">
             <span>Total</span>
             <PriceDisplay value={order.total} className="text-[hsl(var(--primary))]" />

@@ -22,11 +22,11 @@ export function AdminPagination({
   if (total <= 0) return null;
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  if (totalPages <= 1) return null;
-
+  // com 1 página ainda mostra o resumo (X–Y de Z)
   const safePage = Math.min(Math.max(1, page), totalPages);
   const from = (safePage - 1) * pageSize + 1;
   const to = Math.min(safePage * pageSize, total);
+  const multiPage = totalPages > 1;
 
   return (
     <div
@@ -41,33 +41,37 @@ export function AdminPagination({
         </span>{" "}
         de {total}
       </p>
-      <div className="flex items-center gap-1.5">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1 px-2.5 text-xs"
-          disabled={safePage <= 1}
-          onClick={() => onPageChange(safePage - 1)}
-        >
-          <ChevronLeft className="h-3.5 w-3.5" />
-          Anterior
-        </Button>
-        <span className="min-w-[5.5rem] text-center text-xs tabular-nums text-[hsl(var(--muted-foreground))]">
-          {safePage} / {totalPages}
-        </span>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1 px-2.5 text-xs"
-          disabled={safePage >= totalPages}
-          onClick={() => onPageChange(safePage + 1)}
-        >
-          Próxima
-          <ChevronRight className="h-3.5 w-3.5" />
-        </Button>
-      </div>
+      {multiPage ? (
+        <div className="flex items-center gap-1.5">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1 px-2.5 text-xs"
+            disabled={safePage <= 1}
+            onClick={() => onPageChange(safePage - 1)}
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+            Anterior
+          </Button>
+          <span className="min-w-[5.5rem] text-center text-xs tabular-nums text-[hsl(var(--muted-foreground))]">
+            {safePage} / {totalPages}
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1 px-2.5 text-xs"
+            disabled={safePage >= totalPages}
+            onClick={() => onPageChange(safePage + 1)}
+          >
+            Próxima
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      ) : (
+        <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Todos nesta página</p>
+      )}
     </div>
   );
 }

@@ -86,6 +86,12 @@ export interface OrderItem {
   total_price: number;
   notes: string;
   options: OrderItemOption[];
+  components?: Array<{
+    product_id: string | null;
+    product_name: string;
+    base_price: number;
+    sort_order: number;
+  }>;
 }
 
 export interface OrderPayment {
