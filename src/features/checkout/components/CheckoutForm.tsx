@@ -1,11 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Banknote, CreditCard, MapPin, Smartphone, Store, Trash2, User } from "lucide-react";
+import { Armchair, Banknote, CreditCard, MapPin, Smartphone, Store, Trash2, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm, Controller, type FieldPath } from "react-hook-form";
+import { toast } from "sonner";
 import type { ZodIssue } from "zod";
 
 import { useCart, formatCompositionLabel, CompositionHighlight } from "@/features/cart";
 import { useCompanyPublic } from "@/features/company";
+import { getMesaSession, setMesaSession, tablesPublicApi } from "@/features/tables";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { MessageTicker } from "@/shared/components/MessageTicker";
 import { Button } from "@/shared/components/ui/button";
@@ -34,11 +36,16 @@ const PAYMENT_LABELS: Record<string, string> = {
   cash: "Dinheiro",
   pix: "PIX na entrega",
   card_on_delivery: "Cartão na entrega",
+  pay_at_venue: "Pagar no local",
 };
 
 export function CheckoutForm() {
   const [step, setStep] = useState(1);
+  const [mesaNumberInput, setMesaNumberInput] = useState("");
+  const [mesaLabel, setMesaLabel] = useState<string | null>(null);
+  const [resolvingMesa, setResolvingMesa] = useState(false);
   const prefillApplied = useRef(false);
+  const mesaApplied = useRef(false);
   const { items, subtotal, removeItem } = useCart();
   const { data: company } = useCompanyPublic();
   const { mutate: createOrder, isPending } = useCreateOrder();
@@ -46,6 +53,7 @@ export function CheckoutForm() {
     useCheckoutPrefill(company);
 
   const paymentMethods = company?.settings.payment_methods ?? ["cash", "pix", "card_on_delivery"];
+  const acceptsDineIn = company?.settings.accepts_dine_in === true;
 
   const {
     register,
@@ -81,9 +89,62 @@ export function CheckoutForm() {
     prefillApplied.current = true;
   }, [isPrefillReady, prefillValues, reset]);
 
+  // veio do QR da mesa → checkout express (só confirmar)
+  useEffect(() => {
+    if (!acceptsDineIn || mesaApplied.current) return;
+    const session = getMesaSession();
+    if (!session) return;
+    setValue("deliveryType", "dine_in");
+    setValue("tableId", session.tableId);
+    setValue("qrToken", session.qrToken);
+    setValue("paymentMethod", "pay_at_venue");
+    setValue("address", undefined);
+    setValue("customerPhone", "");
+    setValue("customerEmail", "");
+    setValue("customerName", `Mesa ${session.tableNumber}`);
+    setMesaLabel(`Mesa ${session.tableNumber}`);
+    setMesaNumberInput(session.tableNumber);
+    setStep(4);
+    mesaApplied.current = true;
+  }, [acceptsDineIn, setValue]);
+
   const deliveryType = watch("deliveryType");
   const paymentMethod = watch("paymentMethod");
   const formValues = watch();
+  const mesaExpress =
+    deliveryType === "dine_in" && Boolean(formValues.tableId || formValues.qrToken);
+
+  const applyMesaByNumber = async () => {
+    const number = mesaNumberInput.trim();
+    if (!number) {
+      toast.error("Informe o número da mesa");
+      return;
+    }
+    setResolvingMesa(true);
+    try {
+      const table = await tablesPublicApi.getByNumber(number);
+      setValue("deliveryType", "dine_in");
+      setValue("tableId", table.table_id);
+      setValue("qrToken", table.qr_token);
+      setValue("paymentMethod", "pay_at_venue");
+      setValue("address", undefined);
+      setValue("customerPhone", "");
+      setValue("customerEmail", "");
+      setValue("customerName", `Mesa ${table.table_number}`);
+      setMesaLabel(`Mesa ${table.table_number}`);
+      setMesaSession({
+        tableId: table.table_id,
+        tableNumber: table.table_number,
+        qrToken: table.qr_token || "",
+      });
+      clearErrors(["tableId", "address"]);
+      setStep(4);
+    } catch {
+      toast.error("Não encontramos essa mesa. Confira o número.");
+    } finally {
+      setResolvingMesa(false);
+    }
+  };
 
   const deliveryFee =
     deliveryType === "delivery" && company
@@ -122,11 +183,20 @@ export function CheckoutForm() {
       const step2Data =
         values.deliveryType === "delivery"
           ? { deliveryType: "delivery" as const, address: values.address }
-          : { deliveryType: "pickup" as const };
+          : values.deliveryType === "dine_in"
+            ? {
+                deliveryType: "dine_in" as const,
+                tableId: values.tableId,
+                qrToken: values.qrToken,
+              }
+            : { deliveryType: "pickup" as const };
 
       const result = checkoutStep2Schema.safeParse(step2Data);
       if (!result.success) {
         applyZodErrors(result.error.issues);
+        if (values.deliveryType === "dine_in") {
+          toast.error("Informe a mesa antes de continuar");
+        }
         return;
       }
       if (
@@ -187,28 +257,35 @@ export function CheckoutForm() {
       }}
       className="space-y-6 pb-24 lg:pb-0 w-full min-w-0 max-w-full"
     >
-      <CheckoutStepper currentStep={step} />
+      <CheckoutStepper currentStep={step} mesaExpress={mesaExpress} />
 
       <div className="grid w-full min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
         <div className="min-w-0 space-y-6">
       <MessageTicker
         messages={[
-          !authLoading && isAuthenticated && customer
+          mesaExpress
+            ? `🪑 ${mesaLabel || "Mesa"} · confira e envie o pedido`
+            : null,
+          !mesaExpress && !authLoading && isAuthenticated && customer
             ? `👋 Olá, ${customer.first_name}! ${storefrontCopy.account.checkoutLoggedIn(customer.full_name)}`
             : null,
-          !authLoading && !isAuthenticated
+          !mesaExpress && !authLoading && !isAuthenticated
             ? {
                 text: `${storefrontCopy.account.guestCheckout} ${storefrontCopy.account.checkoutLoginLink}`,
                 to: "/entrar",
               }
             : null,
-          `✨ ${storefrontCopy.checkout.steps[step as 1 | 2 | 3 | 4]}`,
-          step === 4 ? `🔒 ${storefrontCopy.checkout.confirmReassurance}` : null,
+          !mesaExpress
+            ? `✨ ${storefrontCopy.checkout.steps[step as 1 | 2 | 3 | 4]}`
+            : null,
+          mesaExpress || step === 4
+            ? `🔒 ${storefrontCopy.checkout.confirmReassurance}`
+            : null,
           `🛡️ ${storefrontCopy.checkout.secureNote}`,
         ].filter((m): m is NonNullable<typeof m> => m != null)}
       />
 
-      {step === 1 ? (
+      {!mesaExpress && step === 1 ? (
         <Card className="border-[hsl(var(--border))] shadow-sm">
           <CardHeader className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -256,15 +333,21 @@ export function CheckoutForm() {
         </Card>
       ) : null}
 
-      {step === 2 ? (
+      {!mesaExpress && step === 2 ? (
         <Card className="border-[hsl(var(--border))] shadow-sm">
           <CardHeader className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30">
             <CardTitle className="flex items-center gap-2 text-base">
               <MapPin className="h-4 w-4 text-brand" />
-              Entrega ou retirada
+              Como prefere receber?
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {mesaLabel && deliveryType === "dine_in" ? (
+              <div className="flex items-center gap-2 rounded-xl border border-brand/30 bg-brand-soft/40 px-3 py-2 text-sm font-medium text-brand">
+                <Armchair className="h-4 w-4 shrink-0" />
+                {mesaLabel}
+              </div>
+            ) : null}
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {company?.settings.accepts_pickup !== false ? (
                 <button
@@ -276,6 +359,8 @@ export function CheckoutForm() {
                   onClick={() => {
                     setValue("deliveryType", "pickup");
                     setValue("address", undefined);
+                    setValue("tableId", undefined);
+                    setValue("qrToken", undefined);
                     clearErrors("address");
                   }}
                 >
@@ -299,6 +384,8 @@ export function CheckoutForm() {
                   )}
                   onClick={() => {
                     setValue("deliveryType", "delivery");
+                    setValue("tableId", undefined);
+                    setValue("qrToken", undefined);
                     setValue("address", {
                       street: "",
                       number: "",
@@ -325,7 +412,53 @@ export function CheckoutForm() {
                   </span>
                 </button>
               ) : null}
+              {acceptsDineIn ? (
+                <button
+                  type="button"
+                  className={cn(
+                    "checkout-option sm:col-span-2",
+                    deliveryType === "dine_in" && "checkout-option-selected",
+                  )}
+                  onClick={() => {
+                    setValue("deliveryType", "dine_in");
+                    setValue("address", undefined);
+                    clearErrors("address");
+                  }}
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">
+                    <Armchair className="h-4 w-4" />
+                  </span>
+                  <span>
+                    <span className="block font-semibold">Estou na loja</span>
+                    <span className="text-xs font-normal text-[hsl(var(--muted-foreground))]">
+                      Pedido na mesa — o garçom leva até você
+                    </span>
+                  </span>
+                </button>
+              ) : null}
             </div>
+
+            {acceptsDineIn && deliveryType === "dine_in" ? (
+              <div className="space-y-2 rounded-xl border border-[hsl(var(--border))] p-3">
+                <Label htmlFor="mesa-number">Qual é o número da sua mesa?</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="mesa-number"
+                    placeholder="Ex.: 12"
+                    value={mesaNumberInput}
+                    onChange={(e) => setMesaNumberInput(e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={resolvingMesa}
+                    onClick={applyMesaByNumber}
+                  >
+                    {resolvingMesa ? "…" : "Confirmar"}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
 
             {deliveryType === "delivery" ? (
               <AddressFields
@@ -357,7 +490,7 @@ export function CheckoutForm() {
         </Card>
       ) : null}
 
-      {step === 3 ? (
+      {!mesaExpress && step === 3 ? (
         <Card className="border-[hsl(var(--border))] shadow-sm">
           <CardHeader className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -429,15 +562,25 @@ export function CheckoutForm() {
         </Card>
       ) : null}
 
-      {step === 4 ? (
+      {step === 4 || mesaExpress ? (
         <Card className="border-[hsl(var(--border))] shadow-sm">
           <CardHeader className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30">
-            <CardTitle>Revisão do pedido</CardTitle>
+            <CardTitle>
+              {mesaExpress ? "Confirmar pedido na mesa" : "Revisão do pedido"}
+            </CardTitle>
             <p className="text-xs text-[hsl(var(--muted-foreground))]">
-              Confira os itens. Pode tirar o que não quiser antes de confirmar.
+              {mesaExpress
+                ? "Confira os itens e envie. O pagamento é no estabelecimento."
+                : "Confira os itens. Pode tirar o que não quiser antes de confirmar."}
             </p>
           </CardHeader>
           <CardContent className="space-y-4 pt-4">
+            {mesaExpress && mesaLabel ? (
+              <div className="flex items-center gap-2 rounded-xl border border-brand/30 bg-brand-soft/40 px-3 py-2.5 text-sm font-semibold text-brand">
+                <Armchair className="h-4 w-4 shrink-0" />
+                {mesaLabel}
+              </div>
+            ) : null}
             <ul className="space-y-2">
               {items.map((item) => {
                 const composition = formatCompositionLabel(
@@ -488,15 +631,26 @@ export function CheckoutForm() {
               })}
             </ul>
 
-            <div className="rounded-xl bg-[hsl(var(--muted))]/50 p-4 text-sm">
-              <p>
-                <strong>{formValues.customerName}</strong> — {formValues.customerPhone}
-              </p>
-              <p className="mt-0.5 text-[hsl(var(--muted-foreground))]">
-                {deliveryType === "delivery" ? "Entrega" : "Retirada"} ·{" "}
-                {PAYMENT_LABELS[paymentMethod] ?? paymentMethod}
-              </p>
-            </div>
+            {mesaExpress ? (
+              <div className="space-y-2">
+                <Label htmlFor="notes-mesa">Observação (opcional)</Label>
+                <Input id="notes-mesa" placeholder="Ex: sem cebola" {...register("notes")} />
+              </div>
+            ) : (
+              <div className="rounded-xl bg-[hsl(var(--muted))]/50 p-4 text-sm">
+                <p>
+                  <strong>{formValues.customerName}</strong> — {formValues.customerPhone}
+                </p>
+                <p className="mt-0.5 text-[hsl(var(--muted-foreground))]">
+                  {deliveryType === "delivery"
+                    ? "Entrega"
+                    : deliveryType === "dine_in"
+                      ? mesaLabel || "Na mesa"
+                      : "Retirada"}{" "}
+                  · {PAYMENT_LABELS[paymentMethod] ?? paymentMethod}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       ) : null}
@@ -518,22 +672,26 @@ export function CheckoutForm() {
 
       <div className="checkout-sticky-actions lg:static lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
         <div className="mx-auto flex w-full max-w-5xl flex-col-reverse gap-2 sm:flex-row sm:justify-between lg:max-w-none">
-        <Button
-          type="button"
-          variant="outline"
-          disabled={step === 1 || isPending}
-          onClick={() => setStep((s) => Math.max(1, s - 1))}
-          className="lg:flex-none"
-        >
-          Voltar
-        </Button>
-        {step < CHECKOUT_STEPS ? (
-          <Button type="button" onClick={goNext} className="lg:flex-none">
-            Continuar
+        {!mesaExpress ? (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={step === 1 || isPending}
+            onClick={() => setStep((s) => Math.max(1, s - 1))}
+            className="lg:flex-none"
+          >
+            Voltar
           </Button>
         ) : (
+          <span className="hidden sm:block" />
+        )}
+        {mesaExpress || step >= CHECKOUT_STEPS ? (
           <Button type="button" disabled={isPending} onClick={handleConfirm} className="gap-2 lg:flex-none">
-            {isPending ? "Finalizando..." : "Confirmar pedido 🎉"}
+            {isPending ? "Enviando..." : mesaExpress ? "Enviar pedido 🎉" : "Confirmar pedido 🎉"}
+          </Button>
+        ) : (
+          <Button type="button" onClick={goNext} className="lg:flex-none">
+            Continuar
           </Button>
         )}
         </div>

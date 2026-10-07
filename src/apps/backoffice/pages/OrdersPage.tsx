@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Bike, CalendarRange, ClipboardList, Search, Store } from "lucide-react";
+import { Armchair, Bike, CalendarRange, ClipboardList, Search, Store } from "lucide-react";
 import { useSearchParams } from "react-router";
 
 import { useOrders } from "@/features/orders/hooks/useOrders";
@@ -41,6 +41,7 @@ const DELIVERY_OPTIONS: Array<{
   { value: "", label: "Todos" },
   { value: "delivery", label: "Entrega", icon: Bike },
   { value: "pickup", label: "Retirada", icon: Store },
+  { value: "dine_in", label: "Mesas", icon: Armchair },
 ];
 
 function todayIso() {
@@ -358,7 +359,8 @@ export function OrdersPage() {
                     status={order.status as OrderStatus}
                     total={order.total}
                     itemsCount={order.items_count}
-                    deliveryType={order.delivery_type as "delivery" | "pickup"}
+                    deliveryType={order.delivery_type as "delivery" | "pickup" | "dine_in"}
+                    tableNumber={order.table_number}
                   />
                 </li>
               ))}

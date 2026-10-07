@@ -18,6 +18,9 @@ export const SECONDARY_ACTION_LABELS: Partial<Record<OrderStatus, string>> = {
 };
 
 export function getPrimaryActionLabel(order: OrderAdminDetail, status: OrderStatus): string {
+  if (status === "completed" && order.delivery_type === "dine_in") {
+    return "Entregar na mesa";
+  }
   if (status === "completed" && order.delivery_type !== "delivery") {
     return "Concluir retirada";
   }
@@ -32,12 +35,16 @@ type NowCard = {
 
 export function getNowCardCopy(order: OrderAdminDetail): NowCard {
   const isDelivery = order.delivery_type === "delivery";
+  const isMesa = order.delivery_type === "dine_in";
+  const mesaLabel = order.table_number ? `Mesa ${order.table_number}` : "a mesa";
 
   switch (order.status) {
     case "pending":
       return {
         title: "O que fazer agora",
-        body: "Pedido novo na fila. Confirme para avisar a cozinha e o cliente.",
+        body: isMesa
+          ? `Pedido da ${mesaLabel}. Confirme para a cozinha começar.`
+          : "Pedido novo na fila. Confirme para avisar a cozinha e o cliente.",
         emotion: "Vamos começar!",
       };
     case "confirmed":
@@ -57,8 +64,14 @@ export function getNowCardCopy(order: OrderAdminDetail): NowCard {
         title: "O que fazer agora",
         body: isDelivery
           ? "Pedido montado. Agora entregue ao entregador."
-          : "Pedido pronto na bancada. Aguarde o cliente ou conclua a retirada.",
-        emotion: isDelivery ? "O entregador já pode sair." : "Cliente quase na porta.",
+          : isMesa
+            ? `Pedido pronto. Leve até a ${mesaLabel}.`
+            : "Pedido pronto na bancada. Aguarde o cliente ou conclua a retirada.",
+        emotion: isDelivery
+          ? "O entregador já pode sair."
+          : isMesa
+            ? "Cliente na mesa."
+            : "Cliente quase na porta.",
       };
     case "out_for_delivery":
       return {
@@ -139,4 +152,5 @@ export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   cash: "Dinheiro",
   pix: "PIX",
   card_on_delivery: "Cartão na entrega",
+  pay_at_venue: "Pagar no local",
 };

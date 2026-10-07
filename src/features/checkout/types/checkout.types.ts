@@ -1,5 +1,5 @@
-export type DeliveryType = "delivery" | "pickup";
-export type PaymentMethod = "cash" | "pix" | "card_on_delivery";
+export type DeliveryType = "delivery" | "pickup" | "dine_in";
+export type PaymentMethod = "cash" | "pix" | "card_on_delivery" | "pay_at_venue";
 
 export interface CheckoutAddress {
   street: string;
@@ -26,6 +26,8 @@ export interface CheckoutFormData {
   notes?: string;
   changeFor?: number;
   address?: CheckoutAddress;
+  tableId?: string;
+  qrToken?: string;
 }
 
 export interface CheckoutItemPayload {
@@ -45,6 +47,8 @@ export interface CheckoutPayload {
   payment_method: PaymentMethod;
   notes?: string;
   change_for?: number;
+  table_id?: string;
+  qr_token?: string;
   address?: {
     street: string;
     number: string;
@@ -110,6 +114,7 @@ export interface Order {
   order_number: string;
   status: OrderStatus;
   delivery_type: DeliveryType;
+  table_number?: string | null;
   customer_name: string;
   customer_phone: string;
   subtotal: number;

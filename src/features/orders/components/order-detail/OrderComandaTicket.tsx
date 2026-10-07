@@ -60,6 +60,7 @@ function ComandaBody({
   copies,
 }: ComandaBodyProps) {
   const isDelivery = order.delivery_type === "delivery";
+  const isMesa = order.delivery_type === "dine_in";
   const itemsCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
   const paymentLabel = order.payment
     ? (PAYMENT_METHOD_LABELS[order.payment.method] ?? order.payment.method)
@@ -91,7 +92,13 @@ function ComandaBody({
 
       <div className="comanda-rule" />
 
-      <p className="comanda-badge">{isDelivery ? "*** ENTREGA ***" : "*** RETIRADA ***"}</p>
+      <p className="comanda-badge">
+        {isDelivery
+          ? "*** ENTREGA ***"
+          : isMesa
+            ? `*** MESA ${order.table_number ?? "—"} ***`
+            : "*** RETIRADA ***"}
+      </p>
       <p className="comanda-meta comanda-center">
         Situação: {statusLabel}
         {settings.show_prep_time ? ` · Prep. ~${estimatedPrepTime} min` : ""}
@@ -100,10 +107,16 @@ function ComandaBody({
       <div className="comanda-rule" />
 
       <section className="comanda-block">
-        <p>
-          <strong>Cliente:</strong> {order.customer.name}
-        </p>
-        {settings.show_customer_phone ? (
+        {isMesa ? (
+          <p>
+            <strong>Mesa:</strong> {order.table_number ?? "—"} (no local)
+          </p>
+        ) : (
+          <p>
+            <strong>Cliente:</strong> {order.customer.name}
+          </p>
+        )}
+        {!isMesa && settings.show_customer_phone ? (
           <p>
             <strong>Tel:</strong> {order.customer.phone}
           </p>
@@ -117,6 +130,10 @@ function ComandaBody({
               <p key={line}>{line}</p>
             ))}
           </div>
+        ) : isMesa ? (
+          <p>
+            <strong>Atendimento:</strong> Levar até a mesa
+          </p>
         ) : (
           <p>
             <strong>Retirada:</strong> Cliente retira no balcão

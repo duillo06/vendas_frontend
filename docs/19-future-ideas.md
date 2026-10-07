@@ -58,6 +58,7 @@ Não abrir discussão de remodelagem de arquitetura por ideia futura (Architectu
 
 | Data | Ideia | Nota |
 |------|-------|------|
+| Out/2026 | Pedidos na mesa (salão) / QR | Spec em `35-pedidos-mesa.md` — Sprint 21 / V2 |
 | Jul/2026 | Sistema proativo / consultor de vendas | Ver `20` §17 e `21-marketing-engine.md` |
 | Jul/2026 | Campanhas prontas + datas comemorativas | `20` §15 · `21` §7 |
 | Jul/2026 | Calendário visual de campanhas | `20` §16 · `21` §16 |

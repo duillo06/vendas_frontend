@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  Armchair,
   Banknote,
   Check,
   Clock,
@@ -34,6 +35,8 @@ import {
   getPrimaryNextStatus,
   getSecondaryNextStatuses,
   getStatusEnteredAt,
+  isDineInOrder,
+  isMesaGuestPhone,
   minutesBetween,
   phoneDigits,
   pickPrimaryAlert,
@@ -93,14 +96,18 @@ export function OrderActionPanel({
   const totalMins = minutesBetween(new Date(order.created_at), now);
   const timer = getLiveTimerCopy(order, minsInStatus, totalMins);
   const copy = getNowCardCopy(order);
+  const isMesa = isDineInOrder(order);
   const isPickupComplete = primary === "completed" && order.delivery_type !== "delivery";
   const PrimaryIcon = isPickupComplete
-    ? Store
+    ? isMesa
+      ? Armchair
+      : Store
     : primary
       ? STATUS_ICONS[primary]
       : Check;
   const urgent = order.status === "pending" && minsInStatus >= 10;
   const done = order.status === "completed" || order.status === "cancelled";
+  const showContactActions = !isMesa && !isMesaGuestPhone(order.customer.phone);
   // um aviso só: atraso/pagamento vencem o "tudo ok"; se só success, cai no texto da ação
   const primaryAlert = pickPrimaryAlert(alerts);
   const cueAlert =
@@ -111,9 +118,16 @@ export function OrderActionPanel({
       className={cn(
         "overflow-hidden rounded-2xl bg-white shadow-[0_4px_24px_-8px_rgb(0_0_0/0.14),0_2px_8px_-4px_rgb(0_0_0/0.06)] ring-1 ring-black/[0.05]",
         "lg:sticky lg:top-4",
+        isMesa && "ring-teal-200/70",
         urgent && "ring-2 ring-amber-300/70",
       )}
     >
+      {isMesa ? (
+        <div className="flex items-center gap-2 border-b border-teal-200/70 bg-teal-50/90 px-4 py-2 text-xs font-semibold text-teal-900">
+          <Armchair className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
+          Mesa {order.table_number ?? "—"} · pagamento no local
+        </div>
+      ) : null}
       {/* status + timer */}
       <div
         className={cn(
@@ -223,28 +237,35 @@ export function OrderActionPanel({
           )}
         </AnimatePresence>
 
-        {/* ações rápidas */}
+        {/* ações rápidas — mesa não tem WhatsApp/ligar */}
         <div
-          className="grid grid-cols-4 gap-1 rounded-xl bg-[hsl(var(--muted))]/55 p-1"
+          className={cn(
+            "grid gap-1 rounded-xl bg-[hsl(var(--muted))]/55 p-1",
+            showContactActions ? "grid-cols-4" : "grid-cols-2",
+          )}
           role="toolbar"
           aria-label="Ações rápidas"
         >
-          <a
-            className="flex flex-col items-center gap-1 rounded-lg px-1 py-2 text-[10px] font-medium text-[hsl(var(--muted-foreground))] transition hover:bg-white hover:text-brand hover:shadow-sm"
-            href={`tel:${phoneDigits(order.customer.phone)}`}
-          >
-            <Phone className="h-4 w-4" />
-            Ligar
-          </a>
-          <a
-            className="flex flex-col items-center gap-1 rounded-lg px-1 py-2 text-[10px] font-medium text-[hsl(var(--muted-foreground))] transition hover:bg-white hover:text-brand hover:shadow-sm"
-            href={whatsappUrl(order.customer.phone)}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <MessageCircle className="h-4 w-4" />
-            WhatsApp
-          </a>
+          {showContactActions ? (
+            <>
+              <a
+                className="flex flex-col items-center gap-1 rounded-lg px-1 py-2 text-[10px] font-medium text-[hsl(var(--muted-foreground))] transition hover:bg-white hover:text-brand hover:shadow-sm"
+                href={`tel:${phoneDigits(order.customer.phone)}`}
+              >
+                <Phone className="h-4 w-4" />
+                Ligar
+              </a>
+              <a
+                className="flex flex-col items-center gap-1 rounded-lg px-1 py-2 text-[10px] font-medium text-[hsl(var(--muted-foreground))] transition hover:bg-white hover:text-brand hover:shadow-sm"
+                href={whatsappUrl(order.customer.phone)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <MessageCircle className="h-4 w-4" />
+                WhatsApp
+              </a>
+            </>
+          ) : null}
           <button
             type="button"
             className="flex flex-col items-center gap-1 rounded-lg px-1 py-2 text-[10px] font-medium text-[hsl(var(--muted-foreground))] transition hover:bg-white hover:text-brand hover:shadow-sm"

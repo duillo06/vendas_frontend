@@ -37,6 +37,7 @@ export interface CompanySettingsAdmin {
   estimated_delivery_time: number;
   accepts_delivery: boolean;
   accepts_pickup: boolean;
+  accepts_dine_in: boolean;
   delivery_city?: string;
   delivery_state?: string;
   delivery_city_id?: number | null;

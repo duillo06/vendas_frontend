@@ -33,6 +33,11 @@ export const checkoutStep1Schema = z.object({
 export const checkoutStep2Schema = z.discriminatedUnion("deliveryType", [
   z.object({ deliveryType: z.literal("pickup") }),
   z.object({
+    deliveryType: z.literal("dine_in"),
+    tableId: z.string().uuid().optional(),
+    qrToken: z.string().min(1).optional(),
+  }),
+  z.object({
     deliveryType: z.literal("delivery"),
     address: addressSchema,
   }),
@@ -52,22 +57,48 @@ export const checkoutStep3Schema = z.discriminatedUnion("paymentMethod", [
 
 export const checkoutSchema = z
   .object({
-    customerName: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-    customerPhone: customerPhoneSchema,
+    customerName: z.string().optional().or(z.literal("")),
+    customerPhone: z.string().optional().or(z.literal("")),
     customerEmail: z.string().email("E-mail inválido").optional().or(z.literal("")),
-    deliveryType: z.enum(["delivery", "pickup"]),
-    paymentMethod: z.enum(["cash", "pix", "card_on_delivery"]),
+    deliveryType: z.enum(["delivery", "pickup", "dine_in"]),
+    paymentMethod: z.enum(["cash", "pix", "card_on_delivery", "pay_at_venue"]),
     notes: z.string().max(500).optional(),
     changeFor: z.number().positive("Informe um valor válido").optional(),
     address: addressSchema.optional(),
+    tableId: z.string().uuid().optional(),
+    qrToken: z.string().optional(),
   })
+  .refine(
+    (data) =>
+      data.deliveryType === "dine_in" ||
+      Boolean(data.customerName && data.customerName.trim().length >= 2),
+    { message: "Nome deve ter pelo menos 2 caracteres", path: ["customerName"] },
+  )
+  .refine(
+    (data) => data.deliveryType === "dine_in" || isBrazilianMobile(data.customerPhone || ""),
+    { message: MOBILE_PHONE_MESSAGE, path: ["customerPhone"] },
+  )
   .refine((data) => data.deliveryType !== "delivery" || Boolean(data.address), {
     message: "Endereço é obrigatório para entrega",
     path: ["address"],
   })
-  .refine((data) => data.paymentMethod !== "cash" || Boolean(data.changeFor), {
-    message: "Informe o valor para troco",
-    path: ["changeFor"],
-  });
+  .refine(
+    (data) =>
+      data.deliveryType !== "dine_in" || Boolean(data.tableId) || Boolean(data.qrToken),
+    {
+      message: "Informe a mesa ou escaneie o QR",
+      path: ["tableId"],
+    },
+  )
+  .refine(
+    (data) =>
+      data.deliveryType === "dine_in" ||
+      data.paymentMethod !== "cash" ||
+      Boolean(data.changeFor),
+    {
+      message: "Informe o valor para troco",
+      path: ["changeFor"],
+    },
+  );
 
 export type CheckoutFormValues = z.infer<typeof checkoutSchema>;

@@ -11,7 +11,7 @@ type CheckoutOrderSummaryProps = {
   items: CartItem[];
   subtotal: number;
   deliveryFee: number;
-  deliveryType: "delivery" | "pickup";
+  deliveryType: "delivery" | "pickup" | "dine_in";
   freeDeliveryAbove?: number | null;
   baseDeliveryFee?: number;
   compact?: boolean;

@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 import { useCartStore } from "@/features/cart/store/cartStore";
 import { useCustomerAuth } from "@/features/customer-auth";
+import { clearMesaSession } from "@/features/tables";
 
 import { ordersApi } from "../api/ordersApi";
 import type { CheckoutFormValues } from "../schemas/checkout.schema";
@@ -26,6 +27,7 @@ export function useCreateOrder() {
     },
     onSuccess: (order) => {
       clearCart();
+      clearMesaSession();
       toast.success("Pedido realizado!", { description: order.order_number });
       void navigate(`/pedido/${order.id}/confirmacao`, { replace: true, state: { order } });
     },

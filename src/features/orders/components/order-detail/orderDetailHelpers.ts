@@ -107,6 +107,15 @@ export function phoneDigits(phone: string): string {
   return phone.replace(/\D/g, "");
 }
 
+/** telefone sintético de convidado mesa — não liga / WhatsApp */
+export function isMesaGuestPhone(phone: string | null | undefined): boolean {
+  return Boolean(phone?.startsWith("mesa-"));
+}
+
+export function isDineInOrder(order: { delivery_type: string }): boolean {
+  return order.delivery_type === "dine_in";
+}
+
 export function whatsappUrl(phone: string): string {
   const digits = phoneDigits(phone);
   const withCountry = digits.startsWith("55") ? digits : `55${digits}`;

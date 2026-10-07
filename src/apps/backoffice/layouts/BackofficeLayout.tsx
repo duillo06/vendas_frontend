@@ -1,4 +1,5 @@
 import {
+  Armchair,
   LayoutDashboard,
   Layers,
   LogOut,
@@ -34,16 +35,28 @@ import { cn } from "@/shared/lib/utils";
 
 const SIDEBAR_COLLAPSED_KEY = "bo_sidebar_collapsed";
 
-const navItems = [
+const navItems: Array<{
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  permission?: string;
+  anyOf?: string[];
+}> = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, permission: "dashboard.view" },
   { to: "/pedidos", label: "Pedidos", icon: ShoppingBag, permission: "orders.view" },
+  {
+    to: "/mesas",
+    label: "Mesas",
+    icon: Armchair,
+    anyOf: ["tables.manage", "settings.manage"],
+  },
   { to: "/clientes", label: "Clientes", icon: Users, permission: "customers.view" },
   { to: "/produtos", label: "Produtos", icon: Package, permission: "catalog.view" },
   { to: "/categorias", label: "Categorias", icon: Layers, permission: "catalog.view" },
   { to: "/promocoes", label: "Promoções", icon: Percent, permission: "promotions.manage" },
   { to: "/conexoes", label: "Conexões", icon: Plug, permission: "connections.manage" },
   { to: "/configuracoes", label: "Configurações", icon: Settings, permission: "settings.manage" },
-] as const;
+];
 
 type SidebarBodyProps = {
   collapsed: boolean;
@@ -96,7 +109,7 @@ function SidebarBody({
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
         {navItems.map((item) => (
-          <Can key={item.to} permission={item.permission}>
+          <Can key={item.to} permission={item.permission} anyOf={item.anyOf}>
             <NavLink
               to={item.to}
               end={item.to === "/"}

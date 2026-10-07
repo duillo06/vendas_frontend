@@ -18,6 +18,7 @@ export interface OrderListItem {
   customer_name: string;
   customer_phone: string;
   delivery_type: string;
+  table_number?: string | null;
   total: number;
   items_count: number;
   created_at: string;
@@ -28,6 +29,8 @@ export interface OrderAdminDetail {
   order_number: string;
   status: OrderStatus;
   delivery_type: string;
+  table_id?: string | null;
+  table_number?: string | null;
   customer: {
     id: string;
     name: string;

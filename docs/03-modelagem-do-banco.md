@@ -2,10 +2,11 @@
 
 > **Documento:** Modelagem do Banco de Dados  
 > **Produto:** Food Service *(nome comercial provisório)*  
-> **Versão:** 1.0  
+> **Versão:** 1.1  
 > **Status:** Aprovado  
-> **Última atualização:** Julho/2026  
+> **Última atualização:** Outubro/2026  
 > **Depende de:** `01-visao-do-produto.md`, `02-arquitetura.md` (aprovados)  
+> **Relacionados:** `35-pedidos-mesa.md` (salão / `dine_in`)  
 > **SGBD:** PostgreSQL 16+
 
 ---
@@ -19,7 +20,7 @@
 5. [Módulo: Contas e Funcionários](#5-módulo-contas-e-funcionários)
 6. [Módulo: Clientes](#6-módulo-clientes)
 7. [Módulo: Catálogo](#7-módulo-catálogo)
-8. [Módulo: Pedidos](#8-módulo-pedidos)
+8. [Módulo: Pedidos](#8-módulo-pedidos) *(inclui `dining_tables` §8.6 — V2)*
 9. [Módulo: Pagamentos](#9-módulo-pagamentos)
 10. [Módulo: Entrega](#10-módulo-entrega)
 11. [Módulo: Promoções](#11-módulo-promoções)
@@ -101,6 +102,10 @@ graph TB
         deliveries
     end
 
+    subgraph DINING["Salão — V2"]
+        dining_tables
+    end
+
     subgraph PROMOTIONS["Promoções — V1"]
         coupons
         coupon_usages
@@ -116,6 +121,7 @@ graph TB
     companies --> ORDERS
     companies --> PAYMENTS
     companies --> DELIVERY
+    companies --> DINING
     companies --> PROMOTIONS
 ```
 
@@ -359,7 +365,7 @@ Configurações operacionais do estabelecimento. Relação 1:1 com `companies`.
 | `estimated_delivery_time` | `INT` | NO | `45` | Tempo estimado de entrega (min) |
 | `accepts_delivery` | `BOOLEAN` | NO | `true` | Aceita delivery |
 | `accepts_pickup` | `BOOLEAN` | NO | `true` | Aceita retirada |
-| `accepts_dine_in` | `BOOLEAN` | NO | `false` | Aceita consumo no local (futuro) |
+| `accepts_dine_in` | `BOOLEAN` | NO | `false` | Aceita pedidos na mesa (salão) — ver `35-pedidos-mesa.md` |
 | `is_open` | `BOOLEAN` | NO | `true` | Loja aberta manualmente |
 | `auto_close_outside_hours` | `BOOLEAN` | NO | `true` | Fechar fora do horário |
 | `payment_methods` | `JSONB` | NO | `'["cash","pix","card_on_delivery"]'` | Formas aceitas |
@@ -991,6 +997,8 @@ VALID_TRANSITIONS = {
 | `notes` | `TEXT` | YES | — | Observações do cliente |
 | `internal_notes` | `TEXT` | YES | — | Observações internas |
 | `delivery_address` | `JSONB` | YES | — | Snapshot do endereço |
+| `table_id` | `UUID` | YES | — | FK → `dining_tables.id` (V2 — salão) |
+| `table_number` | `VARCHAR(20)` | YES | — | Snapshot do número da mesa (V2) |
 | `customer_name` | `VARCHAR(200)` | NO | — | Snapshot do nome |
 | `customer_phone` | `VARCHAR(20)` | NO | — | Snapshot do telefone |
 | `estimated_prep_at` | `TIMESTAMPTZ` | YES | — | Previsão de preparo |
@@ -1009,6 +1017,8 @@ VALID_TRANSITIONS = {
 - `INDEX (tenant_id, customer_id, created_at DESC)` — histórico do cliente
 - `INDEX (tenant_id, created_at DESC)` — relatórios
 - `INDEX (tenant_id, status) WHERE status NOT IN ('completed', 'cancelled')` — pedidos ativos
+- `INDEX (tenant_id, delivery_type, status, created_at DESC)` — filtros do painel (entrega / mesa)
+- `INDEX (tenant_id, table_id, created_at DESC)` WHERE `table_id IS NOT NULL` — histórico por mesa (V2)
 
 **Regras:**
 - `order_number` sequencial por tenant (service gera: `#0001`, `#0002`...)
@@ -1017,6 +1027,8 @@ VALID_TRANSITIONS = {
 - Após `confirmed`, itens **não podem** ser alterados
 - `delivery_address` é JSONB snapshot — não FK para `customer_addresses`
 - Campos `customer_name`, `customer_phone` são snapshot
+- `dine_in` ⇒ `delivery_fee = 0`, `delivery_address` null, `table_id` + `table_number` obrigatórios (V2)
+- `table_number` é snapshot — permanece mesmo se a mesa for renomeada depois
 
 ---
 
@@ -1118,6 +1130,58 @@ erDiagram
         string option_group_name
         string option_name
         numeric price_modifier
+    }
+```
+
+---
+
+### 8.6 `dining_tables` (V2 — salão)
+
+Mesas do estabelecimento para pedidos `dine_in`. Produto: `35-pedidos-mesa.md`.
+
+| Coluna | Tipo | Null | Default | Descrição |
+|--------|------|------|---------|-----------|
+| `id` | `UUID` | NO | — | PK |
+| `tenant_id` | `UUID` | NO | — | FK → `companies.id` |
+| `number` | `VARCHAR(20)` | NO | — | Número legível (`12`, `12A`) |
+| `label` | `VARCHAR(100)` | YES | — | Apelido opcional (ex.: “Varanda”) |
+| `capacity` | `INT` | YES | — | Lugares (opcional) |
+| `is_active` | `BOOLEAN` | NO | `true` | Aceita novos pedidos |
+| `qr_token` | `VARCHAR(64)` | NO | — | Token opaco do QR (único global) |
+| `qr_generated_at` | `TIMESTAMPTZ` | YES | — | Última geração/regeneração |
+| `sort_order` | `INT` | NO | `0` | Ordenação no painel |
+| `created_at` | `TIMESTAMPTZ` | NO | — | — |
+| `updated_at` | `TIMESTAMPTZ` | NO | — | — |
+
+**Índices:**
+- `UNIQUE (tenant_id, number)`
+- `UNIQUE (qr_token)`
+- `INDEX (tenant_id, is_active, sort_order)`
+
+**Regras:**
+- Pedido `dine_in` só com mesa `is_active = true` do mesmo tenant
+- Regenerar QR gera novo `qr_token` e invalida o anterior
+- Soft-desativar (`is_active = false`) em vez de apagar se houver pedidos históricos
+- FK `orders.table_id` → `dining_tables.id` com `SET NULL` (histórico preserva `table_number`)
+
+```mermaid
+erDiagram
+    COMPANIES ||--o{ DINING_TABLES : has
+    DINING_TABLES ||--o{ ORDERS : receives
+
+    DINING_TABLES {
+        uuid id PK
+        uuid tenant_id FK
+        string number
+        boolean is_active
+        string qr_token
+    }
+
+    ORDERS {
+        uuid id PK
+        uuid table_id FK
+        string table_number
+        delivery_type delivery_type
     }
 ```
 
@@ -1468,6 +1532,8 @@ ALTER TABLE coupons
 | `customers` | `phone` | Por tenant |
 | `customers` | `email` | Por tenant (partial, WHERE NOT NULL) |
 | `orders` | `order_number` | Por tenant |
+| `dining_tables` | `number` | Por tenant |
+| `dining_tables` | `qr_token` | Global |
 | `coupons` | `code` | Por tenant |
 
 ---
@@ -1496,13 +1562,15 @@ graph LR
         S6[customer_name]
         S7[delivery_address JSONB]
         S8[coupon_code]
+        S9[table_number]
     end
 
     subgraph REFERENCE["Referência (FK, pode ser null)"]
         R1[product_id]
         R2[option_id]
         R3[customer_id]
-        R4[coupon_id]
+        R4[table_id]
+        R5[coupon_id]
     end
 
     ORDER[orders] --> SNAPSHOT
@@ -1610,9 +1678,14 @@ graph TB
 |--------|----------------|
 | `drivers` | Entregadores |
 | `deliveries` | Rastreamento de entrega |
+| `dining_tables` | Mesas + QR (`35-pedidos-mesa.md`) |
 | `loyalty_programs` | Fidelidade |
 | `loyalty_transactions` | Pontos |
 | `audit_logs` | Auditoria completa |
+
+**Alterações em tabelas existentes (V2 — salão):**
+- `company_settings.accepts_dine_in` habilitável
+- `orders.table_id`, `orders.table_number` para `dine_in`
 
 ### 19.4 Diagrama de Dependências para Migrations
 
@@ -1702,6 +1775,7 @@ sequenceDiagram
 
 | Versão | Data | Autor | Alterações |
 |--------|------|-------|------------|
+| 1.1 | Out/2026 | — | §8.6 `dining_tables`; `orders.table_*`; `accepts_dine_in` — `35` |
 | 1.0 | Jul/2026 | — | Versão inicial — aprovado |
 
 ---
@@ -1743,7 +1817,7 @@ erDiagram
 |------|---------|-----------|
 | MVP | 20 | 20 |
 | V1 | +3 | 23 |
-| V2 | +5 | 28 |
+| V2 | +6 | 29 |
 
 ---
 
