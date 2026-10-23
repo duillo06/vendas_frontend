@@ -19,6 +19,7 @@ import { normalizeApiError } from "@/shared/lib/api-client";
 import { cn } from "@/shared/lib/utils";
 
 import { conexoesApi } from "../api/conexoesApi";
+import type { SituationRow } from "../types/conexoes.types";
 
 type Props = {
   onReconnect: () => void;
@@ -246,6 +247,8 @@ export function WhatsAppPanel({ onReconnect }: Props) {
         </CardContent>
       </Card>
 
+      <MessageDispatches />
+
       <Card className="border-0 shadow-sm">
         <CardContent className="space-y-4 p-5 sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -336,6 +339,92 @@ export function WhatsAppPanel({ onReconnect }: Props) {
       ) : null}
 
     </div>
+  );
+}
+
+function MessageDispatches() {
+  const queryClient = useQueryClient();
+  const { data: situations, isLoading, isError, refetch } = useQuery({
+    queryKey: ["admin", "comms", "situations"],
+    queryFn: () => conexoesApi.listSituations(),
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: (next: SituationRow[]) =>
+      conexoesApi.bulkSituations(
+        Object.fromEntries(next.map((row) => [row.event_key, row.is_enabled])),
+      ),
+    onSuccess: (rows) => {
+      queryClient.setQueryData(["admin", "comms", "situations"], rows);
+    },
+    onError: (err) => {
+      void queryClient.invalidateQueries({ queryKey: ["admin", "comms", "situations"] });
+      toast.error(normalizeApiError(err).message);
+    },
+  });
+
+  const toggle = (eventKey: string) => {
+    if (!situations || saveMutation.isPending) return;
+    const next = situations.map((row) =>
+      row.event_key === eventKey ? { ...row, is_enabled: !row.is_enabled } : row,
+    );
+    queryClient.setQueryData(["admin", "comms", "situations"], next);
+    saveMutation.mutate(next);
+  };
+
+  return (
+    <Card className="border-0 shadow-sm">
+      <CardContent className="space-y-4 p-5 sm:p-6">
+        <div>
+          <h3 className="font-semibold">Mensagens automáticas</h3>
+          <p className="text-sm text-muted-foreground">
+            Ligue o que o cliente deve receber. O que estiver desligado não sai.
+          </p>
+        </div>
+
+        {isLoading ? <Skeleton className="h-24 w-full rounded-xl" /> : null}
+
+        {isError ? (
+          <div className="rounded-xl border border-dashed border-border px-4 py-5 text-center text-sm">
+            <p className="text-muted-foreground">Não deu para carregar os avisos.</p>
+            <Button type="button" variant="outline" className="mt-3" onClick={() => void refetch()}>
+              Tentar de novo
+            </Button>
+          </div>
+        ) : null}
+
+        {situations ? (
+          <ul className="space-y-2">
+            {situations.map((row) => (
+              <li key={row.event_key}>
+                <div className="flex items-center justify-between gap-4 rounded-lg border border-[hsl(var(--border))] p-4">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{row.title}</p>
+                    <p className="text-xs text-[hsl(var(--muted-foreground))]">{row.description}</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={row.is_enabled}
+                    aria-label={row.title}
+                    disabled={saveMutation.isPending}
+                    className={cn(
+                      "inline-flex h-7 w-12 shrink-0 items-center rounded-full p-0.5 transition-colors duration-200 disabled:opacity-60",
+                      row.is_enabled
+                        ? "justify-end bg-[hsl(var(--primary))]"
+                        : "justify-start bg-[hsl(var(--muted))]",
+                    )}
+                    onClick={() => toggle(row.event_key)}
+                  >
+                    <span className="block h-6 w-6 rounded-full bg-white shadow-sm ring-1 ring-black/5" />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }
 
