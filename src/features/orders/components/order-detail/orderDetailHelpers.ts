@@ -12,6 +12,12 @@ export const PIPELINE_LABELS: Record<OrderStatus, string> = {
   cancelled: "Cancelado",
 };
 
+/** retirada no passo pronto — o operador vê que é buscar, não entrega */
+export function pipelineStepLabel(step: OrderStatus, deliveryType?: string): string {
+  if (step === "ready" && deliveryType === "pickup") return "Pronto para retirada";
+  return PIPELINE_LABELS[step];
+}
+
 /** próximo status “de frente” (ignora cancelar) */
 export function getPrimaryNextStatus(order: OrderAdminDetail): OrderStatus | null {
   const next = (ORDER_NEXT_STATUS[order.status] ?? []).filter((s) => s !== "cancelled");

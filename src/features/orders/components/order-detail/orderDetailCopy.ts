@@ -18,6 +18,9 @@ export const SECONDARY_ACTION_LABELS: Partial<Record<OrderStatus, string>> = {
 };
 
 export function getPrimaryActionLabel(order: OrderAdminDetail, status: OrderStatus): string {
+  if (status === "ready" && order.delivery_type === "pickup") {
+    return "Pronto para retirada";
+  }
   if (status === "completed" && order.delivery_type === "dine_in") {
     return "Entregar na mesa";
   }
@@ -56,7 +59,10 @@ export function getNowCardCopy(order: OrderAdminDetail): NowCard {
     case "preparing":
       return {
         title: "O que fazer agora",
-        body: "A cozinha está trabalhando. Marque como pronto quando finalizar.",
+        body:
+          order.delivery_type === "pickup"
+            ? "A cozinha está trabalhando. Quando terminar, marque pronto para retirada."
+            : "A cozinha está trabalhando. Marque como pronto quando finalizar.",
         emotion: "Foco no sabor — tá saindo!",
       };
     case "ready":
@@ -66,12 +72,12 @@ export function getNowCardCopy(order: OrderAdminDetail): NowCard {
           ? "Pedido montado. Agora entregue ao entregador."
           : isMesa
             ? `Pedido pronto. Leve até a ${mesaLabel}.`
-            : "Pedido pronto na bancada. Aguarde o cliente ou conclua a retirada.",
+            : "Pronto para retirada. Conclua quando o cliente buscar.",
         emotion: isDelivery
           ? "O entregador já pode sair."
           : isMesa
             ? "Cliente na mesa."
-            : "Cliente quase na porta.",
+            : "Cliente pode vir buscar.",
       };
     case "out_for_delivery":
       return {
@@ -120,7 +126,10 @@ export function getLiveTimerCopy(
     case "preparing":
       return { label: "Em preparo", detail: `há ${elapsed}` };
     case "ready":
-      return { label: "Pronto", detail: `há ${elapsed}` };
+      return {
+        label: order.delivery_type === "pickup" ? "Pronto para retirada" : "Pronto",
+        detail: `há ${elapsed}`,
+      };
     case "out_for_delivery":
       return { label: "Saiu para entrega", detail: `há ${elapsed}` };
     case "completed":

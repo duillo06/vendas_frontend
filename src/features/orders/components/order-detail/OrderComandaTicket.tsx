@@ -5,7 +5,7 @@ import { formatCompositionLabel } from "@/features/cart";
 import { formatCurrency } from "@/shared/lib/format";
 
 import { PAYMENT_METHOD_LABELS } from "./orderDetailCopy";
-import { PIPELINE_LABELS } from "./orderDetailHelpers";
+import { pipelineStepLabel } from "./orderDetailHelpers";
 
 type OrderComandaTicketProps = {
   order: OrderAdminDetail;
@@ -71,7 +71,7 @@ function ComandaBody({
       : order.payment
         ? "Pendente"
         : "—";
-  const statusLabel = PIPELINE_LABELS[order.status] ?? order.status;
+  const statusLabel = pipelineStepLabel(order.status, order.delivery_type);
 
   return (
     <article className="comanda-copy">
