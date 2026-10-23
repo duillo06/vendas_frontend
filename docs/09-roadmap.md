@@ -715,10 +715,11 @@ graph TD
 |-------|-------|
 | **Objetivo** | Venda no balcão e na mesa |
 | **Tempo** | 2 semanas |
+| **Produto** | `35-pedidos-mesa.md` (filosofia e fluxos do salão) |
 
 - [ ] PDV simplificado (balcão)
 - [ ] QR Code por mesa
-- [ ] Pedido dine-in
+- [ ] Pedido dine-in (filtros no painel: Tudo / Entrega / Retirada / Mesas)
 
 ---
 

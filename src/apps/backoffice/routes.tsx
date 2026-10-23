@@ -17,6 +17,7 @@ import { ProductWizardPage } from "@/apps/backoffice/pages/ProductWizardPage";
 import { ProductsPage } from "@/apps/backoffice/pages/ProductsPage";
 import { PromotionsPage } from "@/apps/backoffice/pages/PromotionsPage";
 import { SettingsPage } from "@/apps/backoffice/pages/SettingsPage";
+import { TablesPage } from "@/apps/backoffice/pages/TablesPage";
 import { PermissionRoute, ProtectedRoute } from "@/features/auth";
 
 export const backofficeRouter = createBrowserRouter([
@@ -42,6 +43,14 @@ export const backofficeRouter = createBrowserRouter([
       },
       { path: "pedidos", element: <OrdersPage /> },
       { path: "pedidos/:id", element: <OrderDetailPage /> },
+      {
+        path: "mesas",
+        element: (
+          <PermissionRoute anyOf={["tables.manage", "settings.manage"]}>
+            <TablesPage />
+          </PermissionRoute>
+        ),
+      },
       {
         path: "clientes",
         element: (

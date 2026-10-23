@@ -18,6 +18,12 @@ export const SECONDARY_ACTION_LABELS: Partial<Record<OrderStatus, string>> = {
 };
 
 export function getPrimaryActionLabel(order: OrderAdminDetail, status: OrderStatus): string {
+  if (status === "ready" && order.delivery_type === "pickup") {
+    return "Pronto para retirada";
+  }
+  if (status === "completed" && order.delivery_type === "dine_in") {
+    return "Entregar na mesa";
+  }
   if (status === "completed" && order.delivery_type !== "delivery") {
     return "Concluir retirada";
   }
@@ -32,12 +38,16 @@ type NowCard = {
 
 export function getNowCardCopy(order: OrderAdminDetail): NowCard {
   const isDelivery = order.delivery_type === "delivery";
+  const isMesa = order.delivery_type === "dine_in";
+  const mesaLabel = order.table_number ? `Mesa ${order.table_number}` : "a mesa";
 
   switch (order.status) {
     case "pending":
       return {
         title: "O que fazer agora",
-        body: "Pedido novo na fila. Confirme para avisar a cozinha e o cliente.",
+        body: isMesa
+          ? `Pedido da ${mesaLabel}. Confirme para a cozinha começar.`
+          : "Pedido novo na fila. Confirme para avisar a cozinha e o cliente.",
         emotion: "Vamos começar!",
       };
     case "confirmed":
@@ -49,7 +59,10 @@ export function getNowCardCopy(order: OrderAdminDetail): NowCard {
     case "preparing":
       return {
         title: "O que fazer agora",
-        body: "A cozinha está trabalhando. Marque como pronto quando finalizar.",
+        body:
+          order.delivery_type === "pickup"
+            ? "A cozinha está trabalhando. Quando terminar, marque pronto para retirada."
+            : "A cozinha está trabalhando. Marque como pronto quando finalizar.",
         emotion: "Foco no sabor — tá saindo!",
       };
     case "ready":
@@ -57,8 +70,14 @@ export function getNowCardCopy(order: OrderAdminDetail): NowCard {
         title: "O que fazer agora",
         body: isDelivery
           ? "Pedido montado. Agora entregue ao entregador."
-          : "Pedido pronto na bancada. Aguarde o cliente ou conclua a retirada.",
-        emotion: isDelivery ? "O entregador já pode sair." : "Cliente quase na porta.",
+          : isMesa
+            ? `Pedido pronto. Leve até a ${mesaLabel}.`
+            : "Pronto para retirada. Conclua quando o cliente buscar.",
+        emotion: isDelivery
+          ? "O entregador já pode sair."
+          : isMesa
+            ? "Cliente na mesa."
+            : "Cliente pode vir buscar.",
       };
     case "out_for_delivery":
       return {
@@ -107,7 +126,10 @@ export function getLiveTimerCopy(
     case "preparing":
       return { label: "Em preparo", detail: `há ${elapsed}` };
     case "ready":
-      return { label: "Pronto", detail: `há ${elapsed}` };
+      return {
+        label: order.delivery_type === "pickup" ? "Pronto para retirada" : "Pronto",
+        detail: `há ${elapsed}`,
+      };
     case "out_for_delivery":
       return { label: "Saiu para entrega", detail: `há ${elapsed}` };
     case "completed":
@@ -139,4 +161,5 @@ export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   cash: "Dinheiro",
   pix: "PIX",
   card_on_delivery: "Cartão na entrega",
+  pay_at_venue: "Pagar no local",
 };

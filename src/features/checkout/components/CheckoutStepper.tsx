@@ -11,20 +11,29 @@ const STEPS = [
   { label: "Revisão", icon: ClipboardList },
 ] as const;
 
+const MESA_STEPS = [{ label: "Confirmar", icon: ClipboardList }] as const;
+
 type CheckoutStepperProps = {
   currentStep: number;
+  /** checkout rápido da mesa — só confirma */
+  mesaExpress?: boolean;
 };
 
-export function CheckoutStepper({ currentStep }: CheckoutStepperProps) {
-  const progressPercent = ((currentStep - 1) / (STEPS.length - 1)) * 100;
+export function CheckoutStepper({ currentStep, mesaExpress = false }: CheckoutStepperProps) {
+  const steps = mesaExpress ? MESA_STEPS : STEPS;
+  const activeStep = mesaExpress ? 1 : currentStep;
+  const progressPercent =
+    steps.length <= 1 ? 100 : ((activeStep - 1) / (steps.length - 1)) * 100;
 
   return (
     <div className="w-full min-w-0 space-y-3 overflow-x-clip">
       <div className="flex items-center justify-between gap-2 text-xs text-[hsl(var(--muted-foreground))]">
         <span className="min-w-0 truncate">
-          {storefrontCopy.checkout.progress(currentStep, STEPS.length)}
+          {mesaExpress
+            ? "Pedido na mesa"
+            : storefrontCopy.checkout.progress(currentStep, STEPS.length)}
         </span>
-        <span className="shrink-0 font-medium text-brand">{STEPS[currentStep - 1]?.label}</span>
+        <span className="shrink-0 font-medium text-brand">{steps[activeStep - 1]?.label}</span>
       </div>
 
       <div className="relative px-1">
@@ -35,10 +44,10 @@ export function CheckoutStepper({ currentStep }: CheckoutStepperProps) {
         />
 
         <ol className="relative flex justify-between">
-          {STEPS.map((step, index) => {
+          {steps.map((step, index) => {
             const stepNumber = index + 1;
-            const isCurrent = stepNumber === currentStep;
-            const isCompleted = stepNumber < currentStep;
+            const isCurrent = stepNumber === activeStep;
+            const isCompleted = stepNumber < activeStep;
             const Icon = step.icon as LucideIcon;
 
             return (

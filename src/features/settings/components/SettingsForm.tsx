@@ -97,6 +97,7 @@ export function SettingsForm({ section }: { section: SettingsFormSection }) {
         ...data,
         settings: {
           ...data.settings,
+          accepts_dine_in: data.settings.accepts_dine_in ?? false,
           print_settings: normalizePrintSettings(data.settings.print_settings),
         },
       });
@@ -297,6 +298,7 @@ export function SettingsForm({ section }: { section: SettingsFormSection }) {
         estimated_delivery_time: Number(form.settings.estimated_delivery_time),
         accepts_delivery: form.settings.accepts_delivery,
         accepts_pickup: form.settings.accepts_pickup,
+        accepts_dine_in: form.settings.accepts_dine_in,
         delivery_city: (form.settings.delivery_city ?? "").trim(),
         delivery_state: (form.settings.delivery_state ?? "").trim().toUpperCase(),
         delivery_city_id:
@@ -464,6 +466,24 @@ export function SettingsForm({ section }: { section: SettingsFormSection }) {
             description="Respeita os horários de funcionamento"
             checked={form.settings.auto_close_outside_hours}
             onChange={(value) => updateSettings("auto_close_outside_hours", value)}
+          />
+          <ToggleRow
+            label="Aceita entrega"
+            description="Cliente pode pedir delivery no cardápio"
+            checked={form.settings.accepts_delivery}
+            onChange={(value) => updateSettings("accepts_delivery", value)}
+          />
+          <ToggleRow
+            label="Aceita retirada"
+            description="Cliente busca o pedido no balcão"
+            checked={form.settings.accepts_pickup}
+            onChange={(value) => updateSettings("accepts_pickup", value)}
+          />
+          <ToggleRow
+            label="Aceita pedido na mesa"
+            description="Cliente pede pelo celular no salão (cadastre as mesas em Mesas)"
+            checked={form.settings.accepts_dine_in}
+            onChange={(value) => updateSettings("accepts_dine_in", value)}
           />
 
           <div className="grid gap-4 sm:grid-cols-2">

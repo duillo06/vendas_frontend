@@ -12,6 +12,7 @@ import { CustomerRegisterPage } from "@/apps/storefront/pages/CustomerRegisterPa
 import { FavoritesPage } from "@/apps/storefront/pages/FavoritesPage";
 import { HomePage } from "@/apps/storefront/pages/HomePage";
 import { MenuPage } from "@/apps/storefront/pages/MenuPage";
+import { MesaEntryPage } from "@/apps/storefront/pages/MesaEntryPage";
 import { OrderConfirmationPage } from "@/apps/storefront/pages/OrderConfirmationPage";
 import { OrderTrackingPage } from "@/apps/storefront/pages/OrderTrackingPage";
 import { ProductPage } from "@/apps/storefront/pages/ProductPage";
@@ -31,6 +32,7 @@ export const storefrontRouter = createBrowserRouter([
       { path: "produto/:slug", element: <ProductPage /> },
       { path: "carrinho", element: <CartPage /> },
       { path: "checkout", element: <CheckoutPage /> },
+      { path: "mesa/:token", element: <MesaEntryPage /> },
       { path: "entrar", element: <CustomerLoginPage /> },
       { path: "cadastro", element: <CustomerRegisterPage /> },
       {

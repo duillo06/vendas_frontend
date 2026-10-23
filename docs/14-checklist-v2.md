@@ -59,6 +59,9 @@ Este documento define o **escopo fechado da V2** do Food Service — tudo que de
 | `08-regras-de-negocio.md` | D-01–05, PG-11–14 |
 | `09-roadmap.md` | Sprints 17–22 |
 | `13-checklist-v1.md` | Base obrigatória |
+| `35-pedidos-mesa.md` | Filosofia e fluxos de pedidos na mesa (salão) — **aprovado** |
+| `08-regras-de-negocio.md` | DM-01 a DM-15 |
+| `07-api.md` | §19.7 Mesas |
 
 ### 1.4 Resumo Quantitativo
 

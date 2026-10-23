@@ -14,10 +14,10 @@ import type { OrderAdminDetail } from "@/features/orders/types/order-admin.types
 import { cn } from "@/shared/lib/utils";
 
 import {
-  PIPELINE_LABELS,
   formatClock,
   getHistoryTime,
   getPipelineSteps,
+  pipelineStepLabel,
   pipelineStepState,
 } from "./orderDetailHelpers";
 
@@ -165,7 +165,7 @@ export function OrderProgressRail({ order, variant = "default" }: OrderProgressR
                   state === "upcoming" && "text-[hsl(var(--muted-foreground))]",
                 )}
               >
-                {PIPELINE_LABELS[step]}
+                {pipelineStepLabel(step, order.delivery_type)}
               </p>
               <p
                 className={cn(

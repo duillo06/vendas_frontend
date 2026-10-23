@@ -1,4 +1,4 @@
-import { ChevronRight, MapPin, Store } from "lucide-react";
+import { Armchair, ChevronRight, MapPin, Store } from "lucide-react";
 import { Link } from "react-router";
 
 import type { OrderStatus } from "@/features/checkout/types/checkout.types";
@@ -14,7 +14,8 @@ type AdminOrderCardProps = {
   status: OrderStatus;
   total: number;
   itemsCount?: number;
-  deliveryType?: "delivery" | "pickup";
+  deliveryType?: "delivery" | "pickup" | "dine_in";
+  tableNumber?: string | null;
   compact?: boolean;
   className?: string;
 };
@@ -38,11 +39,23 @@ export function AdminOrderCard({
   total,
   itemsCount,
   deliveryType,
+  tableNumber,
   className,
 }: AdminOrderCardProps) {
   const isPending = status === "pending";
   const rail = statusRail[status];
-  const deliveryLabel = deliveryType === "delivery" ? "Entrega" : deliveryType === "pickup" ? "Retirada" : null;
+  const deliveryLabel =
+    deliveryType === "delivery"
+      ? "Entrega"
+      : deliveryType === "pickup"
+        ? "Retirada"
+        : deliveryType === "dine_in"
+          ? tableNumber
+            ? `Mesa ${tableNumber}`
+            : "Mesa"
+          : null;
+  const titleLabel =
+    deliveryType === "dine_in" && tableNumber ? `Mesa ${tableNumber}` : customerName;
   const itemsLabel =
     itemsCount !== undefined ? `${itemsCount} ${itemsCount === 1 ? "item" : "itens"}` : null;
 
@@ -68,10 +81,17 @@ export function AdminOrderCard({
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-[hsl(var(--foreground))] group-hover:text-brand">
-          {customerName}
+          {titleLabel}
         </p>
         <p className="truncate text-[11px] text-[hsl(var(--muted-foreground))] sm:hidden">
-          {[createdAt, deliveryLabel, itemsLabel].filter(Boolean).join(" · ")}
+          {[
+            deliveryType === "dine_in" ? customerName : null,
+            createdAt,
+            deliveryType === "dine_in" ? null : deliveryLabel,
+            itemsLabel,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
         </p>
       </div>
 
@@ -79,8 +99,14 @@ export function AdminOrderCard({
         <OrderStatusBadge status={status} className="gap-1 px-1.5 py-0.5 text-[10px] shadow-none" />
 
         {deliveryLabel ? (
-          <span className="inline-flex w-20 items-center gap-1 text-xs text-[hsl(var(--muted-foreground))]">
-            {deliveryType === "delivery" ? <MapPin className="h-3 w-3 shrink-0" /> : <Store className="h-3 w-3 shrink-0" />}
+          <span className="inline-flex w-24 items-center gap-1 text-xs text-[hsl(var(--muted-foreground))]">
+            {deliveryType === "delivery" ? (
+              <MapPin className="h-3 w-3 shrink-0" />
+            ) : deliveryType === "dine_in" ? (
+              <Armchair className="h-3 w-3 shrink-0" />
+            ) : (
+              <Store className="h-3 w-3 shrink-0" />
+            )}
             {deliveryLabel}
           </span>
         ) : null}

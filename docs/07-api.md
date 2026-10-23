@@ -2,11 +2,11 @@
 
 > **Documento:** Contrato da API REST  
 > **Produto:** Food Service *(nome comercial provisório)*  
-> **Versão:** 1.1  
+> **Versão:** 1.2  
 > **Status:** Aprovado  
 > **Última atualização:** Outubro/2026  
 > **Depende de:** `03-modelagem-do-banco.md`, `05-frontend.md`, `06-backend.md` (aprovados)  
-> **Relacionados:** `11-guia-ui-ux.md` §10.2 (Dashboard V1)  
+> **Relacionados:** `11-guia-ui-ux.md` §10.2 (Dashboard V1), `35-pedidos-mesa.md` (salão / `dine_in`)  
 > **Base URL:** `https://api.foodservice.app/api/v1` *(produção)* | `http://localhost:8001/api/v1` *(dev — ver `00-portas-locais.md`)*
 
 ---
@@ -347,11 +347,11 @@ type Slug = string;          // "pizza-calabresa"
 
 #### DeliveryType
 
-| Valor | Label |
-|-------|-------|
-| `delivery` | Entrega |
-| `pickup` | Retirada |
-| `dine_in` | Consumo no local *(futuro)* |
+| Valor | Label | Fase |
+|-------|-------|------|
+| `delivery` | Entrega | MVP |
+| `pickup` | Retirada | MVP |
+| `dine_in` | Pedido na mesa (salão) | V2 — `35-pedidos-mesa.md` |
 
 #### PaymentMethod
 
@@ -619,6 +619,7 @@ Dados públicos do estabelecimento (storefront).
     "estimated_delivery_time": 45,
     "accepts_delivery": true,
     "accepts_pickup": true,
+    "accepts_dine_in": false,
     "payment_methods": ["cash", "pix", "card_on_delivery"]
   },
   "business_hours": [
@@ -867,9 +868,11 @@ Cria um novo pedido (checkout).
 | `customer_name` | string | Sim | min 2 chars |
 | `customer_phone` | string | Sim | Formato BR |
 | `customer_email` | string | Não | E-mail válido |
-| `delivery_type` | enum | Sim | `delivery` \| `pickup` |
+| `delivery_type` | enum | Sim | `delivery` \| `pickup` \| `dine_in` *(V2)* |
 | `payment_method` | enum | Sim | Ver PaymentMethod |
 | `address` | object | Condicional | Obrigatório se `delivery` |
+| `table_id` | UUID | Condicional | Obrigatório se `dine_in` sem `qr_token` (V2) |
+| `qr_token` | string | Condicional | Alternativa a `table_id` no checkout via QR (V2) |
 | `change_for` | number | Condicional | Obrigatório se `cash` |
 | `items` | array | Sim | min 1 item |
 | `items[].product_id` | UUID | Sim | Produto ativo |
@@ -934,13 +937,16 @@ Cria um novo pedido (checkout).
 | `INVALID_OPTIONS` | 422 | Opções inválidas para o produto |
 | `STORE_CLOSED` | 422 | Loja fechada |
 | `MIN_ORDER_VALUE` | 422 | Subtotal < mínimo |
+| `TABLE_NOT_FOUND` | 422 | Mesa / QR inválido *(V2)* |
+| `TABLE_INACTIVE` | 422 | Mesa desativada *(V2)* |
 | `VALIDATION_ERROR` | 400 | Campos inválidos |
 
 **Regras de negócio (backend):**
 - Preços calculados no servidor (não confiar no frontend)
 - Opções validadas contra grupos do produto (min/max/required)
-- `delivery_fee` aplicado conforme settings do tenant
+- `delivery_fee` aplicado conforme settings do tenant (`0` se `pickup` ou `dine_in`)
 - `customer` criado ou encontrado por telefone
+- `dine_in` (V2): resolve mesa por `qr_token` ou `table_id`; grava snapshot `table_number`; ver DM-01… em `08` / `35`
 
 ---
 
@@ -1010,10 +1016,11 @@ Lista pedidos do tenant.
 | Param | Tipo | Descrição |
 |-------|------|-----------|
 | `status` | enum \| CSV | Filtrar por status |
-| `delivery_type` | enum | `delivery` \| `pickup` |
+| `delivery_type` | enum | `delivery` \| `pickup` \| `dine_in` *(V2)* — omitido = tudo |
+| `table_id` | UUID | Pedidos da mesa *(V2)* |
 | `created_after` | date | `2026-07-01` |
 | `created_before` | date | `2026-07-31` |
-| `search` | string | Número, nome, telefone |
+| `search` | string | Número, nome, telefone, mesa |
 | `ordering` | string | `-created_at` (default) |
 | `active` | boolean | Excluir completed/cancelled |
 
@@ -1032,6 +1039,7 @@ Lista pedidos do tenant.
       "customer_name": "Maria Santos",
       "customer_phone": "(11) 98765-4321",
       "delivery_type": "delivery",
+      "table_number": null,
       "total": 78.00,
       "items_count": 2,
       "created_at": "2026-07-06T18:30:00Z"
@@ -1039,6 +1047,8 @@ Lista pedidos do tenant.
   ]
 }
 ```
+
+> Em pedidos `dine_in`, `table_number` vem preenchido (ex.: `"12"`) e é o sinal principal na UI do painel.
 
 ---
 
@@ -1054,6 +1064,8 @@ Detalhe completo do pedido.
   "order_number": "#0001",
   "status": "pending",
   "delivery_type": "delivery",
+  "table_id": null,
+  "table_number": null,
   "customer": {
     "id": "ee0e8400-e29b-41d4-a716-446655440015",
     "name": "Maria Santos",
@@ -1541,6 +1553,7 @@ Remove opção (soft ou hard se sem pedidos).
     "estimated_delivery_time": 45,
     "accepts_delivery": true,
     "accepts_pickup": true,
+    "accepts_dine_in": false,
     "is_open": true,
     "auto_close_outside_hours": true,
     "payment_methods": ["cash", "pix", "card_on_delivery"],
@@ -1849,6 +1862,70 @@ Se não houver pedidos concluídos no `period`, ainda assim retornar:
 | POST | `/api/v1/public/orders/checkout/payment/` | Iniciar pagamento |
 | POST | `/api/v1/webhooks/mercadopago/` | Webhook gateway |
 
+### 19.7 V2 — Mesas (Salão)
+
+> Produto: `35-pedidos-mesa.md`. Checklist: `14` §8.9 / §9.7.
+
+#### Admin — CRUD
+
+| Método | Endpoint | Permissão | Descrição |
+|--------|----------|-----------|-----------|
+| GET | `/api/v1/admin/tables/` | `tables.manage` ou `settings.manage` | Listar mesas |
+| POST | `/api/v1/admin/tables/` | idem | Criar mesa |
+| PATCH | `/api/v1/admin/tables/{id}/` | idem | Editar / ativar-desativar |
+| DELETE | `/api/v1/admin/tables/{id}/` | idem | Remover (só se sem histórico; senão desativar) |
+| POST | `/api/v1/admin/tables/{id}/regenerate-qr/` | idem | Novo `qr_token` |
+| GET | `/api/v1/admin/tables/{id}/qr/` | idem | Dados para impressão (URL + número) |
+| POST | `/api/v1/admin/tables/bulk/` | idem | Criar N mesas sequenciais (assistente) |
+
+**Body criar (exemplo):**
+
+```json
+{
+  "number": "12",
+  "label": "Varanda",
+  "capacity": 4,
+  "is_active": true
+}
+```
+
+**Response item:**
+
+```json
+{
+  "id": "aa0e8400-e29b-41d4-a716-446655440090",
+  "number": "12",
+  "label": "Varanda",
+  "capacity": 4,
+  "is_active": true,
+  "qr_token": "xK9m2pQ…",
+  "qr_url": "https://pizzaria-joao.foodservice.app/mesa/xK9m2pQ…",
+  "sort_order": 12,
+  "created_at": "2026-10-07T12:00:00Z"
+}
+```
+
+#### Pública — contexto da mesa
+
+| Método | Endpoint | Auth | Descrição |
+|--------|----------|------|-----------|
+| GET | `/api/v1/public/tables/{qr_token}/` | — | Contexto da mesa para o storefront |
+
+**Response `200`:**
+
+```json
+{
+  "table_id": "aa0e8400-e29b-41d4-a716-446655440090",
+  "table_number": "12",
+  "label": "Varanda",
+  "is_active": true
+}
+```
+
+**Errors:** `404` / `TABLE_NOT_FOUND` · `TABLE_INACTIVE` se desativada.
+
+Checkout `dine_in`: ver §12.1 (`table_id` ou `qr_token`).
+
 ---
 
 ## 20. Rate Limiting
@@ -1896,6 +1973,7 @@ GET /api/v1/redoc/           # ReDoc
 
 | Versão | Data | Alterações |
 |--------|------|------------|
+| v1.2 | Out/2026 | §19.7 Mesas; checkout `dine_in`; filtro admin; `accepts_dine_in` — `35` |
 | v1.1 | Out/2026 | Dashboard V1: `?period=` + kpis/series/by_hour/by_weekday/by_payment |
 | v1.0 | Jul/2026 | Versão inicial MVP |
 
@@ -1915,6 +1993,7 @@ GET /api/v1/redoc/           # ReDoc
 
 | Versão | Data | Autor | Alterações |
 |--------|------|-------|------------|
+| 1.2 | Out/2026 | — | §19.7 Mesas (salão); `dine_in` no checkout e filtros — `35` |
 | 1.1 | Out/2026 | — | §18 Dashboard V1; §9.5 preferências de layout do funcionário |
 | 1.0 | Jul/2026 | — | Versão inicial — aprovado |
 

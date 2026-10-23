@@ -2,10 +2,11 @@
 
 > **Documento:** Regras de Negócio  
 > **Produto:** Food Service *(nome comercial provisório)*  
-> **Versão:** 1.0  
+> **Versão:** 1.1  
 > **Status:** Aprovado  
-> **Última atualização:** Julho/2026  
-> **Depende de:** `03-modelagem-do-banco.md`, `06-backend.md`, `07-api.md` (aprovados)
+> **Última atualização:** Outubro/2026  
+> **Depende de:** `03-modelagem-do-banco.md`, `06-backend.md`, `07-api.md` (aprovados)  
+> **Relacionados:** `35-pedidos-mesa.md` (salão / `dine_in`)
 
 ---
 
@@ -26,11 +27,12 @@
 13. [Cupons e Promoções](#13-cupons-e-promoções)
 14. [Notificações](#14-notificações)
 15. [Entrega](#15-entrega)
-16. [Regras por Segmento](#16-regras-por-segmento)
-17. [Matriz de Validações](#17-matriz-de-validações)
-18. [Exceções e Mensagens](#18-exceções-e-mensagens)
-19. [Escopo por Fase](#19-escopo-por-fase)
-20. [Próximos Documentos](#20-próximos-documentos)
+16. [Pedidos na Mesa (Salão)](#16-pedidos-na-mesa-salão)
+17. [Regras por Segmento](#17-regras-por-segmento)
+18. [Matriz de Validações](#18-matriz-de-validações)
+19. [Exceções e Mensagens](#19-exceções-e-mensagens)
+20. [Escopo por Fase](#20-escopo-por-fase)
+21. [Próximos Documentos](#21-próximos-documentos)
 
 ---
 
@@ -159,6 +161,8 @@ flowchart TD
 | E-19 | Se `subtotal >= free_delivery_above` → `delivery_fee = 0` | — |
 | E-20 | `accepts_delivery = false` → `delivery_type = delivery` bloqueado | true |
 | E-21 | `accepts_pickup = false` → `delivery_type = pickup` bloqueado | true |
+| E-27 | `accepts_dine_in = false` → `delivery_type = dine_in` bloqueado | false |
+| E-28 | `accepts_dine_in = true` exige ≥ 1 mesa ativa para publicar o canal no storefront | — |
 | E-22 | `payment_methods` define formas aceitas no checkout | `["cash","pix","card_on_delivery"]` |
 | E-23 | `estimated_prep_time` em minutos, usado para previsão | 30 |
 | E-24 | `estimated_delivery_time` em minutos, somado ao prep para delivery | 45 |
@@ -312,6 +316,7 @@ item_total = unit_price × quantity
 | P-10 | `delivery_fee` = settings.delivery_fee, exceto se entrega grátis |
 | P-11 | Entrega grátis se `subtotal >= free_delivery_above` |
 | P-12 | `delivery_fee = 0` se `delivery_type = pickup` |
+| P-16 | `delivery_fee = 0` se `delivery_type = dine_in` |
 | P-13 | `total` = `subtotal - discount + delivery_fee` |
 | P-14 | `total` ≥ 0 |
 | P-15 | `subtotal` deve ser ≥ `min_order_value` (exceto se min = 0) |
@@ -362,6 +367,9 @@ total = R$ 78,00
 | K-14 | `customer_email` opcional |
 | K-15 | `delivery_type = delivery` → endereço obrigatório |
 | K-16 | `delivery_type = pickup` → endereço ignorado |
+| K-28 | `delivery_type = dine_in` → endereço ignorado; mesa ativa obrigatória |
+| K-29 | `dine_in` via QR: `qr_token` resolve tenant + mesa; token inválido → `TABLE_NOT_FOUND` |
+| K-30 | Troca de canal no carrinho (ex.: mesa → delivery) exige confirmação / limpeza — não misturar silenciosamente |
 | K-17 | `payment_method` deve estar em `settings.payment_methods` |
 | K-18 | `payment_method = cash` → `change_for` obrigatório e > `total` |
 | K-19 | `notes` opcional, max 500 caracteres |
@@ -409,7 +417,7 @@ sequenceDiagram
 | PD-02 | `order_number` sequencial por tenant (`#0001`, `#0002`...) |
 | PD-03 | `source = storefront` para checkout público |
 | PD-04 | `source = backoffice` para pedidos manuais (futuro) |
-| PD-05 | Snapshots: `customer_name`, `customer_phone`, `delivery_address` |
+| PD-05 | Snapshots: `customer_name`, `customer_phone`, `delivery_address`, `table_number` (se mesa) |
 | PD-06 | Snapshots em itens: `product_name`, `unit_price`, opções |
 | PD-07 | `product_id` mantido como FK (SET NULL se produto deletado) |
 | PD-08 | `estimated_prep_at` = now + prep_time |
@@ -443,7 +451,7 @@ stateDiagram-v2
     preparing --> ready
     preparing --> cancelled
     ready --> out_for_delivery: delivery
-    ready --> completed: pickup
+    ready --> completed: pickup / dine_in
     ready --> cancelled
     out_for_delivery --> completed
     out_for_delivery --> cancelled
@@ -458,8 +466,8 @@ stateDiagram-v2
 | `pending` | Recebido, aguardando confirmação | Confirmar, Cancelar |
 | `confirmed` | Aceito pelo estabelecimento | Iniciar preparo, Cancelar |
 | `preparing` | Em preparo | Marcar pronto, Cancelar |
-| `ready` | Pronto | Enviar/Entregar, Cancelar |
-| `out_for_delivery` | Em trânsito | Marcar entregue, Cancelar |
+| `ready` | Pronto | Enviar (delivery) / Concluir (pickup/mesa), Cancelar |
+| `out_for_delivery` | Em trânsito *(só delivery)* | Marcar entregue, Cancelar |
 | `completed` | Finalizado | Nenhuma |
 | `cancelled` | Cancelado | Nenhuma |
 
@@ -482,7 +490,12 @@ stateDiagram-v2
 |---------------|------------------------|
 | `delivery` | pending → confirmed → preparing → ready → out_for_delivery → completed |
 | `pickup` | pending → confirmed → preparing → ready → completed |
-| `dine_in` *(futuro)* | pending → confirmed → preparing → ready → completed |
+| `dine_in` | pending → confirmed → preparing → ready → completed |
+
+| ID | Regra |
+|----|-------|
+| PD-21 | `dine_in` → transição para `out_for_delivery` é inválida (`INVALID_ORDER_TRANSITION`) |
+| PD-22 | Listagem admin filtra por `delivery_type`: `delivery` \| `pickup` \| `dine_in` \| omitido = tudo |
 
 ### 9.6 Imutabilidade
 
@@ -491,6 +504,7 @@ stateDiagram-v2
 | Itens do pedido | ❌ Nunca |
 | Preços | ❌ Nunca |
 | `customer_name` / `phone` | ❌ (snapshot) |
+| `table_number` | ❌ (snapshot) |
 | `status` | ✅ Via transições |
 | `internal_notes` | ✅ Sempre |
 | `payment.status` | ✅ (marcar como pago) |
@@ -705,7 +719,31 @@ stateDiagram-v2
 
 ---
 
-## 16. Regras por Segmento
+## 16. Pedidos na Mesa (Salão)
+
+> **Escopo V2 — Sprint 21.** Filosofia: `35-pedidos-mesa.md`. Modelagem: `03` §8.6.
+
+| ID | Regra | Fase |
+|----|-------|------|
+| DM-01 | Pedido na mesa só se `accepts_dine_in = true` | V2 |
+| DM-02 | Pedido na mesa exige mesa **ativa** do mesmo tenant | V2 |
+| DM-03 | `delivery_type = dine_in` ⇒ `delivery_fee = 0` e sem endereço de entrega | V2 |
+| DM-04 | Snapshot: gravar `table_number` no pedido (mesmo se a mesa for renomeada depois) | V2 |
+| DM-05 | Fluxo: pending → confirmed → preparing → ready → completed | V2 |
+| DM-06 | Transição para `out_for_delivery` é inválida em `dine_in` | V2 |
+| DM-07 | QR / token inválido ou mesa inativa ⇒ não cria pedido (`TABLE_NOT_FOUND` / `TABLE_INACTIVE`) | V2 |
+| DM-08 | Listagem admin filtra por tipo: all / delivery / pickup / dine_in | V2 |
+| DM-09 | Storefront em contexto de mesa não troca silenciosamente para delivery no mesmo carrinho | V2 |
+| DM-10 | Fonte do pedido: `storefront` (QR ou “Estou na loja”); PDV balcão = `source = backoffice` | V2 |
+| DM-11 | Gerir mesas: permissão `settings.manage` ou `tables.manage`; status de pedido nas permissões de orders | V2 |
+| DM-12 | Pedidos de mesa entram nas métricas “por tipo” (relatórios / dashboard) | V2 |
+| DM-13 | Número da mesa único por tenant; `qr_token` único e opaco (não é o número da mesa) | V2 |
+| DM-14 | Regenerar QR invalida o token anterior | V2 |
+| DM-15 | Soft-desativar mesa (`is_active = false`) se houver pedidos históricos — não apagar em cascata | V2 |
+
+---
+
+## 17. Regras por Segmento
 
 Todas as regras acima são **genéricas**. A diferença entre segmentos é apenas **configuração**:
 
@@ -739,9 +777,9 @@ No V1: entidade `Promotion` com regras de combo (futuro).
 
 ---
 
-## 17. Matriz de Validações
+## 18. Matriz de Validações
 
-### 17.1 Checkout — Ordem de Validação
+### 18.1 Checkout — Ordem de Validação
 
 | # | Validação | Erro |
 |---|-----------|------|
@@ -756,10 +794,11 @@ No V1: entidade `Promotion` com regras de combo (futuro).
 | 9 | delivery_type aceito | `VALIDATION_ERROR` |
 | 10 | payment_method aceito | `VALIDATION_ERROR` |
 | 11 | Endereço se delivery | `VALIDATION_ERROR` |
+| 11b | Mesa ativa se `dine_in` (V2) | `TABLE_NOT_FOUND` / `TABLE_INACTIVE` |
 | 12 | change_for se cash | `VALIDATION_ERROR` |
 | 13 | Criar pedido (transaction) | — |
 
-### 17.2 Atualização de Status — Ordem
+### 18.2 Atualização de Status — Ordem
 
 | # | Validação | Erro |
 |---|-----------|------|
@@ -773,9 +812,9 @@ No V1: entidade `Promotion` com regras de combo (futuro).
 
 ---
 
-## 18. Exceções e Mensagens
+## 19. Exceções e Mensagens
 
-### 18.1 Mensagens para o Usuário (PT-BR)
+### 19.1 Mensagens para o Usuário (PT-BR)
 
 | Code | Mensagem (detail) |
 |------|-------------------|
@@ -791,8 +830,10 @@ No V1: entidade `Promotion` com regras de combo (futuro).
 | `PERMISSION_DENIED` | Você não tem permissão para esta ação |
 | `COUPON_INVALID` | Cupom inválido ou expirado |
 | `COUPON_LIMIT_REACHED` | Este cupom atingiu o limite de uso |
+| `TABLE_NOT_FOUND` | Não encontramos essa mesa. Confira o número ou peça ajuda ao atendimento |
+| `TABLE_INACTIVE` | Esta mesa não está aceitando pedidos no momento |
 
-### 18.2 Mensagens com Interpolação
+### 19.2 Mensagens com Interpolação
 
 ```python
 # Conceito
@@ -805,9 +846,9 @@ raise DomainException(
 
 ---
 
-## 19. Escopo por Fase
+## 20. Escopo por Fase
 
-### 19.1 MVP
+### 20.1 MVP
 
 | Domínio | Regras ativas |
 |---------|---------------|
@@ -823,28 +864,30 @@ raise DomainException(
 | Funcionários | F-01 a F-12 |
 | Notificações | N-01 a N-07 |
 
-### 19.2 V1 (adicionar)
+### 20.2 V1 (adicionar)
 
 - Cupons (PR-01 a PR-11)
 - Login customer (CL-07)
 - Métricas customer (CL-12 a CL-14)
 - Notificações de status (N-02 expandido)
 
-### 19.3 V2 (adicionar)
+### 20.3 V2 (adicionar)
 
 - Gateway pagamento (PG-11 a PG-14)
 - Entrega (D-01 a D-05)
+- Pedidos na mesa (DM-01 a DM-15) — `35-pedidos-mesa.md`
 - Combos e promoções avançadas
 
 ---
 
-## 20. Próximos Documentos
+## 21. Próximos Documentos
 
 | # | Documento | Relação |
 |---|-----------|---------|
 | 09 | `09-roadmap.md` | Quando implementar cada regra |
 | 12 | `12-checklist-mvp.md` | Regras obrigatórias no MVP |
 | 10 | `10-padroes-de-codigo.md` | Como codificar services |
+| 35 | `35-pedidos-mesa.md` | Filosofia e fluxos do salão |
 
 ---
 
@@ -852,6 +895,7 @@ raise DomainException(
 
 | Versão | Data | Autor | Alterações |
 |--------|------|-------|------------|
+| 1.1 | Out/2026 | — | §16 DM-01…15; E-27/28; P-16; K-28…30; PD-21/22 — `35` |
 | 1.0 | Jul/2026 | — | Versão inicial — aprovado |
 
 ---
@@ -861,18 +905,19 @@ raise DomainException(
 | Domínio | Regras | Fase |
 |---------|--------|------|
 | Multi-tenant | 10 | MVP |
-| Empresa | 24 | MVP |
+| Empresa | 24 (+2 V2: E-27/28) | MVP |
 | Catálogo | 21 | MVP |
 | Opções | 20 | MVP |
-| Preço | 15 | MVP |
-| Carrinho/Checkout | 24 | MVP |
-| Pedidos | 20 | MVP |
+| Preço | 15 (+1 V2: P-16) | MVP |
+| Carrinho/Checkout | 24 (+3 V2: K-28…30) | MVP |
+| Pedidos | 20 (+2 V2: PD-21/22) | MVP |
 | Pagamento | 10 (+4 futuro) | MVP |
 | Clientes | 15 | MVP/V1 |
 | Funcionários | 12 | MVP |
 | Cupons | 11 | V1 |
 | Notificações | 7 | MVP |
 | Entrega | 5 | V2 |
+| Pedidos na mesa | 15 | V2 |
 | **Total MVP** | **~178** | — |
 
 ## Apêndice B — Diagrama de Domínios

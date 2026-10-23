@@ -1,4 +1,4 @@
-import { Banknote, ChevronDown, MapPin, MessageSquareText, Store } from "lucide-react";
+import { Armchair, Banknote, ChevronDown, MapPin, MessageSquareText, Store } from "lucide-react";
 
 import type { OrderStatus } from "@/features/checkout/types/checkout.types";
 import type { OrderAdminDetail } from "@/features/orders/types/order-admin.types";
@@ -7,6 +7,7 @@ import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { cn } from "@/shared/lib/utils";
 
 import { PAYMENT_METHOD_LABELS } from "./orderDetailCopy";
+import { isDineInOrder } from "./orderDetailHelpers";
 import { formatCompositionLabel, CompositionHighlight } from "@/features/cart";
 
 /** tom do cabeçalho da comanda (sem moldura colorida) */
@@ -58,6 +59,7 @@ type OrderItemsPanelProps = {
 export function OrderItemsPanel({ order }: OrderItemsPanelProps) {
   const address = order.delivery_address;
   const isDelivery = order.delivery_type === "delivery";
+  const isMesa = isDineInOrder(order);
   const paymentMethodLabel = order.payment
     ? (PAYMENT_METHOD_LABELS[order.payment.method] ?? order.payment.method)
     : null;
@@ -65,11 +67,34 @@ export function OrderItemsPanel({ order }: OrderItemsPanelProps) {
   const hasOrderNotes = Boolean(order.notes?.trim());
   const hasInternalNotes = Boolean(order.internal_notes?.trim());
   const frame = STATUS_HEADER[order.status as OrderStatus] ?? STATUS_HEADER.pending;
+  const channelLabel = isDelivery ? "Entrega" : isMesa ? "Mesa" : "Retirada";
 
   return (
     <div className="space-y-3">
       {/* comanda — o coração do pedido */}
-      <section className="overflow-hidden rounded-2xl bg-white shadow-[0_4px_24px_-8px_rgb(0_0_0/0.14)] ring-1 ring-black/[0.05]">
+      <section
+        className={cn(
+          "overflow-hidden rounded-2xl bg-white shadow-[0_4px_24px_-8px_rgb(0_0_0/0.14)] ring-1 ring-black/[0.05]",
+          isMesa && "ring-teal-200/80",
+        )}
+      >
+        {isMesa ? (
+          <div className="flex items-center gap-2.5 border-b border-teal-200/70 bg-teal-50/90 px-4 py-2.5 sm:px-5">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-600 text-white shadow-sm shadow-teal-600/20">
+              <Armchair className="h-4 w-4" strokeWidth={2.25} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-teal-800">
+                Pedido na mesa
+              </p>
+              <p className="text-sm font-semibold text-teal-950">
+                Mesa {order.table_number ?? "—"}
+                <span className="font-normal text-teal-800/80"> · levar até o cliente</span>
+              </p>
+            </div>
+          </div>
+        ) : null}
+
         <div
           className={cn(
             "flex flex-wrap items-center justify-between gap-3 border-b bg-gradient-to-r to-transparent px-4 py-3.5 sm:px-5",
@@ -95,15 +120,19 @@ export function OrderItemsPanel({ order }: OrderItemsPanelProps) {
                 "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold shadow-sm ring-1 ring-inset",
                 isDelivery
                   ? "bg-sky-50 text-sky-800 ring-sky-200"
-                  : "bg-violet-50 text-violet-800 ring-violet-200",
+                  : isMesa
+                    ? "bg-teal-50 text-teal-900 ring-teal-200"
+                    : "bg-violet-50 text-violet-800 ring-violet-200",
               )}
             >
               {isDelivery ? (
                 <MapPin className="h-3.5 w-3.5" strokeWidth={2.25} />
+              ) : isMesa ? (
+                <Armchair className="h-3.5 w-3.5" strokeWidth={2.25} />
               ) : (
                 <Store className="h-3.5 w-3.5" strokeWidth={2.25} />
               )}
-              {isDelivery ? "Entrega" : "Retirada"}
+              {channelLabel}
             </span>
             {paymentMethodLabel ? (
               <span

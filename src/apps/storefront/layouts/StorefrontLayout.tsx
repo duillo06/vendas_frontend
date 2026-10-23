@@ -1,4 +1,5 @@
-import { Heart, Home, Share2, User } from "lucide-react";
+import { Armchair, Heart, Home, Share2, User, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router";
 import { toast } from "sonner";
 
@@ -7,6 +8,11 @@ import { useCompanyPublic, useStoreBranding } from "@/features/company";
 import { useCustomerAuth } from "@/features/customer-auth";
 import { useFavorites } from "@/features/favorites";
 import { useTenantTheme } from "@/features/settings";
+import {
+  clearMesaSession,
+  getMesaSession,
+  type MesaSession,
+} from "@/features/tables";
 import {
   shouldShowBottomNav,
   StorefrontBottomNav,
@@ -65,6 +71,11 @@ export function StorefrontLayout() {
   const { favorites } = useFavorites();
   const location = useLocation();
   const showBottomNav = shouldShowBottomNav(location.pathname);
+  const [mesa, setMesa] = useState<MesaSession | null>(() => getMesaSession());
+
+  useEffect(() => {
+    setMesa(getMesaSession());
+  }, [location.pathname]);
 
   useTenantTheme(company?.theme);
   useStoreBranding(company);
@@ -174,6 +185,28 @@ export function StorefrontLayout() {
             <CartNavButton />
           </div>
         </div>
+        {mesa ? (
+          <div className="border-t border-brand/20 bg-brand-soft/50">
+            <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-1.5 text-sm">
+              <span className="inline-flex items-center gap-1.5 font-medium text-brand">
+                <Armchair className="h-4 w-4" />
+                Mesa {mesa.tableNumber}
+              </span>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-[hsl(var(--muted-foreground))] hover:bg-white/60"
+                onClick={() => {
+                  clearMesaSession();
+                  setMesa(null);
+                  toast.message("Pedido na mesa desativado");
+                }}
+              >
+                <X className="h-3.5 w-3.5" />
+                Sair da mesa
+              </button>
+            </div>
+          </div>
+        ) : null}
       </header>
 
       <main

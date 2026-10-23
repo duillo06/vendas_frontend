@@ -33,15 +33,21 @@ export function mapCheckoutPayload(
         }
       : undefined;
 
+  const isMesa = form.deliveryType === "dine_in";
+
   return {
-    customer_name: form.customerName.trim(),
-    customer_phone: form.customerPhone.trim(),
-    customer_email: form.customerEmail?.trim() || undefined,
-    customer_id: customerId,
+    customer_name: isMesa
+      ? form.customerName?.trim() || undefined
+      : form.customerName!.trim(),
+    customer_phone: isMesa ? undefined : form.customerPhone!.trim(),
+    customer_email: isMesa ? undefined : form.customerEmail?.trim() || undefined,
+    customer_id: isMesa ? undefined : customerId,
     delivery_type: form.deliveryType,
-    payment_method: form.paymentMethod,
+    payment_method: isMesa ? "pay_at_venue" : form.paymentMethod,
     notes: form.notes?.trim() || undefined,
-    change_for: form.paymentMethod === "cash" ? form.changeFor : undefined,
+    change_for: !isMesa && form.paymentMethod === "cash" ? form.changeFor : undefined,
+    table_id: isMesa ? form.tableId : undefined,
+    qr_token: isMesa ? form.qrToken : undefined,
     address,
     items: items.map((item) => ({
       product_id: item.productId,
