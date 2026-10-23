@@ -39,8 +39,8 @@ export interface CheckoutItemPayload {
 }
 
 export interface CheckoutPayload {
-  customer_name: string;
-  customer_phone: string;
+  customer_name?: string;
+  customer_phone?: string;
   customer_email?: string;
   customer_id?: string;
   delivery_type: DeliveryType;
