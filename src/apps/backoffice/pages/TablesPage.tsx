@@ -30,26 +30,78 @@ function qrImageUrl(url: string, size = 220) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(url)}`;
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+// imprime no iframe da própria página — popup o navegador bloqueia
 function printTableQr(table: DiningTable) {
+  const number = escapeHtml(table.number);
   const img = qrImageUrl(table.qr_url, 280);
-  const w = window.open("", "_blank", "noopener,noreferrer,width=420,height=560");
-  if (!w) {
-    toast.error("Permita pop-ups para imprimir o QR");
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("title", `Impressão da mesa ${table.number}`);
+  iframe.style.cssText =
+    "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;";
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument;
+  const win = iframe.contentWindow;
+  if (!doc || !win) {
+    iframe.remove();
+    toast.error("Não deu para abrir a impressão. Tente de novo.");
     return;
   }
-  w.document.write(`<!doctype html><html><head><title>Mesa ${table.number}</title>
-<style>
-  body{font-family:system-ui,sans-serif;text-align:center;padding:2rem;color:#111}
-  h1{font-size:1.75rem;margin:0 0 .25rem}
-  p{color:#555;margin:.25rem 0 1.25rem}
-  img{width:280px;height:280px}
-</style></head><body>
-  <h1>Mesa ${table.number}</h1>
+
+  doc.open();
+  doc.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Mesa ${number}</title>
+  <style>
+    @page { margin: 12mm; }
+    body { font-family: system-ui, sans-serif; text-align: center; color: #111; margin: 0; }
+    h1 { font-size: 1.75rem; margin: 0 0 .25rem; }
+    p { color: #555; margin: .25rem 0 1.25rem; }
+    img { width: 280px; height: 280px; }
+  </style>
+</head>
+<body>
+  <h1>Mesa ${number}</h1>
   <p>Aponte a câmera do celular e peça por aqui.</p>
-  <img src="${img}" alt="QR Mesa ${table.number}" />
-  <script>window.onload=()=>{window.print();}</script>
-</body></html>`);
-  w.document.close();
+  <img src="${img}" alt="QR Mesa ${number}" />
+</body>
+</html>`);
+  doc.close();
+
+  const cleanup = () => iframe.remove();
+  const runPrint = () => {
+    try {
+      win.focus();
+      win.print();
+    } finally {
+      window.setTimeout(cleanup, 1000);
+    }
+  };
+
+  const image = doc.querySelector("img");
+  if (image && !image.complete) {
+    image.addEventListener("load", () => window.setTimeout(runPrint, 50), { once: true });
+    image.addEventListener(
+      "error",
+      () => {
+        cleanup();
+        toast.error("Não deu para montar o QR. Tente de novo.");
+      },
+      { once: true },
+    );
+    return;
+  }
+  window.setTimeout(runPrint, 50);
 }
 
 export function TablesPage() {
