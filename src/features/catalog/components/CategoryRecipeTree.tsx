@@ -83,12 +83,22 @@ export function CategoryRecipeTree({ recipe, className }: CategoryRecipeTreeProp
 
           let detail = "";
           if (cap.kind === "half") {
-            const max = Number(cap.settings?.max_parts ?? 2);
             const rule = String(cap.settings?.pricing_rule ?? "highest");
-            detail = `até ${max} sabores · ${PRICE_RULE[rule] ?? rule}`;
+            detail = PRICE_RULE[rule] ?? rule;
           } else if (lib) {
             const options = lib.options ?? [];
-            if (showCategoryPrices && options.length > 0) {
+            if (cap.kind === "size" && options.length > 0) {
+              detail = options
+                .slice(0, 4)
+                .map((o) => {
+                  const max = Number(
+                    o.settings?.max_flavors ?? lib.item_settings?.[o.id]?.max_flavors,
+                  );
+                  return max >= 1 ? `${o.name} · até ${max}` : o.name;
+                })
+                .join(" · ");
+              if (options.length > 4) detail += "…";
+            } else if (showCategoryPrices && options.length > 0) {
               detail = options
                 .slice(0, 5)
                 .map((o) => {

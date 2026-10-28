@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router";
-import { Clock, Flame, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
 import { toast } from "sonner";
 
 import { useFavorites } from "@/features/favorites";
@@ -12,14 +12,13 @@ import {
   flattenSelectionsForCart,
   buildInitialSelections,
   pruneHiddenSelections,
+  effectiveCompositionMaxParts,
+  findSizeGroup,
+  hasSizeSelection,
+  selectedSizeOptionId,
   type ProductBuilderState,
 } from "@/features/product-builder";
-import { ProductFeatureChips } from "@/features/storefront/components/ProductFeatureChips";
-import {
-  getProductBadges,
-  getProductFeatureChips,
-  isPopularProduct,
-} from "@/features/storefront/utils/productBadges";
+import { getProductBadges } from "@/features/storefront/utils/productBadges";
 import { ProductImageCarousel } from "./ProductImageCarousel";
 import { CompositionPicker, composedBasePrice } from "./CompositionPicker";
 import {
@@ -34,7 +33,6 @@ import { useCart } from "@/features/cart";
 import { remainingForProduct, productOrderLimit } from "@/features/cart/utils/orderQuantity";
 
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
-import { MessageTicker } from "@/shared/components/MessageTicker";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Skeleton } from "@/shared/components/ui/skeleton";
@@ -143,23 +141,26 @@ export function ProductDetailView({
   }, [product, selections, compositionParts]);
 
   const primaryImage = product.images.find((img) => img.is_primary) ?? product.images[0];
-  const isPopular = isPopularProduct(product.tags);
   const hasPromotion =
     product.compare_price !== null && product.compare_price > product.base_price;
   const badges = product.promotion?.badges?.length
     ? product.promotion.badges.slice(0, 3).map((label) => ({ label, tone: "sale" as const }))
     : getProductBadges(product.tags, { hasPromotion });
-  const featureChips = getProductFeatureChips(product.tags);
   const favorite = isFavorite(product.id);
   const hasCustomization =
     (product.composition?.enabled ?? false) || product.option_groups.length > 0;
-  const personalizeEmoji = /pizza/i.test(`${product.name} ${categoryName ?? ""}`)
-    ? "🍕"
-    : /pastel/i.test(`${product.name} ${categoryName ?? ""}`)
-      ? "🥟"
-      : /a[cç]a[ií]/i.test(`${product.name} ${categoryName ?? ""}`)
-        ? "🫐"
-        : storefrontCopy.product.personalizeEmoji;
+  const sizeGroup = findSizeGroup(product.option_groups);
+  const sizeReady = hasSizeSelection(product, selections);
+  const sizeOptionId = selectedSizeOptionId(product.option_groups, selections);
+  const compositionMaxParts = effectiveCompositionMaxParts(product.composition, sizeOptionId);
+
+  // troca de tamanho pode reduzir o teto de sabores
+  useEffect(() => {
+    const maxAdditional = Math.max(0, compositionMaxParts - 1);
+    if (compositionParts.length > maxAdditional) {
+      setCompositionParts((parts) => parts.slice(0, maxAdditional));
+    }
+  }, [compositionMaxParts, compositionParts.length]);
 
   const handleAddToCart = () => {
     const validation = validateAllGroups(product.option_groups, selections);
@@ -172,7 +173,7 @@ export function ProductDetailView({
 
     if (product.composition?.enabled) {
       // max_parts = teto; nunca obriga combinar sabores
-      const maxAdditional = Math.max(0, product.composition.max_parts - 1);
+      const maxAdditional = Math.max(0, compositionMaxParts - 1);
       if (compositionParts.length > maxAdditional) {
         toast.error(`Você pode combinar no máximo ${maxAdditional} sabor(es).`);
         return;
@@ -225,8 +226,8 @@ export function ProductDetailView({
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
         <ProductImageCarousel images={product.images} productName={product.name} />
 
-        <div className="space-y-5">
-          <div className="space-y-3">
+        <div className="space-y-4">
+          <div className="space-y-2">
             {badges.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {badges.map((badge) => (
@@ -264,42 +265,13 @@ export function ProductDetailView({
             </div>
 
             {product.description ? (
-              <p className="max-w-prose text-base leading-relaxed text-[hsl(var(--muted-foreground))]">
+              <p className="max-w-prose text-sm leading-relaxed text-[hsl(var(--muted-foreground))] sm:text-base">
                 {product.description}
               </p>
             ) : null}
 
             {!product.is_available ? <Badge variant="outline">Indisponível</Badge> : null}
           </div>
-
-          <div className="flex flex-wrap gap-4 text-sm text-[hsl(var(--muted-foreground))]">
-            {product.prep_time ? (
-              <span className="inline-flex items-center gap-1.5 font-medium">
-                <Clock className="h-4 w-4 text-brand" />
-                {storefrontCopy.product.prepTime(product.prep_time)}
-              </span>
-            ) : null}
-            {isPopular ? (
-              <span className="inline-flex items-center gap-1.5 font-medium text-brand-accent">
-                <Flame className="h-4 w-4" />
-                Popular na casa
-              </span>
-            ) : null}
-          </div>
-
-          {product.is_available ? (
-            <MessageTicker
-              messages={[
-                isPopular
-                  ? `🔥 ${storefrontCopy.product.favorite}`
-                  : `✨ ${storefrontCopy.product.customizeHint}`,
-              ]}
-            />
-          ) : (
-            <MessageTicker messages={[`⏸️ ${storefrontCopy.product.unavailable}`]} />
-          )}
-
-          <ProductFeatureChips items={featureChips} title={storefrontCopy.product.highlightsTitle} />
 
           {/* preço vivo — riscado só se for promoção (compare), não base vs tamanho */}
           <div className="flex items-baseline gap-3">
@@ -325,37 +297,30 @@ export function ProductDetailView({
         </div>
       </div>
 
-      {/* personalização — continuação do produto, não um bloco rival */}
+      {/* personalização — direto nas opções, sem cabeçalho extra */}
       {hasCustomization ? (
-        <section className="mt-12 space-y-6 scroll-mb-[calc(11rem+env(safe-area-inset-bottom,0px))] border-t border-[hsl(var(--border))]/80 pt-10 sm:mt-16 sm:scroll-mb-[calc(9rem+env(safe-area-inset-bottom,0px))] sm:pt-12">
-          <div className="space-y-1">
-            <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
-              <span aria-hidden className="mr-1.5">
-                {personalizeEmoji}
-              </span>
-              {storefrontCopy.product.personalizeTitle}
-            </h2>
-            <p className="text-sm text-[hsl(var(--muted-foreground))]">
-              {storefrontCopy.product.personalizeSubtitle}
-            </p>
-          </div>
-
-          {product.composition?.enabled ? (
-            <CompositionPicker
-              product={product}
-              selected={compositionParts}
-              onChange={(parts) => {
-                setCompositionParts(parts);
-                setAddedToCart(false);
-              }}
-            />
-          ) : null}
-
+        <section className="mt-8 space-y-5 scroll-mb-[calc(11rem+env(safe-area-inset-bottom,0px))] border-t border-[hsl(var(--border))]/80 pt-6 sm:mt-10 sm:scroll-mb-[calc(9rem+env(safe-area-inset-bottom,0px))] sm:space-y-6 sm:pt-8">
           <ProductBuilder
             groups={product.option_groups}
             selections={selections}
             basePrice={product.base_price}
             invalidGroupId={invalidGroupId}
+            lockUntilSize={Boolean(sizeGroup)}
+            afterSize={
+              product.composition?.enabled ? (
+                <CompositionPicker
+                  product={product}
+                  selected={compositionParts}
+                  maxParts={compositionMaxParts}
+                  locked={!sizeReady}
+                  lockedHint="Escolha o tamanho primeiro para combinar sabores."
+                  onChange={(parts) => {
+                    setCompositionParts(parts);
+                    setAddedToCart(false);
+                  }}
+                />
+              ) : null
+            }
             onChange={(groupId, items) => {
               setInvalidGroupId((current) => (current === groupId ? null : current));
               setAddedToCart(false);

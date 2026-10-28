@@ -2,7 +2,7 @@ import { useMemo } from "react";
 
 import type { CompanyPublic } from "@/features/company/types/company.types";
 import {
-  getEstimatedDeliveryMinutes,
+  getDeliveryTimeLabel,
   getStorefrontMarketing,
 } from "@/features/company/utils/storefrontTheme";
 import type { ProductListItem } from "@/features/catalog/types/catalog.types";
@@ -42,9 +42,9 @@ function buildMessages(
     messages.push(`🚚 Frete grátis acima de ${formatCurrency(freeAbove)}`);
   }
 
-  const mins = getEstimatedDeliveryMinutes(company);
-  if (mins) {
-    messages.push(`⏱️ Entrega média de ~${mins} minutos`);
+  const deliveryTime = getDeliveryTimeLabel(company);
+  if (deliveryTime) {
+    messages.push(`⏱️ Entrega em ${deliveryTime}`);
   }
 
   const methods = company?.settings.payment_methods ?? [];

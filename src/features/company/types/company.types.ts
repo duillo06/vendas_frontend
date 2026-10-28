@@ -4,6 +4,8 @@ export interface CompanySettingsPublic {
   free_delivery_above: number | null;
   estimated_prep_time: number;
   estimated_delivery_time: number;
+  delivery_time_min?: number | null;
+  delivery_time_max?: number | null;
   accepts_delivery: boolean;
   accepts_pickup: boolean;
   accepts_dine_in?: boolean;

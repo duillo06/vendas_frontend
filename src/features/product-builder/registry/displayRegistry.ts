@@ -13,6 +13,7 @@ import {
   StepperDisplay,
 } from "../displays";
 import { ColorSwatchDisplay } from "../displays/ColorSwatchDisplay";
+import { SizeSegmentDisplay } from "../displays/SizeSegmentDisplay";
 import type { DisplayProps } from "../types";
 
 const displayRegistry: Partial<Record<OptionDisplayType, ComponentType<DisplayProps>>> = {
@@ -25,6 +26,7 @@ const displayRegistry: Partial<Record<OptionDisplayType, ComponentType<DisplayPr
   stepper: StepperDisplay,
   icon_chips: IconChipDisplay,
   color_swatch: ColorSwatchDisplay,
+  size_segments: SizeSegmentDisplay,
 };
 
 export function resolveDisplayComponent(type: OptionDisplayType): ComponentType<DisplayProps> {

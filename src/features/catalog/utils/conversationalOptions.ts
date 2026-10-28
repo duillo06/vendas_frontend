@@ -13,6 +13,8 @@ export type ChoiceDraft = {
   name: string;
   price: number;
   description?: string;
+  /** só tamanho — até quantos sabores nesse tamanho */
+  maxFlavors?: number;
 };
 
 export type CustomizationDraft = {

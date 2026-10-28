@@ -41,6 +41,8 @@ type KindAnswer = {
   optionNames: string[];
   /** preços padrão Tipo 2 (paralelo a optionIds) */
   optionPrices: number[];
+  /** tamanho → até quantos sabores (paralelo a optionIds) */
+  optionMaxFlavors?: number[];
   half?: {
     min_parts: number;
     max_parts: number;
@@ -48,6 +50,20 @@ type KindAnswer = {
     label: string;
   };
 };
+
+function defaultMaxFlavorsForSize(name: string): number {
+  const n = name.toLowerCase();
+  if (/pequena|broto|individual|pessoal|mini/.test(n)) return 1;
+  return 2;
+}
+
+/** teto da composição = maior limite já definido nos tamanhos */
+function maxFlavorsCeilingFromAnswers(list: KindAnswer[]): number {
+  const size = list.find((a) => a.kindId === "size" && a.enabled);
+  const values = (size?.optionMaxFlavors ?? []).filter((n) => n >= 1 && n <= 4);
+  if (values.length) return Math.max(...values);
+  return 2;
+}
 
 type Step = "intro" | "gate" | "library" | "create-item" | "prices" | "half" | "summary" | "apply";
 
@@ -92,12 +108,24 @@ function answersFromRecipe(recipe: CategoryRecipe | null | undefined): KindAnswe
         : "highest";
     const optionIds = lib?.option_ids ?? [];
     const optionNames = (lib?.options ?? []).map((o) => o.name);
+    const optionMaxFlavors =
+      kindId === "size"
+        ? optionIds.map((id, index) => {
+            const fromItem = Number(
+              lib?.options?.find((o) => o.id === id)?.settings?.max_flavors ??
+                lib?.item_settings?.[id]?.max_flavors,
+            );
+            if (fromItem >= 1 && fromItem <= 4) return fromItem;
+            return defaultMaxFlavorsForSize(optionNames[index] ?? "");
+          })
+        : undefined;
     out.push({
       kindId,
       enabled: cap.enabled,
       groupId: lib?.option_group_id,
       groupName: lib?.option_group_name,
       optionIds,
+      optionMaxFlavors,
       optionNames:
         optionNames.length === optionIds.length
           ? optionNames
@@ -146,10 +174,8 @@ export function CategoryRecipeAssistant({
   const [step, setStep] = useState<Step>("intro");
   const [draft, setDraft] = useState<CustomizationDraft | null>(null);
   const [halfDraft, setHalfDraft] = useState<{
-    max_parts: number;
     pricing_rule: "highest" | "average" | "sum" | "main";
   }>({
-    max_parts: 2,
     pricing_rule: "highest",
   });
   const [newName, setNewName] = useState("");
@@ -212,7 +238,6 @@ export function CategoryRecipeAssistant({
     const prev = answers.find((a) => a.kindId === kind.id);
     if (kind.opensComposition) {
       setHalfDraft({
-        max_parts: prev?.half?.max_parts ?? 2,
         pricing_rule: prev?.half?.pricing_rule ?? "highest",
       });
       setStep("gate");
@@ -227,6 +252,10 @@ export function CategoryRecipeAssistant({
               id: prev.optionIds[i],
               name,
               price: 0,
+              maxFlavors:
+                kind.id === "size"
+                  ? (prev.optionMaxFlavors?.[i] ?? defaultMaxFlavorsForSize(name))
+                  : undefined,
             })),
           }
         : draftFromKind(kind),
@@ -269,6 +298,8 @@ export function CategoryRecipeAssistant({
           {
             ...newChoice(item.name, 0, item.description ?? "", item.optionId),
             key: item.key,
+            maxFlavors:
+              currentKind?.id === "size" ? defaultMaxFlavorsForSize(item.name) : undefined,
           },
         ],
       };
@@ -282,6 +313,20 @@ export function CategoryRecipeAssistant({
         ...d,
         choices: d.choices.map((c) =>
           choiceMatchesLibraryItem(c, item) ? { ...c, name } : c,
+        ),
+      };
+    });
+  };
+
+  const setSizeMaxFlavors = (item: LibraryItem, maxFlavors: number) => {
+    setDraft((d) => {
+      if (!d) return d;
+      return {
+        ...d,
+        choices: d.choices.map((c) =>
+          choiceMatchesLibraryItem(c, item)
+            ? { ...c, maxFlavors: Math.min(4, Math.max(1, maxFlavors)) }
+            : c,
         ),
       };
     });
@@ -303,6 +348,7 @@ export function CategoryRecipeAssistant({
       const byName = new Map(group.options.map((o) => [o.name.trim().toLowerCase(), o]));
       const optionIds: string[] = [];
       const optionNames: string[] = [];
+      const optionMaxFlavors: number[] = [];
       for (const choice of named) {
         const opt =
           (choice.id ? byId.get(choice.id) : undefined) ??
@@ -310,6 +356,11 @@ export function CategoryRecipeAssistant({
         if (!opt) continue;
         optionIds.push(opt.id);
         optionNames.push(opt.name);
+        if (kind.id === "size") {
+          optionMaxFlavors.push(
+            Math.min(4, Math.max(1, choice.maxFlavors ?? defaultMaxFlavorsForSize(choice.name))),
+          );
+        }
       }
       if (optionIds.length === 0) {
         setError("Não encontramos os itens na base. Tente de novo.");
@@ -326,7 +377,6 @@ export function CategoryRecipeAssistant({
       const optionPrices = optionNames.map(
         (name) => prevByName.get(name.trim().toLowerCase()) ?? 0,
       );
-
       const nextAnswer: KindAnswer = {
         kindId: kind.id,
         enabled: true,
@@ -335,6 +385,7 @@ export function CategoryRecipeAssistant({
         optionIds,
         optionNames,
         optionPrices,
+        optionMaxFlavors: kind.id === "size" ? optionMaxFlavors : undefined,
       };
       setAnswers((current) => {
         const without = current.filter((a) => a.kindId !== kind.id);
@@ -373,7 +424,8 @@ export function CategoryRecipeAssistant({
           optionPrices: [],
           half: {
             min_parts: 1,
-            max_parts: halfDraft.max_parts,
+            // quantidade fica por tamanho; aqui só o teto de fallback + cobrança
+            max_parts: maxFlavorsCeilingFromAnswers(current),
             pricing_rule: halfDraft.pricing_rule,
             label: "Escolher outro sabor",
           },
@@ -413,6 +465,7 @@ export function CategoryRecipeAssistant({
 
   const buildPayload = (mode: "new_only" | "all" | "later" = "new_only"): CategoryRecipeWrite => {
     const enabled = answers.filter((a) => a.enabled);
+    const flavorsCeiling = maxFlavorsCeilingFromAnswers(answers);
     const capabilities = enabled.map((a, index) => ({
       kind: a.kindId,
       enabled: true,
@@ -421,7 +474,8 @@ export function CategoryRecipeAssistant({
       settings: a.half
         ? {
             min_parts: a.half.min_parts,
-            max_parts: a.half.max_parts,
+            // espelha o maior limite dos tamanhos (fallback se não houver size)
+            max_parts: flavorsCeiling,
             pricing_rule: a.half.pricing_rule,
             label: a.half.label,
           }
@@ -429,12 +483,29 @@ export function CategoryRecipeAssistant({
     }));
     const libraries = enabled
       .filter((a) => a.kindId !== "half" && a.groupId && a.optionIds.length)
-      .map((a, index) => ({
-        kind: a.kindId,
-        option_group_id: a.groupId!,
-        sort_order: index,
-        option_ids: a.optionIds,
-      }));
+      .map((a, index) => {
+        const item_settings =
+          a.kindId === "size" && a.optionMaxFlavors?.length
+            ? Object.fromEntries(
+                a.optionIds.map((id, i) => [
+                  id,
+                  {
+                    max_flavors: Math.min(
+                      4,
+                      Math.max(1, a.optionMaxFlavors?.[i] ?? defaultMaxFlavorsForSize(a.optionNames[i] ?? "")),
+                    ),
+                  },
+                ]),
+              )
+            : undefined;
+        return {
+          kind: a.kindId,
+          option_group_id: a.groupId!,
+          sort_order: index,
+          option_ids: a.optionIds,
+          ...(item_settings ? { item_settings } : {}),
+        };
+      });
     const option_prices = enabled
       .filter((a) => isCategoryPricedKind(a.kindId))
       .flatMap((a) =>
@@ -469,9 +540,15 @@ export function CategoryRecipeAssistant({
     .map((a) => {
       const kind = kindById(a.kindId);
       const label = kind?.label ?? a.kindId;
+      if (a.kindId === "size" && a.optionMaxFlavors?.length) {
+        const bits = a.optionNames
+          .map((name, i) => `${name} · até ${a.optionMaxFlavors?.[i] ?? 1}`)
+          .slice(0, 4);
+        return `✓ ${label} — ${bits.join(" · ")}`;
+      }
       if (a.kindId === "half" && a.half) {
         const rule = HALF_RULES.find((r) => r.value === a.half!.pricing_rule)?.label ?? "";
-        return `✓ ${label} — até ${a.half.max_parts} sabores · ${rule.toLowerCase()}`;
+        return `✓ ${label} — ${rule.toLowerCase()}`;
       }
       if (isCategoryPricedKind(a.kindId) && a.optionNames.length) {
         const priced = a.optionNames
@@ -605,56 +682,87 @@ export function CategoryRecipeAssistant({
                 {currentKind.libraryQuestion}
               </h3>
               <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
-                Marque os que oferece — com o item marcado, você pode editar o nome. Preço fica em
-                cada produto.
+                {currentKind.id === "size"
+                  ? "Marque os tamanhos e diga até quantos sabores cada um aceita. O preço fica em cada produto."
+                  : "Marque os que oferece — com o item marcado, você pode editar o nome. Preço fica em cada produto."}
               </p>
             </div>
             <ul className="space-y-1.5">
               {libraryItems.map((item) => {
                 const choice = choiceForItem(item);
                 const checked = Boolean(choice);
+                const maxFlavors =
+                  choice?.maxFlavors ?? defaultMaxFlavorsForSize(choice?.name ?? item.name);
                 return (
                   <li key={item.key}>
                     <div
                       className={cn(
-                        "flex w-full items-center gap-3 rounded-xl border-2 px-3 py-2.5 text-left transition",
+                        "rounded-xl border-2 px-3 py-2.5 text-left transition",
                         checked
                           ? "border-[hsl(var(--primary)/0.45)] bg-[hsl(var(--primary-soft))]"
                           : "border-[hsl(var(--border))] bg-white hover:border-[hsl(var(--primary)/0.25)]",
                       )}
                     >
-                      <button
-                        type="button"
-                        onClick={() => toggleLibraryItem(item)}
-                        aria-pressed={checked}
-                        aria-label={checked ? `Remover ${item.name}` : `Adicionar ${item.name}`}
-                        className={cn(
-                          "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2",
-                          checked ? "border-brand bg-brand text-white" : "border-[hsl(var(--border))]",
-                        )}
-                      >
-                        {checked ? <Check className="h-3 w-3" /> : null}
-                      </button>
-                      {checked ? (
-                        <Input
-                          value={choice?.name ?? item.name}
-                          onChange={(e) => renameLibraryItem(item, e.target.value)}
-                          className="h-9 flex-1 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
-                          aria-label={`Nome de ${item.name}`}
-                        />
-                      ) : (
+                      <div className="flex w-full items-center gap-3">
                         <button
                           type="button"
                           onClick={() => toggleLibraryItem(item)}
-                          className="min-w-0 flex-1 text-left text-sm font-medium"
+                          aria-pressed={checked}
+                          aria-label={checked ? `Remover ${item.name}` : `Adicionar ${item.name}`}
+                          className={cn(
+                            "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2",
+                            checked
+                              ? "border-brand bg-brand text-white"
+                              : "border-[hsl(var(--border))]",
+                          )}
                         >
-                          {item.name}
+                          {checked ? <Check className="h-3 w-3" /> : null}
                         </button>
-                      )}
-                      {item.fromLibrary ? (
-                        <span className="ml-auto shrink-0 text-[10px] font-medium uppercase tracking-wide text-brand">
-                          Base
-                        </span>
+                        {checked ? (
+                          <Input
+                            value={choice?.name ?? item.name}
+                            onChange={(e) => renameLibraryItem(item, e.target.value)}
+                            className="h-9 flex-1 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
+                            aria-label={`Nome de ${item.name}`}
+                          />
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => toggleLibraryItem(item)}
+                            className="min-w-0 flex-1 text-left text-sm font-medium"
+                          >
+                            {item.name}
+                          </button>
+                        )}
+                        {item.fromLibrary ? (
+                          <span className="ml-auto shrink-0 text-[10px] font-medium uppercase tracking-wide text-brand">
+                            Base
+                          </span>
+                        ) : null}
+                      </div>
+                      {checked && currentKind.id === "size" ? (
+                        <div className="mt-2.5 space-y-1.5 border-t border-[hsl(var(--primary)/0.15)] pt-2.5">
+                          <p className="text-xs font-medium text-[hsl(var(--muted-foreground))]">
+                            Até quantos sabores?
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {[1, 2, 3, 4].map((n) => (
+                              <button
+                                key={n}
+                                type="button"
+                                onClick={() => setSizeMaxFlavors(item, n)}
+                                className={cn(
+                                  "min-h-9 min-w-11 rounded-lg border px-2.5 text-sm font-semibold transition",
+                                  maxFlavors === n
+                                    ? "border-brand bg-brand text-white"
+                                    : "border-[hsl(var(--border))] bg-white text-[hsl(var(--foreground))]",
+                                )}
+                              >
+                                {n}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       ) : null}
                     </div>
                   </li>
@@ -793,25 +901,9 @@ export function CategoryRecipeAssistant({
             <div>
               <h3 className="text-base font-semibold">Como funciona o meio a meio?</h3>
               <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
-                Até N sabores é o máximo — o cliente pode pedir só um se quiser.
+                Quantidade de sabores fica em cada tamanho. Aqui só define como cobra.
               </p>
             </div>
-            <label className="block space-y-1.5">
-              <span className="text-sm font-medium">Até quantos sabores?</span>
-              <Input
-                type="number"
-                min={2}
-                max={4}
-                className="h-11 w-28"
-                value={halfDraft.max_parts}
-                onChange={(e) =>
-                  setHalfDraft((h) => ({
-                    ...h,
-                    max_parts: Math.min(4, Math.max(2, Number(e.target.value) || 2)),
-                  }))
-                }
-              />
-            </label>
             <div className="space-y-2">
               <span className="text-sm font-medium">Como cobra?</span>
               <div className="space-y-1.5">

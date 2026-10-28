@@ -2,12 +2,11 @@ import { Bike, Clock, Lock, MapPin, Search, Star, Store } from "lucide-react";
 import { useMemo, type ReactNode } from "react";
 
 import {
-  getEstimatedDeliveryMinutes,
+  getDeliveryTimeLabel,
   getStorefrontMarketing,
 } from "@/features/company/utils/storefrontTheme";
 import type { CompanyPublic } from "@/features/company/types/company.types";
 import {
-  deliveryWindowLabel,
   getNextOpenLabel,
 } from "@/features/storefront/utils/shopHours";
 import { formatCurrency } from "@/shared/lib/format";
@@ -79,7 +78,7 @@ function InstagramIcon({ className }: { className?: string }) {
 
 export function StoreHero({ company, isLoading, compact = false, onSearchClick }: StoreHeroProps) {
   const marketing = getStorefrontMarketing(company);
-  const deliveryMinutes = getEstimatedDeliveryMinutes(company);
+  const deliveryTimeLabel = getDeliveryTimeLabel(company);
   const isOpen = Boolean(company?.is_open);
   const instagramUrl = marketing.instagram_url?.trim() || null;
 
@@ -163,7 +162,7 @@ export function StoreHero({ company, isLoading, compact = false, onSearchClick }
             <ShopMetaChips
               company={company}
               marketing={marketing}
-              deliveryMinutes={deliveryMinutes}
+              deliveryTimeLabel={deliveryTimeLabel}
               fulfillment={fulfillment}
             />
           </ul>
@@ -228,7 +227,7 @@ export function StoreHero({ company, isLoading, compact = false, onSearchClick }
           <ShopMetaChips
             company={company}
             marketing={marketing}
-            deliveryMinutes={deliveryMinutes}
+            deliveryTimeLabel={deliveryTimeLabel}
             fulfillment={fulfillment}
           />
         </ul>
@@ -240,12 +239,12 @@ export function StoreHero({ company, isLoading, compact = false, onSearchClick }
 function ShopMetaChips({
   company,
   marketing,
-  deliveryMinutes,
+  deliveryTimeLabel,
   fulfillment,
 }: {
   company?: CompanyPublic | null;
   marketing: ReturnType<typeof getStorefrontMarketing>;
-  deliveryMinutes: number | null;
+  deliveryTimeLabel: string | null;
   fulfillment: string;
 }) {
   return (
@@ -256,10 +255,10 @@ function ShopMetaChips({
           {marketing.rating.toFixed(1)}
         </MetaChip>
       ) : null}
-      {deliveryMinutes ? (
+      {deliveryTimeLabel ? (
         <MetaChip>
           <Bike className="h-3 w-3 text-brand" />
-          {deliveryWindowLabel(deliveryMinutes) ?? `${deliveryMinutes} min`}
+          {deliveryTimeLabel}
         </MetaChip>
       ) : company?.settings.estimated_prep_time ? (
         <MetaChip>

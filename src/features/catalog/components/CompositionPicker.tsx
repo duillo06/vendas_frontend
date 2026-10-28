@@ -18,22 +18,34 @@ type CompositionPickerProps = {
   product: ProductDetail;
   selected: CartComponent[];
   onChange: (parts: CartComponent[]) => void;
+  /** teto efetivo (já considera o tamanho) */
+  maxParts?: number;
+  locked?: boolean;
+  lockedHint?: string;
 };
 
-export function CompositionPicker({ product, selected, onChange }: CompositionPickerProps) {
+export function CompositionPicker({
+  product,
+  selected,
+  onChange,
+  maxParts,
+  locked = false,
+  lockedHint,
+}: CompositionPickerProps) {
   const [open, setOpen] = useState(false);
   const composition = product.composition;
 
   const { data: candidates, isLoading } = useQuery({
     queryKey: ["catalog", "composition", product.slug],
     queryFn: () => catalogApi.getCompositionOptions(product.slug),
-    enabled: open && !!composition?.enabled,
+    enabled: open && !!composition?.enabled && !locked,
     staleTime: 60_000,
   });
 
   if (!composition?.enabled) return null;
 
-  const maxAdditional = Math.max(0, composition.max_parts - 1);
+  const effectiveMax = Math.max(1, maxParts ?? composition.max_parts);
+  const maxAdditional = Math.max(0, effectiveMax - 1);
   const totalParts = selected.length + 1;
   const pct = Math.round(100 / totalParts);
 
@@ -70,15 +82,31 @@ export function CompositionPicker({ product, selected, onChange }: CompositionPi
     toast.info(`Você pode escolher no máximo ${maxAdditional} sabor(es).`);
   };
 
+  if (locked || maxAdditional <= 0) {
+    return (
+      <div className="space-y-2 rounded-2xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--muted))]/20 p-4">
+        <p className="font-semibold">{composition.label}</p>
+        <p className="text-sm text-[hsl(var(--muted-foreground))]">
+          {locked
+            ? lockedHint || "Escolha o tamanho primeiro para combinar sabores."
+            : "Neste tamanho, a pizza fica com um sabor só."}
+        </p>
+        {selected.length > 0 ? (
+          <Button type="button" variant="ghost" size="sm" className="px-0 text-brand" onClick={() => onChange([])}>
+            Remover sabores extras
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30 p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-semibold">{composition.label}</p>
           <p className="text-xs text-[hsl(var(--muted-foreground))]">
-            {maxAdditional > 0
-              ? `Opcional: combine com até ${maxAdditional} sabor(es) — ou peça só este.`
-              : "Composição indisponível neste produto."}
+            Opcional: combine com até {maxAdditional} sabor(es) — ou peça só este.
           </p>
         </div>
         <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>
