@@ -59,7 +59,8 @@ export type OptionDisplayType =
   | "dropdown"
   | "stepper"
   | "icon_chips"
-  | "color_swatch";
+  | "color_swatch"
+  | "size_segments";
 
 export type PricingConfig =
   | { strategy: "additive" }
@@ -123,6 +124,8 @@ export interface ProductComposition {
   min_parts: number;
   max_parts: number;
   pricing_rule: CompositionPricingRule;
+  /** tamanho → máximo de sabores (ex.: pequena=1, grande=2) */
+  max_parts_by_size?: Record<string, number>;
 }
 
 export interface ProductDetail {

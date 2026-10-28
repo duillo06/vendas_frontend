@@ -33,7 +33,8 @@ export type CategoryRecipeLibrary = {
   option_group_name?: string;
   sort_order: number;
   option_ids: string[];
-  options?: { id: string; name: string }[];
+  options?: { id: string; name: string; settings?: Record<string, unknown> }[];
+  item_settings?: Record<string, Record<string, unknown>>;
 };
 
 export type CategoryRecipe = {
@@ -52,6 +53,7 @@ export type CategoryRecipeWrite = {
     option_group_id: string;
     sort_order?: number;
     option_ids: string[];
+    item_settings?: Record<string, Record<string, unknown>>;
   }[];
   option_prices?: { option_id: string; price: number }[];
   template_key?: string;

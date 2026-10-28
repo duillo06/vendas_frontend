@@ -1,11 +1,20 @@
 import type { OptionGroup } from "@/features/catalog/types/catalog.types";
 
+import { isSizeLikeGroup, preferredSizeOptionId } from "./sizeFocus";
 import type { ProductBuilderState } from "./types";
 
 export function buildInitialSelections(groups: OptionGroup[]): ProductBuilderState {
   const selections: ProductBuilderState = {};
 
   for (const group of groups) {
+    if (isSizeLikeGroup(group)) {
+      const preferred = preferredSizeOptionId(group);
+      if (preferred) {
+        selections[group.id] = [{ option_id: preferred, quantity: 1 }];
+      }
+      continue;
+    }
+
     const defaults = group.default_option_ids ?? [];
     if (!defaults.length) continue;
 

@@ -279,6 +279,25 @@ export function SettingsForm({ section }: { section: SettingsFormSection }) {
       return;
     }
 
+    const deliveryMin = form.settings.delivery_time_min;
+    const deliveryMax = form.settings.delivery_time_max;
+    const minEmpty = deliveryMin == null;
+    const maxEmpty = deliveryMax == null;
+    if (minEmpty !== maxEmpty) {
+      toast.error("Informe o tempo mínimo e o máximo da entrega");
+      return;
+    }
+    if (
+      !minEmpty &&
+      !maxEmpty &&
+      (deliveryMin < 5 || deliveryMax > 240 || deliveryMax < deliveryMin)
+    ) {
+      toast.error(
+        "O tempo de entrega vai de 5 a 240 minutos, e o máximo precisa ser maior ou igual ao mínimo",
+      );
+      return;
+    }
+
     saveSettings({
       company: {
         legal_name: form.company.legal_name,
@@ -296,6 +315,8 @@ export function SettingsForm({ section }: { section: SettingsFormSection }) {
           : null,
         estimated_prep_time: Number(form.settings.estimated_prep_time),
         estimated_delivery_time: Number(form.settings.estimated_delivery_time),
+        delivery_time_min: form.settings.delivery_time_min,
+        delivery_time_max: form.settings.delivery_time_max,
         accepts_delivery: form.settings.accepts_delivery,
         accepts_pickup: form.settings.accepts_pickup,
         accepts_dine_in: form.settings.accepts_dine_in,
@@ -513,6 +534,51 @@ export function SettingsForm({ section }: { section: SettingsFormSection }) {
                 value={form.settings.delivery_fee}
                 onChange={(event) => updateSettings("delivery_fee", event.target.value)}
               />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="delivery_time_min">Tempo de entrega</Label>
+              <div className="flex flex-wrap items-center gap-2">
+                <Input
+                  id="delivery_time_min"
+                  type="number"
+                  inputMode="numeric"
+                  min={5}
+                  max={240}
+                  step={1}
+                  placeholder="60"
+                  className="w-24"
+                  value={form.settings.delivery_time_min ?? ""}
+                  onChange={(event) =>
+                    updateSettings(
+                      "delivery_time_min",
+                      event.target.value === "" ? null : Number(event.target.value),
+                    )
+                  }
+                />
+                <span className="text-sm text-[hsl(var(--muted-foreground))]">a</span>
+                <Input
+                  id="delivery_time_max"
+                  type="number"
+                  inputMode="numeric"
+                  min={5}
+                  max={240}
+                  step={1}
+                  placeholder="90"
+                  className="w-24"
+                  aria-label="Tempo máximo de entrega"
+                  value={form.settings.delivery_time_max ?? ""}
+                  onChange={(event) =>
+                    updateSettings(
+                      "delivery_time_max",
+                      event.target.value === "" ? null : Number(event.target.value),
+                    )
+                  }
+                />
+                <span className="text-sm text-[hsl(var(--muted-foreground))]">minutos</span>
+              </div>
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                O cliente vê essa faixa no cardápio. Ex.: 60–90 min.
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="free_delivery_above">Entrega grátis acima de (R$)</Label>

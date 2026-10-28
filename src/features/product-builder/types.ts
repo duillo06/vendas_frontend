@@ -31,6 +31,8 @@ export type DisplayProps = {
 export type GroupSectionProps = DisplayProps & {
   invalid?: boolean;
   allSelections: ProductBuilderState;
+  emphasized?: boolean;
+  lockedHint?: string | null;
 };
 
 export function getItemQuantity(items: OptionSelectionItem[], optionId: string): number {

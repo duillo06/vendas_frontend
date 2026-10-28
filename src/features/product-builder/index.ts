@@ -5,6 +5,14 @@ export { getGroupGuidance } from "./guidance";
 export { computeBuilderProgress } from "./progress";
 export { resolveDisplayType } from "./resolveDisplayType";
 export { buildInitialSelections } from "./defaults";
+export {
+  effectiveCompositionMaxParts,
+  findSizeGroup,
+  hasSizeSelection,
+  isSizeLikeGroup,
+  preferredSizeOptionId,
+  selectedSizeOptionId,
+} from "./sizeFocus";
 export { getVisibleGroups, isGroupVisible, pruneHiddenSelections } from "./visibility";
 export {
   validateAllGroups,
