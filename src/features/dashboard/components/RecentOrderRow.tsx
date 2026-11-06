@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 
+import { isWhatsappOrder, orderSourceLabel } from "@/features/orders/lib/orderSource";
 import { OrderStatusBadge } from "@/shared/components/OrderStatusBadge";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import type { OrderStatus } from "@/shared/components/OrderStatusBadge";
@@ -12,6 +13,7 @@ type RecentOrderRowProps = {
   createdAt: string;
   status: OrderStatus;
   total: number;
+  source?: string | null;
 };
 
 export function RecentOrderRow({
@@ -21,6 +23,7 @@ export function RecentOrderRow({
   createdAt,
   status,
   total,
+  source,
 }: RecentOrderRowProps) {
   const pending = status === "pending";
 
@@ -33,7 +36,19 @@ export function RecentOrderRow({
       )}
     >
       <span className="text-xs font-semibold tabular-nums text-brand">{orderNumber}</span>
-      <span className="truncate text-xs text-[hsl(var(--foreground))]">{customerName}</span>
+      <span className="flex min-w-0 items-center gap-1.5">
+        <span className="truncate text-xs text-[hsl(var(--foreground))]">{customerName}</span>
+        <span
+          className={cn(
+            "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+            isWhatsappOrder(source)
+              ? "bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200"
+              : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]",
+          )}
+        >
+          {orderSourceLabel(source)}
+        </span>
+      </span>
       <span className="hidden text-[11px] text-[hsl(var(--muted-foreground))] sm:inline">{createdAt}</span>
       <span className="justify-self-end sm:justify-self-auto">
         <OrderStatusBadge status={status} className="gap-1 px-1.5 py-0.5 text-[10px] shadow-none" />

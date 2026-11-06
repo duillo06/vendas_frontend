@@ -4,6 +4,8 @@ import { normalizePrintSettings } from "@/features/settings";
 import { formatCompositionLabel } from "@/features/cart";
 import { formatCurrency } from "@/shared/lib/format";
 
+import { orderSourceLabel } from "@/features/orders/lib/orderSource";
+
 import { PAYMENT_METHOD_LABELS } from "./orderDetailCopy";
 import { pipelineStepLabel } from "./orderDetailHelpers";
 
@@ -99,6 +101,7 @@ function ComandaBody({
             ? `*** MESA ${order.table_number ?? "—"} ***`
             : "*** RETIRADA ***"}
       </p>
+      <p className="comanda-meta comanda-center">{orderSourceLabel(order.source)}</p>
       <p className="comanda-meta comanda-center">
         Situação: {statusLabel}
         {settings.show_prep_time ? ` · Prep. ~${estimatedPrepTime} min` : ""}

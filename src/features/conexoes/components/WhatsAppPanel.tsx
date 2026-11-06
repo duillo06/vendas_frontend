@@ -60,6 +60,15 @@ export function WhatsAppPanel({ onReconnect }: Props) {
     },
   });
 
+  const orderingMutation = useMutation({
+    mutationFn: (enabled: boolean) => conexoesApi.setOrdering(enabled),
+    onSuccess: (_data, enabled) => {
+      void queryClient.invalidateQueries({ queryKey: ["admin", "comms", "whatsapp"] });
+      toast.success(enabled ? "Clientes já podem pedir por aqui" : "Pedidos pelo WhatsApp pausados");
+    },
+    onError: (err) => toast.error(normalizeApiError(err).message),
+  });
+
   const disconnectMutation = useMutation({
     mutationFn: () => conexoesApi.disconnect(),
     onSuccess: () => {
@@ -244,6 +253,31 @@ export function WhatsAppPanel({ onReconnect }: Props) {
               Desconectar WhatsApp
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-0 shadow-sm">
+        <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <div className="min-w-0">
+            <h3 className="font-semibold">Pedidos pelo WhatsApp</h3>
+            <p className="text-sm text-muted-foreground">
+              {online
+                ? "Quando ligado, o cliente monta o pedido na conversa. O cardápio do site continua igual."
+                : "Conecte o WhatsApp para receber pedidos por aqui."}
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant={connection.ordering_enabled ? "default" : "outline"}
+            className="w-full shrink-0 sm:w-auto"
+            disabled={!online || orderingMutation.isPending}
+            onClick={() => orderingMutation.mutate(!connection.ordering_enabled)}
+          >
+            {orderingMutation.isPending ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : null}
+            {connection.ordering_enabled ? "Pedidos ligados" : "Clientes podem pedir por aqui"}
+          </Button>
         </CardContent>
       </Card>
 

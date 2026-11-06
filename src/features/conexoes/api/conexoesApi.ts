@@ -55,6 +55,11 @@ export const conexoesApi = {
   stats: () =>
     apiClient.get<WhatsAppStats>("/admin/communications/whatsapp/stats/").then((r) => r.data),
 
+  setOrdering: (enabled: boolean) =>
+    apiClient
+      .post<WhatsAppConnection>("/admin/communications/whatsapp/ordering/", { enabled })
+      .then((r) => r.data),
+
   listSituations: () =>
     apiClient.get<SituationRow[]>("/admin/communications/situations/").then((r) => r.data),
 

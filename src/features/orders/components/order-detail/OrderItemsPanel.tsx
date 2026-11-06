@@ -1,6 +1,7 @@
 import { Armchair, Banknote, ChevronDown, MapPin, MessageSquareText, Store } from "lucide-react";
 
 import type { OrderStatus } from "@/features/checkout/types/checkout.types";
+import { isWhatsappOrder, orderSourceLabel } from "@/features/orders/lib/orderSource";
 import type { OrderAdminDetail } from "@/features/orders/types/order-admin.types";
 import { OrderEventTimeline } from "@/features/orders/components/order-detail/OrderEventTimeline";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
@@ -133,6 +134,16 @@ export function OrderItemsPanel({ order }: OrderItemsPanelProps) {
                 <Store className="h-3.5 w-3.5" strokeWidth={2.25} />
               )}
               {channelLabel}
+            </span>
+            <span
+              className={cn(
+                "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold shadow-sm ring-1 ring-inset",
+                isWhatsappOrder(order.source)
+                  ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
+                  : "bg-[hsl(var(--muted))] text-[hsl(var(--foreground)/0.72)] ring-[hsl(var(--border))]",
+              )}
+            >
+              {orderSourceLabel(order.source)}
             </span>
             {paymentMethodLabel ? (
               <span

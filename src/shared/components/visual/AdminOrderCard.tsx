@@ -2,6 +2,7 @@ import { Armchair, ChevronRight, MapPin, Store } from "lucide-react";
 import { Link } from "react-router";
 
 import type { OrderStatus } from "@/features/checkout/types/checkout.types";
+import { isWhatsappOrder, orderSourceLabel } from "@/features/orders/lib/orderSource";
 import { PriceDisplay } from "@/shared/components/PriceDisplay";
 import { OrderStatusBadge } from "@/shared/components/OrderStatusBadge";
 import { cn } from "@/shared/lib/utils";
@@ -16,6 +17,7 @@ type AdminOrderCardProps = {
   itemsCount?: number;
   deliveryType?: "delivery" | "pickup" | "dine_in";
   tableNumber?: string | null;
+  source?: string | null;
   compact?: boolean;
   className?: string;
 };
@@ -40,6 +42,7 @@ export function AdminOrderCard({
   itemsCount,
   deliveryType,
   tableNumber,
+  source,
   className,
 }: AdminOrderCardProps) {
   const isPending = status === "pending";
@@ -58,6 +61,8 @@ export function AdminOrderCard({
     deliveryType === "dine_in" && tableNumber ? `Mesa ${tableNumber}` : customerName;
   const itemsLabel =
     itemsCount !== undefined ? `${itemsCount} ${itemsCount === 1 ? "item" : "itens"}` : null;
+  const originLabel = orderSourceLabel(source);
+  const fromWhatsapp = isWhatsappOrder(source);
 
   return (
     <Link
@@ -80,8 +85,20 @@ export function AdminOrderCard({
       </span>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-[hsl(var(--foreground))] group-hover:text-brand">
-          {titleLabel}
+        <p className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate text-sm font-medium text-[hsl(var(--foreground))] group-hover:text-brand">
+            {titleLabel}
+          </span>
+          <span
+            className={cn(
+              "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+              fromWhatsapp
+                ? "bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200"
+                : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]",
+            )}
+          >
+            {originLabel}
+          </span>
         </p>
         <p className="truncate text-[11px] text-[hsl(var(--muted-foreground))] sm:hidden">
           {[

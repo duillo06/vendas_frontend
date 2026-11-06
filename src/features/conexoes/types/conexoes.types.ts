@@ -29,6 +29,7 @@ export type WhatsAppConnection = {
   } | null;
   last_error_code?: string;
   last_error_message?: string;
+  ordering_enabled?: boolean;
   active_alert?: WhatsAppActiveAlert | null;
 };
 

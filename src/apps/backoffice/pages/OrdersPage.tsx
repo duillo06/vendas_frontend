@@ -361,6 +361,7 @@ export function OrdersPage() {
                     itemsCount={order.items_count}
                     deliveryType={order.delivery_type as "delivery" | "pickup" | "dine_in"}
                     tableNumber={order.table_number}
+                    source={order.source}
                   />
                 </li>
               ))}
