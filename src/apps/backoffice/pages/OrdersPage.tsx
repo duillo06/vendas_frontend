@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Armchair, Bike, CalendarRange, ClipboardList, Search, Store } from "lucide-react";
+import { Armchair, Bike, CalendarRange, ClipboardList, RotateCcw, Search, Store } from "lucide-react";
 import { useSearchParams } from "react-router";
 
+import { usePermissions } from "@/features/auth/hooks/usePermissions";
 import { useOrders } from "@/features/orders/hooks/useOrders";
+import { useResetOrderNumbering } from "@/features/orders/hooks/useResetOrderNumbering";
 import { EmptyState } from "@/shared/components/EmptyState";
 import {
   AdminOrderCard,
@@ -10,8 +12,10 @@ import {
   BackLink,
   PageHeader,
 } from "@/shared/components/visual";
+import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { useConfirm } from "@/shared/hooks/useConfirm";
 import { ADMIN_PAGE_SIZE } from "@/shared/constants/adminList";
 import { adminCopy } from "@/shared/copy/admin";
 import type { OrderStatus } from "@/shared/components/OrderStatusBadge";
@@ -79,6 +83,9 @@ function formatDateTime(iso: string) {
 }
 
 export function OrdersPage() {
+  const { confirm } = useConfirm();
+  const { can } = usePermissions();
+  const resetNumbering = useResetOrderNumbering();
   const [searchParams] = useSearchParams();
   const initialStatus = searchParams.get("status") ?? "";
   const [status, setStatus] = useState(
@@ -138,21 +145,46 @@ export function OrdersPage() {
     if (from && to) setPeriod("custom");
   }
 
+  async function handleResetNumbering() {
+    const ok = await confirm({
+      title: adminCopy.orders.resetNumbering.title,
+      description: adminCopy.orders.resetNumbering.description,
+      confirmLabel: adminCopy.orders.resetNumbering.confirm,
+    });
+    if (!ok) return;
+    resetNumbering.mutate();
+  }
+
   return (
     <div className="space-y-4">
       <BackLink to="/" label="Dashboard" />
 
       <div className="flex flex-wrap items-end justify-between gap-3">
         <PageHeader title="Pedidos" subtitle={adminCopy.orders.subtitle} icon={ClipboardList} />
-        <div className="flex items-center gap-2 pb-0.5 text-[11px] text-[hsl(var(--muted-foreground))]">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand/40" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
-          </span>
-          Ao vivo
-          {!isLoading && total > 0 ? (
-            <span className="tabular-nums text-[hsl(var(--foreground))]">· {total}</span>
+        <div className="flex flex-wrap items-center gap-2 pb-0.5">
+          {can("orders.manage") ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-11 sm:h-9"
+              disabled={resetNumbering.isPending}
+              onClick={() => void handleResetNumbering()}
+            >
+              <RotateCcw className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+              {resetNumbering.isPending ? "Reiniciando…" : adminCopy.orders.resetNumbering.button}
+            </Button>
           ) : null}
+          <span className="flex items-center gap-2 text-[11px] text-[hsl(var(--muted-foreground))]">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand/40" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
+            </span>
+            Ao vivo
+            {!isLoading && total > 0 ? (
+              <span className="tabular-nums text-[hsl(var(--foreground))]">· {total}</span>
+            ) : null}
+          </span>
         </div>
       </div>
 
@@ -361,6 +393,7 @@ export function OrdersPage() {
                     itemsCount={order.items_count}
                     deliveryType={order.delivery_type as "delivery" | "pickup" | "dine_in"}
                     tableNumber={order.table_number}
+                    source={order.source}
                   />
                 </li>
               ))}

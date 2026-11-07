@@ -115,10 +115,19 @@ export const adminCopy = {
       },
       toastCompleted: "Mais um cliente feliz — pedido concluído!",
     },
+    resetNumbering: {
+      button: "Reiniciar numeração",
+      title: "Reiniciar numeração",
+      description:
+        "O próximo pedido desta loja volta a ser #0001. Os pedidos que já existem continuam com o número atual.",
+      confirm: "Reiniciar",
+    },
     toasts: {
       statusUpdated: "Status atualizado",
       paymentRegistered: "Pagamento registrado",
       orderCompleted: "Mais um cliente feliz!",
+      numberingReset: "Numeração reiniciada",
+      numberingResetFailed: "Não foi possível reiniciar a numeração",
     },
   },
   categories: {

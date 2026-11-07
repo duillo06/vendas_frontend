@@ -307,6 +307,7 @@ export function DashboardPage() {
                     createdAt={formatTime(order.created_at)}
                     status={order.status as OrderStatus}
                     total={order.total}
+                    source={order.source}
                   />
                 </li>
               ))}

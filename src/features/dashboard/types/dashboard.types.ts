@@ -31,6 +31,7 @@ export interface DashboardRecentOrder {
   status: string;
   customer_name: string;
   total: number;
+  source?: string;
   created_at: string;
 }
 

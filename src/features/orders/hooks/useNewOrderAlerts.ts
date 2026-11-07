@@ -5,12 +5,14 @@ import { toast } from "sonner";
 import type { DashboardRecentOrder } from "@/features/dashboard/types/dashboard.types";
 import { formatCurrency } from "@/shared/lib/format";
 
+import { orderSourceLabel } from "../lib/orderSource";
 import { playOrderAlertSound } from "../lib/playOrderAlertSound";
 
 export type OrderAlertNotification = {
   id: string;
   orderNumber: string;
   customerName: string;
+  source?: string;
   total: number;
   receivedAt: string;
   read: boolean;
@@ -53,6 +55,7 @@ export function useNewOrderAlerts(
         id: order.id,
         orderNumber: order.order_number,
         customerName: order.customer_name,
+        source: order.source,
         total: order.total,
         receivedAt,
         read: false,
@@ -62,7 +65,7 @@ export function useNewOrderAlerts(
 
     for (const order of newcomers) {
       toast.message(`Novo pedido ${order.order_number}`, {
-        description: `${order.customer_name} · ${formatCurrency(order.total)}`,
+        description: `${orderSourceLabel(order.source)} · ${order.customer_name} · ${formatCurrency(order.total)}`,
         duration: 12_000,
         action: {
           label: "Abrir",

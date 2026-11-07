@@ -10,6 +10,7 @@ import { formatCurrency } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 
 import type { OrderAlertNotification } from "../hooks/useNewOrderAlerts";
+import { orderSourceLabel } from "../lib/orderSource";
 
 type OrderNotificationsBellProps = {
   notifications: OrderAlertNotification[];
@@ -67,7 +68,7 @@ function NotificationsList({
               </span>
             </div>
             <p className="mt-0.5 truncate text-xs text-[hsl(var(--muted-foreground))]">
-              {item.customerName} · {formatCurrency(item.total)}
+              {orderSourceLabel(item.source)} · {item.customerName} · {formatCurrency(item.total)}
             </p>
             {!item.read ? (
               <span className="mt-1 inline-block text-[10px] font-semibold uppercase tracking-wide text-brand">
