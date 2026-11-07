@@ -1202,6 +1202,22 @@ Marca pagamento como recebido.
 
 ---
 
+### 13.5 `POST /api/v1/admin/orders/reset-numbering/`
+
+Reinicia a numeração desta loja. O próximo pedido volta a `#0001`. Pedidos já criados não mudam de número. Outra empresa não é afetada.
+
+**Permissão:** `orders.manage`
+
+**Response `200`:**
+
+```json
+{
+  "next_order_number": "#0001"
+}
+```
+
+---
+
 ## 14. API Admin — Catálogo
 
 **Permissão base:** `catalog.view` (leitura) | `catalog.manage` (escrita)
@@ -2019,6 +2035,7 @@ GET /api/v1/redoc/           # ReDoc
 | 13 | GET | `/admin/orders/{id}/` | JWT | `orders.view` |
 | 14 | PATCH | `/admin/orders/{id}/status/` | JWT | `orders.manage` |
 | 15 | PATCH | `/admin/orders/{id}/payment/` | JWT | `orders.manage` |
+| 15a | POST | `/admin/orders/reset-numbering/` | JWT | `orders.manage` |
 | 16 | GET | `/admin/products/` | JWT | `catalog.view` |
 | 17 | POST | `/admin/products/` | JWT | `catalog.manage` |
 | 18 | GET | `/admin/products/{id}/` | JWT | `catalog.view` |

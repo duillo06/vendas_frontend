@@ -2,9 +2,9 @@
 
 > **Documento:** Modelagem do Banco de Dados  
 > **Produto:** Food Service *(nome comercial provisório)*  
-> **Versão:** 1.1  
+> **Versão:** 1.2  
 > **Status:** Aprovado  
-> **Última atualização:** Outubro/2026  
+> **Última atualização:** Novembro/2026  
 > **Depende de:** `01-visao-do-produto.md`, `02-arquitetura.md` (aprovados)  
 > **Relacionados:** `35-pedidos-mesa.md` (salão / `dine_in`)  
 > **SGBD:** PostgreSQL 16+
@@ -290,6 +290,7 @@ erDiagram
         uuid tenant_id FK
         uuid customer_id FK
         string order_number
+        date business_date
         string status
         string delivery_type
         numeric subtotal
@@ -984,7 +985,9 @@ VALID_TRANSITIONS = {
 | `id` | `UUID` | NO | — | PK |
 | `tenant_id` | `UUID` | NO | — | FK → `companies.id` |
 | `customer_id` | `UUID` | NO | — | FK → `customers.id` |
-| `order_number` | `VARCHAR(20)` | NO | — | Número legível (`#0001`) |
+| `order_number` | `VARCHAR(20)` | NO | — | Número legível do dia (`#0001`) |
+| `business_date` | `DATE` | NO | — | Dia local da loja; a sequência reinicia neste dia |
+| `numbering_cycle` | `INTEGER` | NO | `1` | Sobe quando o painel reinicia a numeração no meio do dia |
 | `status` | `order_status` | NO | `'pending'` | Status atual |
 | `delivery_type` | `delivery_type` | NO | — | `delivery`, `pickup`, `dine_in` |
 | `subtotal` | `NUMERIC(10,2)` | NO | — | Soma dos itens |
@@ -1012,7 +1015,7 @@ VALID_TRANSITIONS = {
 | `updated_at` | `TIMESTAMPTZ` | NO | — | — |
 
 **Índices:**
-- `UNIQUE (tenant_id, order_number)`
+- `UNIQUE (tenant_id, business_date, numbering_cycle, order_number)`
 - `INDEX (tenant_id, status, created_at DESC)` — listagem principal do painel
 - `INDEX (tenant_id, customer_id, created_at DESC)` — histórico do cliente
 - `INDEX (tenant_id, created_at DESC)` — relatórios
@@ -1021,7 +1024,7 @@ VALID_TRANSITIONS = {
 - `INDEX (tenant_id, table_id, created_at DESC)` WHERE `table_id IS NOT NULL` — histórico por mesa (V2)
 
 **Regras:**
-- `order_number` sequencial por tenant (service gera: `#0001`, `#0002`...)
+- `order_number` sequencial por tenant e por `business_date` (service gera `#0001`, `#0002`… e no dia seguinte recomeça)
 - `total = subtotal - discount + delivery_fee`
 - `total >= 0`
 - Após `confirmed`, itens **não podem** ser alterados
@@ -1531,7 +1534,7 @@ ALTER TABLE coupons
 | `employees` | `email` | Por tenant |
 | `customers` | `phone` | Por tenant |
 | `customers` | `email` | Por tenant (partial, WHERE NOT NULL) |
-| `orders` | `order_number` | Por tenant |
+| `orders` | `order_number` | Por tenant, dia (`business_date`) e ciclo (`numbering_cycle`) |
 | `dining_tables` | `number` | Por tenant |
 | `dining_tables` | `qr_token` | Global |
 | `coupons` | `code` | Por tenant |
@@ -1775,6 +1778,7 @@ sequenceDiagram
 
 | Versão | Data | Autor | Alterações |
 |--------|------|-------|------------|
+| 1.2 | Nov/2026 | — | `orders.business_date`; número único por tenant e dia |
 | 1.1 | Out/2026 | — | §8.6 `dining_tables`; `orders.table_*`; `accepts_dine_in` — `35` |
 | 1.0 | Jul/2026 | — | Versão inicial — aprovado |
 

@@ -26,4 +26,9 @@ export const ordersAdminApi = {
     apiClient
       .patch<OrderAdminDetail>(`/admin/orders/${id}/payment/`, data)
       .then((response) => response.data),
+
+  resetNumbering: () =>
+    apiClient
+      .post<{ next_order_number: string }>("/admin/orders/reset-numbering/")
+      .then((response) => response.data),
 };

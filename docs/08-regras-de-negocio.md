@@ -2,9 +2,9 @@
 
 > **Documento:** Regras de Negócio  
 > **Produto:** Food Service *(nome comercial provisório)*  
-> **Versão:** 1.1  
+> **Versão:** 1.2  
 > **Status:** Aprovado  
-> **Última atualização:** Outubro/2026  
+> **Última atualização:** Novembro/2026  
 > **Depende de:** `03-modelagem-do-banco.md`, `06-backend.md`, `07-api.md` (aprovados)  
 > **Relacionados:** `35-pedidos-mesa.md` (salão / `dine_in`)
 
@@ -414,7 +414,7 @@ sequenceDiagram
 | ID | Regra |
 |----|-------|
 | PD-01 | Pedido criado com `status = pending` |
-| PD-02 | `order_number` sequencial por tenant (`#0001`, `#0002`...) |
+| PD-02 | `order_number` sequencial por tenant **e por dia local da loja** (`#0001`, `#0002`…). No dia seguinte volta a `#0001`. O painel pode reiniciar no meio do dia (`orders.manage`): o próximo pedido volta a `#0001` e os anteriores mantêm o número. Outra empresa não compartilha a sequência. |
 | PD-03 | `source = storefront` para checkout público |
 | PD-04 | `source = backoffice` para pedidos manuais (futuro) |
 | PD-05 | Snapshots: `customer_name`, `customer_phone`, `delivery_address`, `table_number` (se mesa) |
@@ -895,6 +895,7 @@ raise DomainException(
 
 | Versão | Data | Autor | Alterações |
 |--------|------|-------|------------|
+| 1.2 | Nov/2026 | — | PD-02: número do pedido reinicia todo dia, por empresa |
 | 1.1 | Out/2026 | — | §16 DM-01…15; E-27/28; P-16; K-28…30; PD-21/22 — `35` |
 | 1.0 | Jul/2026 | — | Versão inicial — aprovado |
 

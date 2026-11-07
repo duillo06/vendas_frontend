@@ -308,7 +308,7 @@ Itens **explicitamente excluídos**. Implementar qualquer um deles **invalida** 
 - [ ] **P0** `OrderService.create_from_checkout` — K-01 a K-24, PD-01 a PD-20
 - [ ] **P0** `OrderService.update_status` — transições válidas + histórico
 - [ ] **P0** `OrderService.update_payment` — PG-01 a PG-10
-- [ ] **P0** Geração de `order_number` sequencial por tenant
+- [ ] **P0** Geração de `order_number` sequencial por tenant e por dia local da loja
 - [ ] **P0** Cálculo de totais no servidor (subtotal, taxa, desconto=0, total)
 
 ### 7.7 Celery (assíncrono)
